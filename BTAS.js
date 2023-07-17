@@ -14,8 +14,12 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
 // ==/UserScript==
+
 var $ = window.jQuery;
+
 const LogSourceDomain = $('#customfield_10223-val').text().trim();
+const Labels = $('.labels-wrap .labels li a span').text();
+const LogSource = $('#customfield_10204-val').text().trim();
 const rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
 
 /**
@@ -217,11 +221,11 @@ function editNotify() {
             http://172.18.2.13/books/customers/page/lsh-hk-lei-shing-hong-hk',
         'toysrus':
             'If the alert is related to Malicious or Unwanted software, there is NO NEED to escalate.<br>\
-            Please help the customer run full scan on MDE and then close ticket. Finally, add full scan screenshots in internal comments'
+            Please help the customer run full scan on MDE and then close ticket. Finally, add full scan screenshots in internal comments',
+        'Auto Escalate':
+            'All automatically upgraded tickets can NOT be closed directly, and need to be upgraded to the customer. Only need to add a description and ATT&CK, and wait for the customer to confirm before closing'
     };
-    const LogSourceDomain = $('#customfield_10223-val').text().trim();
-    const Labels = $('.labels-wrap .labels li a span').text();
-    const LogSource = $('#customfield_10204-val').text().trim();
+
     function addEditonClick() {
         // # Add a click event listener to the "Edit" button related to the "LogSourceDomain" field
         if (
@@ -268,6 +272,13 @@ function editNotify() {
             const orgNotify = orgNotifydict['Dev Team'];
             $('#edit-issue').on('click', () => {
                 showFlag('warning', `${LogSource} ticket`, `${orgNotify}`, 'manual');
+            });
+        }
+        // # Add a click event listener to the "Resolve this issue" button related to the "Log Source Domain" field
+        if ($('#customfield_12202-val').text().trim() == 'Yes') {
+            const orgNotify = orgNotifydict['Auto Escalate'];
+            $('#action_id_761').on('click', () => {
+                showFlag('warning', `Auto Escalate ticket`, `${orgNotify}`, 'manual');
             });
         }
     }
