@@ -2,7 +2,7 @@
 // @name         BTAS
 // @namespace    https://github.com/Ripper-S/BTAS
 // @homepageURL  https://github.com/Ripper-S/BTAS
-// @version      1.4.9
+// @version      1.5.0
 // @description  Blue Team Assistance Script
 // @author       Barry Y Yang; Jack SA Chen; Xingyu X Zhou
 // @license      Apache-2.0
@@ -16,6 +16,12 @@
 // ==/UserScript==
 
 var $ = window.jQuery;
+
+const LogSourceDomain = $('#customfield_10223-val').text().trim();
+const Labels = $('.labels-wrap .labels li a span').text();
+const LogSource = $('#customfield_10204-val').text().trim();
+const rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
+const TicketAutoEscalate = $('#customfield_12202-val').text().trim();
 
 /**
  * This function creates and displays a flag using AJS.flag function
@@ -270,7 +276,7 @@ function editNotify(LogSourceDomain, LogSource, Labels) {
             });
         }
         // # Add a click event listener to the "Resolve this issue" button related to the "Log Source Domain" field
-        if ($('#customfield_12202-val').text().trim() == 'Yes') {
+        if (TicketAutoEscalate == 'Yes') {
             const orgNotify = orgNotifydict['Auto Escalate'];
             $('#action_id_761').on('click', () => {
                 showFlag('warning', `Auto Escalate ticket`, `${orgNotify}`, 'manual');
