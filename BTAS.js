@@ -17,12 +17,6 @@
 
 var $ = window.jQuery;
 
-const LogSourceDomain = $('#customfield_10223-val').text().trim();
-const Labels = $('.labels-wrap .labels li a span').text();
-const LogSource = $('#customfield_10204-val').text().trim();
-const rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
-const TicketAutoEscalate = $('#customfield_12202-val').text().trim();
-
 /**
  * This function creates and displays a flag using AJS.flag function
  * @param {string} type - The type of flag, can be one of the following: "success", "info", "warning", "error"
@@ -206,7 +200,7 @@ function checkKeywords() {
  * It adds click event listeners to the "Edit" button based on certain conditions,
  * and generates a specific HTML element for the edit notification.
  */
-function editNotify(LogSourceDomain, LogSource, Labels) {
+function editNotify(LogSourceDomain, LogSource, Labels, TicketAutoEscalate) {
     console.log('#### Code editNotify run ####');
     const orgNotifydict = {
         'Dev Team':
@@ -852,9 +846,10 @@ function WineventAlertHandler(rawLog) {
         const LogSourceDomain = $('#customfield_10223-val').text().trim();
         const Labels = $('.labels-wrap .labels li a span').text();
         const LogSource = $('#customfield_10204-val').text().trim();
+        const TicketAutoEscalate = $('#customfield_12202-val').text().trim();
         if ($('#issue-content').length && !$('#generateEditnotify').length) {
             console.log('#### Code Issue page: Edit Notify ####');
-            editNotify(LogSourceDomain, LogSource, Labels);
+            editNotify(LogSourceDomain, LogSource, Labels, TicketAutoEscalate);
         }
     }, 3000);
 })();
