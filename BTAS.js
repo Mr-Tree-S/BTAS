@@ -17,11 +17,6 @@
 
 var $ = window.jQuery;
 
-const LogSourceDomain = $('#customfield_10223-val').text().trim();
-const Labels = $('.labels-wrap .labels li a span').text();
-const LogSource = $('#customfield_10204-val').text().trim();
-const rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
-
 /**
  * This function creates and displays a flag using AJS.flag function
  * @param {string} type - The type of flag, can be one of the following: "success", "info", "warning", "error"
@@ -205,7 +200,7 @@ function checkKeywords() {
  * It adds click event listeners to the "Edit" button based on certain conditions,
  * and generates a specific HTML element for the edit notification.
  */
-function editNotify() {
+function editNotify(LogSourceDomain, LogSource, Labels) {
     console.log('#### Code editNotify run ####');
     const orgNotifydict = {
         'Dev Team':
@@ -314,7 +309,7 @@ function addButton(id, text, onClick) {
  * Creates three buttons on a JIRA issue page to handle Cortex XDR alerts
  * The buttons allow users to generate a description of the alerts, open the alert card page and timeline page
  */
-function cortexAlertHandler() {
+function cortexAlertHandler(rawLog, LogSourceDomain) {
     console.log('#### Code cortexAlertHandler run ####');
     /**
      * Extracts the log information and organization name from the current JIRA issue page
@@ -335,12 +330,10 @@ function cortexAlertHandler() {
         'welab': 'https://welabbank.xdr.sg.paloaltonetworks.com/'
     };
     function extractLog(orgDict) {
-        const LogSourceDomain = $('#customfield_10223-val').text().trim();
         const orgNavigator = orgDict[LogSourceDomain];
-        let rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
-        return { LogSourceDomain, orgNavigator, rawLog };
+        return orgNavigator;
     }
-    const { LogSourceDomain, orgNavigator, rawLog } = extractLog(orgDict);
+    const orgNavigator = extractLog(orgDict);
 
     /**
      * Parse the relevant information from the raw log data
@@ -497,7 +490,7 @@ function cortexAlertHandler() {
     addButton('openTimeline', 'Timeline', openTimeline);
 }
 
-function MDEAlertHandler() {
+function MDEAlertHandler(rawLog) {
     console.log('#### Code MDEAlertHandler run ####');
 
     function parseLog(rawLog) {
@@ -534,7 +527,6 @@ function MDEAlertHandler() {
         return alertInfo;
     }
     const alertInfo = parseLog(rawLog);
-    // console.info(`alertInfo: ${alertInfo}`);
 
     function generateDescription() {
         const alertDescriptions = [];
@@ -560,7 +552,7 @@ function MDEAlertHandler() {
     addButton('openMDE', 'MDE', openMDE);
 }
 
-function HTSCAlertHandler() {
+function HTSCAlertHandler(rawLog) {
     console.log('#### Code HTSCAlertHandler run ####');
 
     function decodeHtml(encodedString) {
@@ -608,7 +600,7 @@ function HTSCAlertHandler() {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
-function CBAlertHandler() {
+function CBAlertHandler(rawLog, LogSourceDomain) {
     console.log('#### Code CBAlertHandler run ####');
 
     // For Swire
@@ -742,7 +734,7 @@ function CBAlertHandler() {
     addButton('openCB', 'CB', openCB);
 }
 
-function WineventAlertHandler() {
+function WineventAlertHandler(rawLog) {
     console.log('#### Code WineventAlertHandler run ####');
 
     function parseLog(rawLog) {
@@ -821,6 +813,8 @@ function WineventAlertHandler() {
 
     // Issue page: Alert Handler
     setInterval(() => {
+        const LogSourceDomain = $('#customfield_10223-val').text().trim();
+        const rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
         if ($('#issue-content').length && !$('#generateDescription').length) {
             console.log('#### Code Issue page: Alert Handler ####');
             const handlers = {
@@ -832,10 +826,9 @@ function WineventAlertHandler() {
                 'windows_eventchannel': WineventAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim();
-
             const handler = handlers[DecoderName];
             if (handler) {
-                handler();
+                handler(rawLog, LogSourceDomain);
             }
         }
     }, 3000);
@@ -850,9 +843,12 @@ function WineventAlertHandler() {
 
     // Issue page: Edit Notify
     setInterval(() => {
+        const LogSourceDomain = $('#customfield_10223-val').text().trim();
+        const Labels = $('.labels-wrap .labels li a span').text();
+        const LogSource = $('#customfield_10204-val').text().trim();
         if ($('#issue-content').length && !$('#generateEditnotify').length) {
             console.log('#### Code Issue page: Edit Notify ####');
-            editNotify();
+            editNotify(LogSourceDomain, LogSource, Labels);
         }
     }, 3000);
 })();
