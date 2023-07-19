@@ -1,0 +1,26 @@
+{
+    "LogSourceDomain": {
+        "esf": {
+            "message": "Please escalated according to the Label tags and document.<br>https://172.18.2.13/books/customers/page/esf-cortex-endpoint-group-jira-organization-mapping",
+            "properties": {},
+            "click": "Edit"
+        },
+        "kerrypropshk": {
+            "message": "Please note that if the host starts with cn/sz/bj/sh, Do NOT escalate it on Jira.<br>Instead, share the issue key and MDE link with Desen and Barry.<br>Then, choose 'Won't Do as the Resolution and Resolve this issue.<br>In the Comments, mention that the host belongs to PRC and has been handed over to the SH team for handling.",
+            "properties": { "Labels": ["UnassignedGroup"] },
+            "click": "Edit"
+        }
+    },
+    "LogSource": {
+        ".int.darklab.hk": {
+            "mseeage": "Please do NOT escalate to the customer<br>AND contact Dev Team via Teams Conversation first to confirm if it is due to their operatation",
+            "properties": {},
+            "click": "Edit"
+        }
+    },
+    "TicketAutoEscalate": {
+        "message": "All automatically upgraded tickets can NOT be closed directly, and need to be upgraded to the customer. Only need to add a description and ATT&CK, and wait for the customer to confirm before closing",
+        "properties": {},
+        "click": "Resolve"
+    }
+}
