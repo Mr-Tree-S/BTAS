@@ -2,7 +2,7 @@
 // @name         BTAS
 // @namespace    https://github.com/Ripper-S/BTAS
 // @homepageURL  https://github.com/Ripper-S/BTAS
-// @version      1.5.0
+// @version      1.5.1
 // @description  Blue Team Assistance Script
 // @author       Barry Y Yang; Jack SA Chen; Xingyu X Zhou
 // @license      Apache-2.0
@@ -318,6 +318,7 @@ function addButton(id, text, onClick) {
  * The buttons allow users to generate a description of the alerts, open the alert card page and timeline page
  */
 function cortexAlertHandler(rawLog, LogSourceDomain) {
+function cortexAlertHandler(rawLog, LogSourceDomain) {
     console.log('#### Code cortexAlertHandler run ####');
     /**
      * Extracts the log information and organization name from the current JIRA issue page
@@ -337,11 +338,7 @@ function cortexAlertHandler(rawLog, LogSourceDomain) {
         'toppanmerrill': 'https://tpm-apac.xdr.us.paloaltonetworks.com/',
         'welab': 'https://welabbank.xdr.sg.paloaltonetworks.com/'
     };
-    function extractLog(orgDict) {
-        const orgNavigator = orgDict[LogSourceDomain];
-        return orgNavigator;
-    }
-    const orgNavigator = extractLog(orgDict);
+    const orgNavigator = orgDict[LogSourceDomain];
 
     /**
      * Parse the relevant information from the raw log data
