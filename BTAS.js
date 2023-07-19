@@ -13,6 +13,8 @@
 // @require      https://code.jquery.com/jquery-3.6.4.min.js
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
+// @run-at       context-menu
+// @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
 var $ = window.jQuery;
@@ -202,26 +204,32 @@ function checkKeywords() {
  */
 function editNotify(LogSourceDomain, LogSource, Labels, TicketAutoEscalate) {
     console.log('#### Code editNotify run ####');
-    const orgNotifydict = {
-        'Dev Team':
-            'Please do NOT escalate to the customer<br>\
-            AND contact Dev Team via Teams Conversation first to confirm if it is due to their operatation',
-        'esf': 'Please escalated according to the Label tags and document.<br>\
-            https://172.18.2.13/books/customers/page/esf-cortex-endpoint-group-jira-organization-mapping',
-        'swireproperties':
-            'Please escalated according to the group, hostname value.<br>\
-            Check if additional Participants need to be added through HK_MSS_SOP.doc',
-        'lsh-hk':
-            'Please escalated according to the Label tags and document.<br>\
-            http://172.18.2.13/books/customers/page/lsh-hk-lei-shing-hong-hk',
-        'toysrus':
-            'If the alert is related to Malicious or Unwanted software, there is NO NEED to escalate.<br>\
-            Please help the customer run full scan on MDE and then close ticket. Finally, add full scan screenshots in internal comments',
-        'Auto Escalate':
-            'All automatically upgraded tickets can NOT be closed directly, and need to be upgraded to the customer. Only need to add a description and ATT&CK, and wait for the customer to confirm before closing'
-    };
+    const orgNotifydict = {};
 
-    function addEditonClick() {
+    function fetchOrgNotifydict() {
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: 'https://example.com/path/to/orgNotifydict.json', // 将URL替换为JSON文件所在的服务器地址
+            onload: function (response) {
+                if (response.status === 200) {
+                    const data = JSON.parse(response.responseText);
+                    // 在这里处理获取到的data，例如将它存储到变量orgNotifydict中
+                    const orgNotifydict = data;
+                    // 然后调用处理函数
+                    addEditonClick(orgNotifydict);
+                } else {
+                    console.error('Error fetching orgNotifydict:', response.status);
+                }
+            },
+            onerror: function (error) {
+                console.error('Error fetching orgNotifydict:', error);
+            }
+        });
+    }
+
+    fetchOrgNotifydict();
+
+    function addEditonClick(orgNotifydict) {
         // # Add a click event listener to the "Edit" button related to the "LogSourceDomain" field
         if (
             LogSourceDomain.includes('esf') ||
@@ -277,7 +285,7 @@ function editNotify(LogSourceDomain, LogSource, Labels, TicketAutoEscalate) {
             });
         }
     }
-    addEditonClick();
+    //addEditonClick();
 
     function generateEditnotify() {
         const toolbar = $('.aui-toolbar2-primary');
