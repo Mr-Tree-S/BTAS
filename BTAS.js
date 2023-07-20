@@ -13,8 +13,9 @@
 // @require      https://code.jquery.com/jquery-3.6.4.min.js
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
-// @run-at       context-menu
 // @grant        GM_xmlhttpRequest
+// @connect      *
+// @run-at       start
 // ==/UserScript==
 
 var $ = window.jQuery;
@@ -202,21 +203,18 @@ function checkKeywords() {
  * It adds click event listeners to the "Edit" button based on certain conditions,
  * and generates a specific HTML element for the edit notification.
  */
-function editNotify(LogSourceDomain, LogSource, Labels, TicketAutoEscalate) {
+function editNotify(ValueFromPage) {
     console.log('#### Code editNotify run ####');
-    const orgNotifydict = {};
 
     function fetchOrgNotifydict() {
         GM_xmlhttpRequest({
             method: 'GET',
-            url: 'https://example.com/path/to/orgNotifydict.json', // 将URL替换为JSON文件所在的服务器地址
+            url: 'https://raw.githubusercontent.com/Dyebasedink/BTAS/Dev/notify.json',
             onload: function (response) {
                 if (response.status === 200) {
                     const data = JSON.parse(response.responseText);
-                    // 在这里处理获取到的data，例如将它存储到变量orgNotifydict中
-                    const orgNotifydict = data;
-                    // 然后调用处理函数
-                    addEditonClick(orgNotifydict);
+                    addClickListener(data);
+                    generateNotify();
                 } else {
                     console.error('Error fetching orgNotifydict:', response.status);
                 }
@@ -226,75 +224,57 @@ function editNotify(LogSourceDomain, LogSource, Labels, TicketAutoEscalate) {
             }
         });
     }
-
     fetchOrgNotifydict();
 
-    function addEditonClick(orgNotifydict) {
-        // # Add a click event listener to the "Edit" button related to the "LogSourceDomain" field
-        if (
-            LogSourceDomain.includes('esf') ||
-            LogSourceDomain.includes('swireproperties') ||
-            LogSourceDomain.includes('lsh-hk') ||
-            LogSourceDomain.includes('toysrus')
-        ) {
-            const orgNotify = orgNotifydict[LogSourceDomain];
-            $('#edit-issue').on('click', () => {
-                showFlag('warning', `${LogSourceDomain} ticket`, `${orgNotify}`, 'manual');
-            });
+    // Add a click event listener to button
+    function addClickListener(orgNotifydict) {
+        // get button path
+        function clickButton(click) {
+            const buttonMap = {
+                Edit: '#edit-issue',
+                Resolve: '#action_id_761'
+            };
+            return buttonMap[click] || '';
         }
-        if (LogSourceDomain.includes('kerrypropshk')) {
-            if (Labels === 'UnassignedGroup') {
-                $('#edit-issue').on('click', () => {
-                    showFlag(
-                        'warning',
-                        'kerrypropshk UnassignedGroup ticket',
-                        'Please note that if the host starts with cn/sz/bj/sh, Do NOT escalate it on Jira.<br>\
-                    Instead, share the issue key and MDE link with Desen and Barry.<br>\
-                    Then, choose "Won\'t Do" as the Resolution and Resolve this issue.<br>\
-                    In the Comments, mention that the host belongs to PRC and has been handed over to the SH team for handling.',
-                        'manual'
-                    );
-                });
-            } else {
-                $('#edit-issue').on('click', () => {
-                    showFlag(
-                        'warning',
-                        'kerrypropshk ticket',
-                        'Please copy the description to the comments for the customer',
-                        'manual'
-                    );
-                });
+
+        // check all the condition
+        function checkProperties(properties) {
+            return (
+                Object.keys(properties).length === 0 ||
+                Object.entries(properties).every(([property, value]) => {
+                    return Object.keys(ValueFromPage).includes(property) && value == ValueFromPage[property];
+                })
+            );
+        }
+
+        function processSection(sectionKey) {
+            const sectionData = orgNotifydict[sectionKey];
+            const valueFromPage = ValueFromPage[sectionKey];
+            for (const key in sectionData) {
+                if (valueFromPage.includes(key)) {
+                    const { ticketname, message, properties, click } = sectionData[key];
+                    const button = clickButton(click);
+                    if (checkProperties(properties)) {
+                        $(button).on('click', () => {
+                            showFlag('warning', `${ticketname} ticket`, `${message}`, 'manual');
+                        });
+                    }
+                }
             }
         }
-        // # Add a click event listener to the "Edit" button related to the "LogSource" field
-        if (
-            LogSource.includes('plwazag') ||
-            LogSource.includes('LogCollector') ||
-            LogSource.includes('.int.darklab.hk')
-        ) {
-            const orgNotify = orgNotifydict['Dev Team'];
-            $('#edit-issue').on('click', () => {
-                showFlag('warning', `${LogSource} ticket`, `${orgNotify}`, 'manual');
-            });
-        }
-        // # Add a click event listener to the "Resolve this issue" button related to the "Log Source Domain" field
-        if (TicketAutoEscalate == 'Yes') {
-            const orgNotify = orgNotifydict['Auto Escalate'];
-            $('#action_id_761').on('click', () => {
-                showFlag('warning', `Auto Escalate ticket`, `${orgNotify}`, 'manual');
-            });
-        }
-    }
-    //addEditonClick();
 
-    function generateEditnotify() {
+        processSection('LogSourceDomain');
+        processSection('LogSource');
+        processSection('TicketAutoEscalate');
+    }
+
+    // add a element into toolbar
+    function generateNotify() {
         const toolbar = $('.aui-toolbar2-primary');
         const element = $('<div id="generateEditnotify"></div>');
         toolbar.append(element);
     }
-    generateEditnotify();
 }
-
 /**
  * Creates a new button and adds it to the DOM.
  * @param {string} id - The ID attribute for the new button element.
@@ -317,7 +297,6 @@ function addButton(id, text, onClick) {
  * Creates three buttons on a JIRA issue page to handle Cortex XDR alerts
  * The buttons allow users to generate a description of the alerts, open the alert card page and timeline page
  */
-function cortexAlertHandler(rawLog, LogSourceDomain) {
 function cortexAlertHandler(rawLog, LogSourceDomain) {
     console.log('#### Code cortexAlertHandler run ####');
     /**
@@ -852,9 +831,11 @@ function WineventAlertHandler(rawLog) {
         const Labels = $('.labels-wrap .labels li a span').text();
         const LogSource = $('#customfield_10204-val').text().trim();
         const TicketAutoEscalate = $('#customfield_12202-val').text().trim();
+        const ValueFromPage = { LogSourceDomain, Labels, LogSource, TicketAutoEscalate };
+        // If it pops up once, it will not be reminded again
         if ($('#issue-content').length && !$('#generateEditnotify').length) {
             console.log('#### Code Issue page: Edit Notify ####');
-            editNotify(LogSourceDomain, LogSource, Labels, TicketAutoEscalate);
+            editNotify(ValueFromPage);
         }
     }, 3000);
 })();
