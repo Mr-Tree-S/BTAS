@@ -7,7 +7,7 @@
         },
         "kerrypropshk": {
             "message": "Please note that if the host starts with cn/sz/bj/sh, Do NOT escalate it on Jira.<br>Instead, share the issue key and MDE link with Desen and Barry.<br>Then, choose 'Won't Do as the Resolution and Resolve this issue.<br>In the Comments, mention that the host belongs to PRC and has been handed over to the SH team for handling.",
-            "properties": { "Labels": "UnassignedGroup", "LogSource":"Wazuh-MDE" },
+            "properties": { "Labels": "UnassignedGroup", "LogSource":"Cortex" },
             "click": "Edit"
         }
     },
