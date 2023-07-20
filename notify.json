@@ -52,9 +52,11 @@
         }
     },
     "TicketAutoEscalate": {
-        "ticketname": "Auto Escalate",
-        "message": "All automatically upgraded tickets can NOT be closed directly, and need to be upgraded to the customer. Only need to add a description and ATT&CK, and wait for the customer to confirm before closing",
-        "properties": {},
-        "click": "Resolve"
+        "Yes": {
+            "ticketname": "Auto Escalate",
+            "message": "All automatically upgraded tickets can NOT be closed directly, and need to be upgraded to the customer. Only need to add a description and ATT&CK, and wait for the customer to confirm before closing",
+            "properties": {},
+            "click": "Resolve"
+        }
     }
 }
