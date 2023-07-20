@@ -1,5 +1,10 @@
 {
     "LogSourceDomain": {
+        "Dev Team": {
+            "message": "Please do NOT escalate to the customer<br>AND contact Dev Team via Teams Conversation first to confirm if it is due to their operatation",
+            "properties": {},
+            "click": "Edit"
+        },
         "swireproperties": {
             "message": "Please escalated according to the group, hostname value.<br>Check if additional Participants need to be added through HK_MSS_SOP.doc",
             "properties": {},
@@ -28,17 +33,17 @@
     },
     "LogSource": {
         ".int.darklab.hk": {
-            "mseeage": "Please do NOT escalate to the customer<br>AND contact Dev Team via Teams Conversation first to confirm if it is due to their operatation",
+            "message": "Please do NOT escalate to the customer<br>AND contact Dev Team via Teams Conversation first to confirm if it is due to their operatation",
             "properties": {},
             "click": "Edit"
         },
         "LogCollector": {
-            "mseeage": "Please do NOT escalate to the customer<br>AND contact Dev Team via Teams Conversation first to confirm if it is due to their operatation",
+            "message": "Please do NOT escalate to the customer<br>AND contact Dev Team via Teams Conversation first to confirm if it is due to their operatation",
             "properties": {},
             "click": "Edit"
         },
         "plwazag": {
-            "mseeage": "Please do NOT escalate to the customer<br>AND contact Dev Team via Teams Conversation first to confirm if it is due to their operatation",
+            "message": "Please do NOT escalate to the customer<br>AND contact Dev Team via Teams Conversation first to confirm if it is due to their operatation",
             "properties": {},
             "click": "Edit"
         }
