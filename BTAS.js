@@ -14,8 +14,8 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
 // @grant        GM_xmlhttpRequest
-// @connect      *
-// @run-at       start
+// @connect      raw.githubusercontent.com
+// @run-at       document-idle
 // ==/UserScript==
 
 var $ = window.jQuery;
