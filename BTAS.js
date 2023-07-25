@@ -15,6 +15,7 @@
 // @grant        GM_unregisterMenuCommand
 // @grant        GM_xmlhttpRequest
 // @connect      raw.githubusercontent.com
+// @connect      myqcloud.com
 // @run-at       document-idle
 // ==/UserScript==
 
@@ -209,7 +210,7 @@ function editNotify(ValueFromPage) {
     function fetchOrgNotifydict() {
         GM_xmlhttpRequest({
             method: 'GET',
-            url: 'https://raw.githubusercontent.com/Dyebasedink/BTAS/Dev/notify.json',
+            url: 'https://aspirepig-1251964320.cos.ap-shanghai.myqcloud.com/notify.json',
             onload: function (response) {
                 if (response.status === 200) {
                     const data = JSON.parse(response.responseText);
@@ -831,7 +832,8 @@ function WineventAlertHandler(rawLog) {
         const Labels = $('.labels-wrap .labels li a span').text();
         const LogSource = $('#customfield_10204-val').text().trim();
         const TicketAutoEscalate = $('#customfield_12202-val').text().trim();
-        const ValueFromPage = { LogSourceDomain, Labels, LogSource, TicketAutoEscalate };
+        const Status = $('#status-val > span').text().trim();
+        const ValueFromPage = { LogSourceDomain, Labels, LogSource, TicketAutoEscalate, Status };
         // If it pops up once, it will not be reminded again
         if ($('#issue-content').length && !$('#generateEditnotify').length) {
             console.log('#### Code Issue page: Edit Notify ####');
