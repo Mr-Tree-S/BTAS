@@ -267,6 +267,7 @@ function editNotify(ValueFromPage) {
         processSection('LogSourceDomain');
         processSection('LogSource');
         processSection('TicketAutoEscalate');
+        processSection('AlertTitle');
     }
 
     // add a element into toolbar
@@ -833,7 +834,9 @@ function WineventAlertHandler(rawLog) {
         const LogSource = $('#customfield_10204-val').text().trim();
         const TicketAutoEscalate = $('#customfield_12202-val').text().trim();
         const Status = $('#status-val > span').text().trim();
-        const ValueFromPage = { LogSourceDomain, Labels, LogSource, TicketAutoEscalate, Status };
+        const RawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
+        const AlertTitle = $('#summary-val').text().trim();
+        const ValueFromPage = { LogSourceDomain, Labels, LogSource, TicketAutoEscalate, Status, RawLog, AlertTitle };
         // If it pops up once, it will not be reminded again
         if ($('#issue-content').length && !$('#generateEditnotify').length) {
             console.log('#### Code Issue page: Edit Notify ####');
