@@ -2,7 +2,7 @@
 // @name         BTAS
 // @namespace    https://github.com/Ripper-S/BTAS
 // @homepageURL  https://github.com/Ripper-S/BTAS
-// @version      1.5.2
+// @version      1.5.3
 // @description  Blue Team Assistance Script
 // @author       Barry Y Yang; Jack SA Chen; Xingyu X Zhou
 // @license      Apache-2.0
@@ -267,7 +267,7 @@ function editNotify(ValueFromPage) {
         processSection('LogSourceDomain');
         processSection('LogSource');
         processSection('TicketAutoEscalate');
-        processSection('AlertTitle');
+        processSection('Summary');
     }
 
     // add a element into toolbar
@@ -605,7 +605,7 @@ function CBAlertHandler(rawLog, LogSourceDomain) {
                 });
                 if (log.trim() !== '') {
                     acc.push({
-                        AlertTitle: cb_log.watchlist_name,
+                        Summary: cb_log.watchlist_name,
                         HostName: cb_log.computer_name,
                         HostIp: cb_log.interface_ip,
                         UserName: cb_log.username,
@@ -662,7 +662,7 @@ function CBAlertHandler(rawLog, LogSourceDomain) {
                     const cef_log_extends = cefToJson(cef_log[7]);
 
                     acc.push({
-                        AlertTitle: cef_log_header[4],
+                        Summary: cef_log_header[4],
                         // for some like "server error" tickets
                         HostName: cef_log_extends.dhost ? cef_log_extends.dhost : cef_log_extends.dvchost,
                         HostIp: cef_log_extends.dst,
@@ -693,10 +693,10 @@ function CBAlertHandler(rawLog, LogSourceDomain) {
     function generateDescription() {
         const alertDescriptions = [];
         for (const info of alertInfo) {
-            const { AlertTitle } = info;
-            let desc = `Observed ${AlertTitle}\n`;
+            const { Summary } = info;
+            let desc = `Observed ${Summary}\n`;
             Object.entries(info).forEach(([index, value]) => {
-                if (value !== undefined && index != 'AlertTitle' && index != 'CBlink') {
+                if (value !== undefined && index != 'Summary' && index != 'CBlink') {
                     desc += `${index}: ${value}\n`;
                 }
             });
@@ -835,8 +835,8 @@ function WineventAlertHandler(rawLog) {
         const TicketAutoEscalate = $('#customfield_12202-val').text().trim();
         const Status = $('#status-val > span').text().trim();
         const RawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
-        const AlertTitle = $('#summary-val').text().trim();
-        const ValueFromPage = { LogSourceDomain, Labels, LogSource, TicketAutoEscalate, Status, RawLog, AlertTitle };
+        const Summary = $('#summary-val').text().trim();
+        const ValueFromPage = { LogSourceDomain, Labels, LogSource, TicketAutoEscalate, Status, RawLog, Summary };
         // If it pops up once, it will not be reminded again
         if ($('#issue-content').length && !$('#generateEditnotify').length) {
             console.log('#### Code Issue page: Edit Notify ####');
