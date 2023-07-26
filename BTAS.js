@@ -723,16 +723,13 @@ function CBAlertHandler(...kwargs) {
 
 function WineventAlertHandler(...kwargs) {
     console.log('#### Code WineventAlertHandler run ####');
-    const { rawLog } = kwargs[0];
+    let { rawLog, summary } = kwargs[0];
+    summary = summary.replace(/[\[(].*?[\])]/g, '');
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
                 const { win } = JSON.parse(log);
                 const { eventdata, system } = win;
-                const alertTitle = $('#summary-val')
-                    .text()
-                    .trim()
-                    .replace(/[\[(].*?[\])]/g, '');
                 const alertHost = system.computer;
                 const alertExtraInfo = {
                     UserName: eventdata.subjectUserName,
@@ -745,7 +742,7 @@ function WineventAlertHandler(...kwargs) {
                     ObjectDN: eventdata.objectDN,
                     ObjectGUID: eventdata.objectGUID
                 };
-                acc.push({ alertTitle, alertHost, alertExtraInfo });
+                acc.push({ summary, alertHost, alertExtraInfo });
             } catch (error) {
                 console.error(`Error: ${error.message}`);
             }
@@ -758,7 +755,7 @@ function WineventAlertHandler(...kwargs) {
     function generateDescription() {
         const alertDescriptions = [];
         for (const info of alertInfo) {
-            let desc = `Observed${info.alertTitle}\nHost: ${info.alertHost}\n`;
+            let desc = `Observed${info.summary}\nHost: ${info.alertHost}\n`;
             for (const key in info.alertExtraInfo) {
                 if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
                     const value = info.alertExtraInfo[key];
@@ -778,8 +775,8 @@ function WineventAlertHandler(...kwargs) {
 }
 
 function FortigateAlertHandler(...kwargs) {
-    let { rawLog, alertTitle } = kwargs[0];
-    alertTitle = alertTitle.split(']')[1].trim();
+    let { rawLog, summary } = kwargs[0];
+    summary = summary.split(']')[1].trim();
     function ParseFortigateLog(rawLog) {
         const alertInfos = rawLog.reduce((acc, log) => {
             if (log == '') {
@@ -844,7 +841,7 @@ function FortigateAlertHandler(...kwargs) {
     function generateDescription() {
         const alertDescriptions = [];
         for (const info of extract_alert_infos) {
-            let desc = `Observed ${alertTitle}\n`;
+            let desc = `Observed ${summary}\n`;
             Object.entries(info).forEach(([index, value]) => {
                 if (value !== undefined) {
                     desc += `${index}: ${value}\n`;
@@ -885,7 +882,7 @@ function FortigateAlertHandler(...kwargs) {
     setInterval(() => {
         const LogSourceDomain = $('#customfield_10223-val').text().trim();
         const rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
-        const alertTitle = $('#summary-val').text().trim();
+        const summary = $('#summary-val').text().trim();
         if ($('#issue-content').length && !$('#generateDescription').length) {
             console.log('#### Code Issue page: Alert Handler ####');
             const handlers = {
@@ -900,7 +897,7 @@ function FortigateAlertHandler(...kwargs) {
             const DecoderName = $('#customfield_10807-val').text().trim();
             const handler = handlers[DecoderName];
             if (handler) {
-                handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, alertTitle: alertTitle });
+                handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, summary: summary });
             }
         }
     }, 3000);
