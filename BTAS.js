@@ -298,8 +298,9 @@ function addButton(id, text, onClick) {
  * Creates three buttons on a JIRA issue page to handle Cortex XDR alerts
  * The buttons allow users to generate a description of the alerts, open the alert card page and timeline page
  */
-function cortexAlertHandler(rawLog, LogSourceDomain) {
+function cortexAlertHandler(...kwargs) {
     console.log('#### Code cortexAlertHandler run ####');
+    const { rawLog, LogSourceDomain } = kwargs[0];
     /**
      * Extracts the log information and organization name from the current JIRA issue page
      * @param {Object} orgDict - A dictionary that maps organization name to navigator name
@@ -475,9 +476,9 @@ function cortexAlertHandler(rawLog, LogSourceDomain) {
     addButton('openTimeline', 'Timeline', openTimeline);
 }
 
-function MDEAlertHandler(rawLog) {
+function MDEAlertHandler(...kwargs) {
     console.log('#### Code MDEAlertHandler run ####');
-
+    const { rawLog } = kwargs[0];
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
@@ -537,9 +538,9 @@ function MDEAlertHandler(rawLog) {
     addButton('openMDE', 'MDE', openMDE);
 }
 
-function HTSCAlertHandler(rawLog) {
+function HTSCAlertHandler(...kwargs) {
     console.log('#### Code HTSCAlertHandler run ####');
-
+    const { rawLog } = kwargs;
     function decodeHtml(encodedString) {
         const tmpElement = document.createElement('span');
         tmpElement.innerHTML = encodedString;
@@ -585,9 +586,9 @@ function HTSCAlertHandler(rawLog) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
-function CBAlertHandler(rawLog, LogSourceDomain) {
+function CBAlertHandler(...kwargs) {
     console.log('#### Code CBAlertHandler run ####');
-
+    const { rawLog, LogSourceDomain } = kwargs[0];
     // For Swire
     function parseLeefLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
@@ -719,9 +720,9 @@ function CBAlertHandler(rawLog, LogSourceDomain) {
     addButton('openCB', 'CB', openCB);
 }
 
-function WineventAlertHandler(rawLog) {
+function WineventAlertHandler(...kwargs) {
     console.log('#### Code WineventAlertHandler run ####');
-
+    const { rawLog } = kwargs[0];
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
@@ -775,6 +776,89 @@ function WineventAlertHandler(rawLog) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function FortigateAlertHandler(...kwargs) {
+    let { rawLog, alertTitle } = kwargs[0];
+    alertTitle = alertTitle.split(']')[1].trim();
+    function ParseFortigateLog(rawLog) {
+        const alertInfos = rawLog.reduce((acc, log) => {
+            if (log == '') {
+                return acc;
+            }
+            let jsonData = {};
+            const regex = /(\w+)=(["'].*?["']|\S+)/g;
+            let matchresult;
+            while ((matchresult = regex.exec(log)) !== null) {
+                let key = matchresult[1];
+                let value = matchresult[2];
+                if (value.startsWith('"') && value.endsWith('"')) {
+                    value = value.slice(1, -1);
+                } else if (value.startsWith("'") && value.endsWith("'")) {
+                    value = value.slice(1, -1);
+                }
+                jsonData[key] = value;
+            }
+            acc.push(jsonData);
+            return acc;
+        }, []);
+        return [...new Set(alertInfos)];
+    }
+
+    const alertInfos = ParseFortigateLog(rawLog);
+
+    function ExtractAlertInfo(alertInfos) {
+        const extract_alert_infos = alertInfos.reduce((acc, alertInfo) => {
+            const {
+                srcip,
+                srcport,
+                srccountry,
+                dstip,
+                dstport,
+                dstcountry,
+                hostname,
+                url,
+                action,
+                devname,
+                user,
+                cfgattr,
+                msg
+            } = alertInfo;
+            const extract_alert_info = {
+                srcip: srcip ? `${srcip}:${srcport}[${srccountry}]` : undefined,
+                dstip: dstip ? `${dstip}:${dstport}[${dstcountry}]` : undefined,
+                hostname: hostname,
+                devname: devname,
+                user: user,
+                url: url,
+                action: action,
+                cfgattr: cfgattr,
+                msg: msg
+            };
+            acc.push(extract_alert_info);
+            return acc;
+        }, []);
+        return extract_alert_infos;
+    }
+    const extract_alert_infos = ExtractAlertInfo(alertInfos);
+
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of extract_alert_infos) {
+            let desc = `Observed ${alertTitle}\n`;
+            Object.entries(info).forEach(([index, value]) => {
+                if (value !== undefined) {
+                    desc += `${index}: ${value}\n`;
+                }
+            });
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        alert(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -800,6 +884,7 @@ function WineventAlertHandler(rawLog) {
     setInterval(() => {
         const LogSourceDomain = $('#customfield_10223-val').text().trim();
         const rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
+        const alertTitle = $('#summary-val').text().trim();
         if ($('#issue-content').length && !$('#generateDescription').length) {
             console.log('#### Code Issue page: Alert Handler ####');
             const handlers = {
@@ -808,12 +893,13 @@ function WineventAlertHandler(rawLog) {
                 'sangfor-ccom-json': HTSCAlertHandler,
                 'CarbonBlack': CBAlertHandler,
                 'carbonblack_cef': CBAlertHandler,
-                'windows_eventchannel': WineventAlertHandler
+                'windows_eventchannel': WineventAlertHandler,
+                'fortigate-firewall-v5': FortigateAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim();
             const handler = handlers[DecoderName];
             if (handler) {
-                handler(rawLog, LogSourceDomain);
+                handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, alertTitle: alertTitle });
             }
         }
     }, 3000);
