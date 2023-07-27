@@ -204,7 +204,7 @@ function checkKeywords() {
  * It adds click event listeners to the "Edit" button based on certain conditions,
  * and generates a specific HTML element for the edit notification.
  */
-function editNotify(ValueFromPage) {
+function editNotify(pageData) {
     console.log('#### Code editNotify run ####');
 
     function fetchOrgNotifydict() {
@@ -239,26 +239,43 @@ function editNotify(ValueFromPage) {
         }
 
         // check all the condition
-        function checkProperties(properties) {
-            return (
-                Object.keys(properties).length === 0 ||
-                Object.entries(properties).every(([property, value]) => {
-                    return Object.keys(ValueFromPage).includes(property) && value == ValueFromPage[property];
-                })
-            );
+        function checkProperties(properties, valueFromPage) {
+            // Iterate through all key-value pairs of the properties object
+            for (const [property, value] of Object.entries(properties)) {
+                // Converts the value of the valueFromPage property to an array
+                const propertyValue = Array.isArray(valueFromPage[property])
+                    ? valueFromPage[property]
+                    : [valueFromPage[property]];
+                // Check whether the value of the property is contained in the properties object
+                if (!propertyValue.some((item) => item.includes(value))) {
+                    return false;
+                }
+            }
+            // Returns true if all properties match
+            return true;
         }
 
-        function processSection(sectionKey) {
-            const sectionData = orgNotifydict[sectionKey];
-            const valueFromPage = ValueFromPage[sectionKey];
-            for (const key in sectionData) {
-                if (valueFromPage.includes(key)) {
-                    const { ticketname, message, properties, click } = sectionData[key];
-                    const button = clickButton(click);
-                    if (checkProperties(properties)) {
-                        $(button).on('click', () => {
-                            showFlag('warning', `${ticketname} ticket`, `${message}`, 'manual');
-                        });
+        function processSection(keyFromPage) {
+            // Gets data for a specific section of a configuration file
+            const sectionConfig = orgNotifydict[keyFromPage];
+            // Gets the value of a specific field extracted from web page
+            const valueFromPage = pageData[keyFromPage];
+            // Convert to Array List to handle mutil values from page
+            const valueArray = Array.isArray(valueFromPage) ? valueFromPage : [valueFromPage];
+
+            for (const value of valueArray) {
+                // convert to Array List to handle mutil values from JSON
+                const alerts = Array.isArray(sectionConfig[value]) ? sectionConfig[value] : [sectionConfig[value]];
+                if (alerts[0] !== undefined) {
+                    for (const alert of alerts) {
+                        const { ticketname, message, properties, click } = alert;
+                        const button = clickButton(click);
+
+                        if (checkProperties(properties, pageData)) {
+                            $(button).on('click', () => {
+                                showFlag('warning', `${ticketname} ticket`, `${message}`, 'manual');
+                            });
+                        }
                     }
                 }
             }
@@ -919,11 +936,11 @@ function FortigateAlertHandler(...kwargs) {
         const Status = $('#status-val > span').text().trim();
         const RawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
         const Summary = $('#summary-val').text().trim();
-        const ValueFromPage = { LogSourceDomain, Labels, LogSource, TicketAutoEscalate, Status, RawLog, Summary };
+        const pageData = { LogSourceDomain, Labels, LogSource, TicketAutoEscalate, Status, RawLog, Summary };
         // If it pops up once, it will not be reminded again
         if ($('#issue-content').length && !$('#generateEditnotify').length) {
             console.log('#### Code Issue page: Edit Notify ####');
-            editNotify(ValueFromPage);
+            editNotify(pageData);
         }
     }, 3000);
 })();
