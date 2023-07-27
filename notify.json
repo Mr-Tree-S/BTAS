@@ -24,12 +24,20 @@
             "properties": {},
             "click": "Edit"
         },
-        "kerrypropshk": {
-            "ticketname": "kerrypropshk",
-            "message": "Please note that if the host starts with cn/sz/bj/sh, Do NOT escalate it on Jira.<br>Instead, share the issue key and MDE link with Desen and Barry.<br>Then, choose 'Won't Do as the Resolution and Resolve this issue.<br>In the Comments, mention that the host belongs to PRC and has been handed over to the SH team for handling.",
-            "properties": { "Labels": "UnassignedGroup" },
-            "click": "Edit"
-        }
+        "kerrypropshk": [
+            {
+                "ticketname": "kerrypropshk",
+                "message": "Please note that if the host starts with cn/sz/bj/sh, Do NOT escalate it on Jira.<br>Instead, share the issue key and MDE link with Desen and Barry.<br>Then, choose 'Won't Do as the Resolution and Resolve this issue.<br>In the Comments, mention that the host belongs to PRC and has been handed over to the SH team for handling.",
+                "properties": { "Labels": "UnassignedGroup" },
+                "click": "Edit"
+            },
+            {
+                "ticketname": "kerrypropshk",
+                "message": "Please Do Not escalated to the customer if host is in the range of TSTACW301-TSTACW323 and TSTACN002 because these devices are no long belongs to KPL",
+                "properties": { "RawLog": "TSTAC" },
+                "click": "Edit"
+            }
+        ]
     },
     "LogSource": {
         ".int.darklab.hk": {
@@ -59,14 +67,14 @@
             "click": "Resolve"
         }
     },
-    "AlertTitle":{
-        "Report":{
+    "Summary": {
+        "Report": {
             "ticketname": "Report Type",
             "message": "All Report Type ticket should be closed as Informational",
             "properties": { "RawLog": "" },
             "click": "Resolve"
         },
-        "CVE":{
+        "CVE": {
             "ticketname": "Report Type",
             "message": "All Report Type ticket should be closed as Informational",
             "properties": { "RawLog": "" },
