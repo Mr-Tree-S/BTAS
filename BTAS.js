@@ -17,6 +17,7 @@
 // @connect      raw.githubusercontent.com
 // @connect      myqcloud.com
 // @run-at       document-idle
+// @grant        GM_addStyle
 // ==/UserScript==
 
 var $ = window.jQuery;
@@ -170,16 +171,22 @@ function checkupdate(NotifyControls) {
         const currentTime = new Date();
         const diffMs = currentTime - datetime;
         const diffMinutes = Math.floor(diffMs / 60000);
-        if (diffMinutes > 30) {
+        if (diffMinutes > 30 && diffMinutes < 120) {
             overdueTickets += `${issuekey}, `;
         }
     });
     if (overdueTickets && promptCheckbox.find('input').prop('checked')) {
+        GM_addStyle(`
+        .aui-banner.aui-banner-warning {
+            background-color: #ffff80 !important;
+            color: black !important;
+        }
+    `);
         AJS.banner({
-            body: `ticket: <strong>${overdueTickets}</strong><br>30 minutes have passed since the customer responded, please handle it as soon as possible`
+            body: `ticket: <strong>${overdueTickets}</strong><br>30 minutes have passed since the ticket's status changed, please handle it as soon as possible`,
+            type: 'warning'
         });
     }
-    // console.info(`#### checkupdate_end: ${notifyKey} ####`);
 }
 
 /**
