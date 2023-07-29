@@ -565,7 +565,7 @@ function MDEAlertHandler(...kwargs) {
 
 function HTSCAlertHandler(...kwargs) {
     console.log('#### Code HTSCAlertHandler run ####');
-    const { rawLog } = kwargs;
+    const { rawLog } = kwargs[0];
     function decodeHtml(encodedString) {
         const tmpElement = document.createElement('span');
         tmpElement.innerHTML = encodedString;
