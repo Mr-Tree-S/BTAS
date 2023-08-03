@@ -374,26 +374,92 @@ function cortexAlertHandler(...kwargs) {
                         action_file_name,
                         action_file_path,
                         action_file_sha256,
+                        action_process_image_name,
+                        action_process_image_sha256,
+                        action_process_image_command_line,
                         actor_process_image_name,
                         actor_process_image_path,
                         actor_process_image_sha256,
+                        actor_process_command_line,
+                        causality_actor_process_image_name,
+                        causality_actor_process_command_line,
+                        causality_actor_process_image_path,
+                        causality_actor_process_image_sha256,
+                        os_actor_process_image_name,
+                        os_actor_process_image_path,
+                        os_actor_process_command_line,
+                        os_actor_process_image_sha256,
+                        action_pretty,
                         host_name,
                         host_ip,
-                        user_name,
-                        actor_process_command_line
+                        user_name
                     } = cortex_xdr;
-                    const filename = action_file_name || actor_process_image_name;
-                    const filepath = action_file_path || actor_process_image_path;
-                    const sha256 = action_file_sha256 || actor_process_image_sha256;
+                    const action_length = action_process_image_command_line
+                        ? action_process_image_command_line.length
+                        : 0;
+                    const actor_length = actor_process_command_line ? actor_process_command_line.length : 0;
+                    const causality_length = causality_actor_process_command_line
+                        ? causality_actor_process_command_line.length
+                        : 0;
+                    const os_length = os_actor_process_command_line ? os_actor_process_command_line.length : 0;
+                    const lengths = [action_length, actor_length, causality_length, os_length];
+                    const maxLength = Math.max(...lengths);
+                    let filename;
+                    let filepath;
+                    let sha256;
+                    let cmd;
+                    if (
+                        action_length === maxLength &&
+                        (action_file_name || action_process_image_name) &&
+                        (action_file_path || true) &&
+                        (action_file_sha256 || action_process_image_sha256)
+                    ) {
+                        filename = action_file_name || action_process_image_name;
+                        filepath = action_file_path;
+                        cmd = action_process_image_command_line;
+                        sha256 = action_file_sha256 || action_process_image_sha256;
+                    } else if (
+                        actor_length === maxLength &&
+                        actor_process_image_name &&
+                        actor_process_image_path &&
+                        actor_process_image_sha256
+                    ) {
+                        filename = actor_process_image_name;
+                        filepath = actor_process_image_path;
+                        cmd = actor_process_command_line;
+                        sha256 = actor_process_image_sha256;
+                    } else if (
+                        causality_length === maxLength &&
+                        causality_actor_process_image_name &&
+                        causality_actor_process_image_path &&
+                        causality_actor_process_image_sha256
+                    ) {
+                        filename = causality_actor_process_image_name;
+                        filepath = causality_actor_process_image_path;
+                        cmd = causality_actor_process_command_line;
+                        sha256 = causality_actor_process_image_sha256;
+                    } else if (
+                        os_actor_process_image_name &&
+                        os_actor_process_image_path &&
+                        os_actor_process_command_line &&
+                        os_actor_process_image_sha256
+                    ) {
+                        filename = os_actor_process_image_name;
+                        filepath = os_actor_process_image_path;
+                        cmd = os_actor_process_command_line;
+                        sha256 = os_actor_process_image_sha256;
+                    }
+
                     acc.push({
                         ...alert,
                         host_name,
                         host_ip,
                         user_name,
-                        actor_process_command_line,
                         filename,
                         filepath,
-                        sha256
+                        cmd,
+                        sha256,
+                        action_pretty
                     });
                 }
             } catch (error) {
@@ -425,11 +491,12 @@ function cortexAlertHandler(...kwargs) {
                 host_name,
                 host_ip,
                 user_name,
-                actor_process_command_line,
                 filename,
                 filepath,
+                cmd,
                 sha256,
-                description
+                description,
+                action
             } = info;
             if (source === 'PAN NGFW') {
                 const desc = `Observed ${name}\nSrcip: ${action_local_ip}   Srcport: ${action_local_port}\nDstip: ${action_remote_ip}   Dstport: ${action_remote_port}\nAction: ${action_pretty}\n\nPlease help to verify if this activity is legitimate.\n`;
@@ -437,12 +504,10 @@ function cortexAlertHandler(...kwargs) {
             } else {
                 const desc = `Observed ${
                     description || name
-                }\nHost: ${host_name}   IP: ${host_ip}\nusername: ${user_name}\ncmd: ${actor_process_command_line}\nfilename: ${filename}\nfilepath:\n${filepath}\nhttps://www.virustotal.com/gui/file/${sha256}\n\nPlease help to verify if it is legitimate, if not please remove it and perform a full scan.\n`;
+                }\nHost: ${host_name}   IP: ${host_ip}\nusername: ${user_name}\ncmd: ${cmd}\nfilename: ${filename}\nfilepath: ${filepath}\naction: ${action_pretty}\nhttps://www.virustotal.com/gui/file/${sha256}\n\nPlease help to verify if this activity is legitimate.\n`;
                 alertDescriptions.push(desc);
             }
             const toolbarSha256 = $('.aui-toolbar2-inner');
-            // console.info(`toolbar_sha256: ${toolbarSha256.clone().children().remove().end().text().trim()}`);
-            // console.info(`sha256: ${sha256}`);
             if (sha256 && !toolbarSha256.clone().children().remove().end().text().trim().includes(sha256)) {
                 toolbarSha256.append(`${sha256} `);
             }
@@ -450,6 +515,7 @@ function cortexAlertHandler(...kwargs) {
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
         alert(alertMsg);
     }
+
     function openCard() {
         for (const info of alertInfo) {
             const { source, alert_id } = info;
