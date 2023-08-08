@@ -38,6 +38,69 @@ function showFlag(type, title, body, close) {
     });
 }
 
+function showDialog(body) {
+    // Create custom dialog style
+    const customDialogContent = AJS.$(`<section
+            id="custom-dialog"
+            class="aui-dialog2 aui-dialog2-small aui-layer"
+            role="dialog"
+            tabindex="-1"
+            data-aui-modal="true"
+            data-aui-remove-on-hide="true"
+            aria-labelledby="dialog-show-button--heading"
+            aria-describedby="dialog-show-button--description"
+            hidden
+        >
+            <header class="aui-dialog2-header">
+                <h2 class="aui-dialog2-header-main" id="dialog-show-button--heading">Description</h2>
+            </header>
+            <div class="aui-dialog2-content" id="dialog-show-button--description">
+                <p style="word-wrap: break-word; white-space: pre-line">${body}</p>
+            </div>
+            <footer class="aui-dialog2-footer">
+                <div class="aui-dialog2-footer-actions">
+                    <button id="dialog-copy-button" class="aui-button aui-button-primary">Copy</button>
+                    <button id="dialog-close-button" class="aui-button aui-button-link">Close</button>
+                </div>
+            </footer>
+        </section>`);
+
+    // Show the dialog
+    AJS.dialog2(customDialogContent).show();
+
+    // Close the dialog
+    AJS.$('#dialog-close-button').on('click', function (e) {
+        e.preventDefault();
+        AJS.dialog2(customDialogContent).hide();
+        tippy.destroy();
+    });
+
+    // Init tippy instance
+    tippy('#dialog-copy-button', {
+        content: 'Copy Success',
+        placement: 'bottom',
+        trigger: 'click'
+    });
+
+    // Copy description text
+    AJS.$('#dialog-copy-button').on('click', function () {
+        const textToCopy = customDialogContent.find('p').text().trim();
+
+        // Create Clipboard instance
+        const clipboard = new ClipboardJS('#dialog-copy-button', {
+            text: function () {
+                return textToCopy;
+            }
+        });
+
+        // Copy success
+        clipboard.on('success', function (e) {
+            clipboard.destroy();
+            e.clearSelection();
+        });
+    });
+}
+
 /**
  * This function registers a Tampermonkey search menu command
  * @param {Array} searchEngines - Search engines array containing the Jira, VT, AbuseIPDB
