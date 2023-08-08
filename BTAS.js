@@ -11,6 +11,9 @@
 // @match        https://caas.pwchk.com/*
 // @icon         https://www.google.com/s2/favicons?domain=pwchk.com
 // @require      https://code.jquery.com/jquery-3.6.4.min.js
+// @require      https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js
+// @require      https://unpkg.com/@popperjs/core@2/dist/umd/popper.min.js
+// @require      https://unpkg.com/tippy.js@6/dist/tippy-bundle.umd.js
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
 // @grant        GM_xmlhttpRequest
@@ -35,6 +38,69 @@ function showFlag(type, title, body, close) {
         title: title,
         body: body,
         close: close
+    });
+}
+
+function showDialog(body) {
+    // Create custom dialog style
+    const customDialogContent = AJS.$(`<section
+            id="custom-dialog"
+            class="aui-dialog2 aui-dialog2-small aui-layer"
+            role="dialog"
+            tabindex="-1"
+            data-aui-modal="true"
+            data-aui-remove-on-hide="true"
+            aria-labelledby="dialog-show-button--heading"
+            aria-describedby="dialog-show-button--description"
+            hidden
+        >
+            <header class="aui-dialog2-header">
+                <h2 class="aui-dialog2-header-main" id="dialog-show-button--heading">Description</h2>
+            </header>
+            <div class="aui-dialog2-content" id="dialog-show-button--description">
+                <p style="word-wrap: break-word; white-space: pre-line">${body}</p>
+            </div>
+            <footer class="aui-dialog2-footer">
+                <div class="aui-dialog2-footer-actions">
+                    <button id="dialog-copy-button" class="aui-button aui-button-primary">Copy</button>
+                    <button id="dialog-close-button" class="aui-button aui-button-link">Close</button>
+                </div>
+            </footer>
+        </section>`);
+
+    // Show the dialog
+    AJS.dialog2(customDialogContent).show();
+
+    // Close the dialog
+    AJS.$('#dialog-close-button').on('click', function (e) {
+        e.preventDefault();
+        AJS.dialog2(customDialogContent).hide();
+        tippy.destroy();
+    });
+
+    // Init tippy instance
+    tippy('#dialog-copy-button', {
+        content: 'Copy Success',
+        placement: 'bottom',
+        trigger: 'click'
+    });
+
+    // Copy description text
+    AJS.$('#dialog-copy-button').on('click', function () {
+        const textToCopy = customDialogContent.find('p').text().trim();
+
+        // Create Clipboard instance
+        const clipboard = new ClipboardJS('#dialog-copy-button', {
+            text: function () {
+                return textToCopy;
+            }
+        });
+
+        // Copy success
+        clipboard.on('success', function (e) {
+            clipboard.destroy();
+            e.clearSelection();
+        });
     });
 }
 
@@ -513,7 +579,7 @@ function cortexAlertHandler(...kwargs) {
             }
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
-        alert(alertMsg);
+        showDialog(alertMsg);
     }
 
     function openCard() {
@@ -613,7 +679,7 @@ function MDEAlertHandler(...kwargs) {
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
-        alert(alertMsg);
+        showDialog(alertMsg);
     }
     function openMDE() {
         let MDEURL = '';
@@ -672,7 +738,7 @@ function HTSCAlertHandler(...kwargs) {
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
-        alert(alertMsg);
+        showDialog(alertMsg);
     }
     addButton('generateDescription', 'Description', generateDescription);
 }
@@ -795,7 +861,7 @@ function CBAlertHandler(...kwargs) {
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
-        alert(alertMsg);
+        showDialog(alertMsg);
     }
     function openCB() {
         let CBURL = '';
@@ -858,7 +924,7 @@ function WineventAlertHandler(...kwargs) {
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
-        alert(alertMsg);
+        showDialog(alertMsg);
     }
 
     addButton('generateDescription', 'Description', generateDescription);
@@ -941,7 +1007,7 @@ function FortigateAlertHandler(...kwargs) {
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
-        alert(alertMsg);
+        showDialog(alertMsg);
     }
 
     addButton('generateDescription', 'Description', generateDescription);
