@@ -1013,6 +1013,99 @@ function FortigateAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function CSAlertHandler(...kwargs) {
+    let { rawLog } = kwargs[0];
+    function parseCefLog(rawLog) {
+        function cefToJson(cefLog) {
+            let json = {};
+            let fields = cefLog.split(' ');
+
+            for (let i = 0; i < fields.length; i++) {
+                let field = fields[i].split('=');
+                let key = field[0];
+                let value = field.slice(1).join('=');
+
+                if (value) {
+                    value = value.replace(/\\\\=/g, '=').replace(/\\\\s/g, ' ');
+
+                    if (key === 'filePath' || key === 'msg' || key === 'cs5' || key === 'start' || key === 'rt') {
+                        let nextFieldIndex = i + 1;
+                        while (nextFieldIndex < fields.length && !fields[nextFieldIndex].includes('=')) {
+                            value += ' ' + fields[nextFieldIndex];
+                            nextFieldIndex++;
+                        }
+                    }
+                    json[key] = value;
+                }
+            }
+            return json;
+        }
+
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                // Determine whether the log is empty
+                if (Object.keys(log).length !== 0) {
+                    // Split CEF log
+                    let cef_log = log.split('|');
+                    // Parsing CEF Header
+                    const cef_log_header = cef_log.slice(1, 7);
+                    // Parsing CEF Extends
+                    const cef_log_extends = cefToJson(cef_log[7]);
+
+                    acc.push({
+                        Summary: cef_log_header[4],
+                        // for some like "server error" tickets
+                        HostName: cef_log_extends.dhost ? cef_log_extends.dhost : cef_log_extends.dvchost,
+                        HostIp: cef_log_extends.dst,
+                        UserName: cef_log_extends.duser,
+                        FileName: cef_log_extends.fname,
+                        FilePath: cef_log_extends.filePath,
+                        Command: cef_log_extends.cs5,
+                        Sha256: cef_log_extends.fileHash,
+                        Msg: cef_log_extends.msg,
+                        CSLink: cef_log_extends.cs6
+                    });
+                }
+                return acc;
+            } catch (error) {
+                console.error(`Error: ${error.message}`);
+            }
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseCefLog(rawLog);
+
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            const { Summary } = info;
+            let desc = `Observed ${Summary}\n`;
+            Object.entries(info).forEach(([index, value]) => {
+                if (value !== undefined && index != 'Summary' && index != 'CSLink') {
+                    desc += `${index}: ${value}\n`;
+                }
+            });
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+    function openCS() {
+        let CSURL = '';
+        for (const info of alertInfo) {
+            const { CSLink } = info;
+            if (CSLink) {
+                CSURL += `${CSLink.replace('hXXps', 'https').replace(/[\[\]]/g, '')}<br><br>`;
+            }
+        }
+        showFlag('info', 'CS URL:', `${CSURL}`, 'manual');
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+    addButton('openCS', 'CS', openCS);
+}
+
 (function () {
     'use strict';
 
@@ -1045,12 +1138,13 @@ function FortigateAlertHandler(...kwargs) {
                 'cortex-xdr-json': cortexAlertHandler,
                 'mde-api-json': MDEAlertHandler,
                 'sangfor-ccom-json': HTSCAlertHandler,
-                'CarbonBlack': CBAlertHandler,
+                'carbonblack': CBAlertHandler,
                 'carbonblack_cef': CBAlertHandler,
                 'windows_eventchannel': WineventAlertHandler,
-                'fortigate-firewall-v5': FortigateAlertHandler
+                'fortigate-firewall-v5': FortigateAlertHandler,
+                'crowdstrike_cef': CSAlertHandler
             };
-            const DecoderName = $('#customfield_10807-val').text().trim();
+            const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
             if (handler) {
                 handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, summary: summary });
