@@ -437,6 +437,8 @@ function cortexAlertHandler(...kwargs) {
                     });
                 } else {
                     const {
+                        action_local_ip,
+                        action_file_macro_sha256,
                         action_file_name,
                         action_file_path,
                         action_file_sha256,
@@ -460,56 +462,83 @@ function cortexAlertHandler(...kwargs) {
                         host_ip,
                         user_name
                     } = cortex_xdr;
-                    const action_length = action_process_image_command_line
+                    const action_list = {
+                        action_file_name,
+                        action_file_path,
+                        action_file_sha256,
+                        action_process_image_name,
+                        action_process_image_sha256,
+                        action_process_image_command_line
+                    };
+                    const actor_list = {
+                        actor_process_image_name,
+                        actor_process_image_path,
+                        actor_process_image_sha256,
+                        actor_process_command_line
+                    };
+                    const causality_actor_list = {
+                        causality_actor_process_image_name,
+                        causality_actor_process_command_line,
+                        causality_actor_process_image_path,
+                        causality_actor_process_image_sha256
+                    };
+                    const os_actor_list = {
+                        os_actor_process_image_name,
+                        os_actor_process_image_path,
+                        os_actor_process_command_line,
+                        os_actor_process_image_sha256
+                    };
+
+                    function countValidProperties(obj) {
+                        const validPropsCount = Object.keys(obj).reduce((count, key) => {
+                            if (obj[key] !== undefined) {
+                                count++;
+                            }
+                            return count;
+                        }, 0);
+                        return validPropsCount;
+                    }
+
+                    const actionPropsCount = countValidProperties(action_list)
+                        ? countValidProperties(action_list) + 1
+                        : 0;
+                    const actorPropsCount = countValidProperties(actor_list);
+                    const causalityPropsCount = countValidProperties(causality_actor_list);
+                    const osPropsCount = countValidProperties(os_actor_list);
+                    const maxCount = Math.max(actionPropsCount, actorPropsCount, causalityPropsCount, osPropsCount);
+
+                    const action_cmd_length = action_process_image_command_line
                         ? action_process_image_command_line.length
                         : 0;
-                    const actor_length = actor_process_command_line ? actor_process_command_line.length : 0;
-                    const causality_length = causality_actor_process_command_line
+                    const actor_cmd_length = actor_process_command_line ? actor_process_command_line.length : 0;
+                    const causality_cmd_length = causality_actor_process_command_line
                         ? causality_actor_process_command_line.length
                         : 0;
-                    const os_length = os_actor_process_command_line ? os_actor_process_command_line.length : 0;
-                    const lengths = [action_length, actor_length, causality_length, os_length];
+                    const os_cmd_length = os_actor_process_command_line ? os_actor_process_command_line.length : 0;
+                    const lengths = [action_cmd_length, actor_cmd_length, causality_cmd_length, os_cmd_length];
                     const maxLength = Math.max(...lengths);
+
                     let filename;
                     let filepath;
                     let sha256;
                     let cmd;
-                    if (
-                        action_length === maxLength &&
-                        (action_file_name || action_process_image_name) &&
-                        (action_file_path || true) &&
-                        (action_file_sha256 || action_process_image_sha256)
-                    ) {
+
+                    if (action_cmd_length === maxLength && actionPropsCount === maxCount) {
                         filename = action_file_name || action_process_image_name;
                         filepath = action_file_path;
                         cmd = action_process_image_command_line;
                         sha256 = action_file_sha256 || action_process_image_sha256;
-                    } else if (
-                        actor_length === maxLength &&
-                        actor_process_image_name &&
-                        actor_process_image_path &&
-                        actor_process_image_sha256
-                    ) {
+                    } else if (actor_cmd_length === maxLength && actorPropsCount === maxCount) {
                         filename = actor_process_image_name;
                         filepath = actor_process_image_path;
                         cmd = actor_process_command_line;
                         sha256 = actor_process_image_sha256;
-                    } else if (
-                        causality_length === maxLength &&
-                        causality_actor_process_image_name &&
-                        causality_actor_process_image_path &&
-                        causality_actor_process_image_sha256
-                    ) {
+                    } else if (causality_cmd_length === maxLength && causalityPropsCount === maxCount) {
                         filename = causality_actor_process_image_name;
                         filepath = causality_actor_process_image_path;
                         cmd = causality_actor_process_command_line;
                         sha256 = causality_actor_process_image_sha256;
-                    } else if (
-                        os_actor_process_image_name &&
-                        os_actor_process_image_path &&
-                        os_actor_process_command_line &&
-                        os_actor_process_image_sha256
-                    ) {
+                    } else if (os_actor_process_image_name && osPropsCount === maxCount) {
                         filename = os_actor_process_image_name;
                         filepath = os_actor_process_image_path;
                         cmd = os_actor_process_command_line;
@@ -525,7 +554,9 @@ function cortexAlertHandler(...kwargs) {
                         filepath,
                         cmd,
                         sha256,
-                        action_pretty
+                        action_pretty,
+                        action_local_ip,
+                        action_file_macro_sha256
                     });
                 }
             } catch (error) {
@@ -562,15 +593,19 @@ function cortexAlertHandler(...kwargs) {
                 cmd,
                 sha256,
                 description,
-                action
+                action_file_macro_sha256
             } = info;
             if (source === 'PAN NGFW') {
                 const desc = `Observed ${name}\nSrcip: ${action_local_ip}   Srcport: ${action_local_port}\nDstip: ${action_remote_ip}   Dstport: ${action_remote_port}\nAction: ${action_pretty}\n\nPlease help to verify if this activity is legitimate.\n`;
                 alertDescriptions.push(desc);
             } else {
-                const desc = `Observed ${
-                    description || name
-                }\nHost: ${host_name}   IP: ${host_ip}\nusername: ${user_name}\ncmd: ${cmd}\nfilename: ${filename}\nfilepath: ${filepath}\naction: ${action_pretty}\nhttps://www.virustotal.com/gui/file/${sha256}\n\nPlease help to verify if this activity is legitimate.\n`;
+                const desc = `Observed ${description || name}\nHost: ${host_name}   IP: ${host_ip}\n${
+                    action_local_ip ? 'action_local_ip: ' + action_local_ip + '\n' : ''
+                }username: ${user_name}\ncmd: ${cmd}\nfilename: ${filename}\nfilepath: ${filepath}\naction: ${action_pretty}\n${
+                    action_file_macro_sha256 ? 'macro file hash: ' + action_file_macro_sha256 + '\n' : ''
+                }https://www.virustotal.com/gui/file/${
+                    action_file_macro_sha256 || sha256
+                }\n\nPlease help to verify if this activity is legitimate.\n`;
                 alertDescriptions.push(desc);
             }
             const toolbarSha256 = $('.aui-toolbar2-inner');
