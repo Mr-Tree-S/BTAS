@@ -272,6 +272,14 @@ function checkKeywords() {
     }
 }
 
+function checkATTCK() {
+    const status = $('#status-val > span').text().trim();
+    const attck = $('#rowForcustomfield_10220 > div > strong > label').text();
+    if (status == 'Waiting for customer' && attck == '') {
+        AJS.banner({ body: `The ATT&CK field is not filled in` });
+    }
+}
+
 /**
  * This function initializes the edit notification functionality.
  * It adds click event listeners to the "Edit" button based on certain conditions,
@@ -1187,11 +1195,12 @@ function CSAlertHandler(...kwargs) {
         }
     }, 3000);
 
-    // Issue page: check Keywords
+    // Issue page: check Keywords and ATT&CK
     setInterval(() => {
         if ($('#issue-content').length && !$('.aui-banner-error').length) {
             console.log('#### Code Issue page: check Keywords ####');
             checkKeywords();
+            checkATTCK();
         }
     }, 3000);
 
