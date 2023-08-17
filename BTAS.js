@@ -314,7 +314,8 @@ function editNotify(pageData) {
         function clickButton(click) {
             const buttonMap = {
                 Edit: '#edit-issue',
-                Resolve: '#action_id_761'
+                Resolve: '#action_id_761',
+                None: ''
             };
             return buttonMap[click] || '';
         }
@@ -353,9 +354,12 @@ function editNotify(pageData) {
                         const button = clickButton(click);
 
                         if (checkProperties(properties, pageData)) {
-                            $(button).on('click', () => {
+                            if (button == '') {
                                 showFlag('warning', `${ticketname} ticket`, `${message}`, 'manual');
-                            });
+                            } else
+                                $(button).on('click', () => {
+                                    showFlag('warning', `${ticketname} ticket`, `${message}`, 'manual');
+                                });
                         }
                     }
                 }
