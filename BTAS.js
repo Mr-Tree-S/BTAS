@@ -135,6 +135,38 @@ function registerSearchMenu() {
         });
     });
 }
+
+function registerQuickReplyMenu() {
+    const commentBar = $(
+        '#issue-workflow-transition > div.form-body > div.sd-comment-field-edit-root > div > sd-comment-field > div.sd-comment-tab-container.tabwrap.tabs2'
+    );
+    commentBar.append(`<button class="aui-button aui-dropdown2-trigger" aria-controls="is-radio-checked">Quick Reply</button>
+    <aui-dropdown-menu id="is-radio-checked">
+    <aui-section id="reply" label="reply">
+        <aui-item-radio interactive>Reply 1</aui-item-radio>
+        <aui-item-radio interactive>Reply 2</aui-item-radio>
+    </aui-section>
+    </aui-dropdown-menu>`);
+
+    const section = document.querySelector('aui-section#reply');
+    const replyComment = {
+        'Reply 1': 'Dear Customer,<br>Thanks for your reply, we will close this case.<br>Best Regards.',
+        'Reply 2': 'Dear Customer,<br>Thanks for your reply, we will keep monitor.<br>Best Regards.'
+    };
+
+    try {
+        section.addEventListener('change', function (e) {
+            if (e.target.hasAttribute('checked')) {
+                tinymce.activeEditor.setContent('');
+                let replyValue = replyComment[e.target.textContent];
+                tinymce.activeEditor.execCommand('mceInsertContent', false, replyValue);
+            }
+        });
+    } catch (error) {
+        console.error(error);
+    }
+}
+
 /**
  * This function registers two Tampermonkey exception menu command
  * Add Exception: adds the currently selected text to an exception list stored in local storage
@@ -1264,6 +1296,13 @@ function CSAlertHandler(...kwargs) {
         if ($('#issue-content').length && !$('#generateEditnotify').length) {
             console.log('#### Code Issue page: Edit Notify ####');
             editNotify(pageData);
+        }
+    }, 3000);
+
+    // Issue page: Quick Reply
+    setInterval(() => {
+        if (document.querySelector('#reply') == null) {
+            registerQuickReplyMenu();
         }
     }, 3000);
 })();
