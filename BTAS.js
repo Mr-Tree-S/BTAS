@@ -295,16 +295,17 @@ function checkOrg() {
     try {
         // not first handle ticket
         if (desc !== 'Click to add description') {
-            if (organization === '' && description !== 'Click to add description') {
+            if (organization == '') {
                 AJS.banner({ body: 'Please add organization field' });
-            } else if (
-                !organization.includes(LogSourceDomain) &&
-                organization !== '' &&
-                !orgDict[LogSourceDomain].map((item) => item.toLowerCase()).includes(organization)
-            ) {
-                AJS.banner({
-                    body: 'Organization field is wrong, please remove organization first and then add correct organization'
-                });
+            } else {
+                if (
+                    !organization.includes(LogSourceDomain) &&
+                    !orgDict[LogSourceDomain].map((item) => item.toLowerCase()).includes(organization)
+                ) {
+                    AJS.banner({
+                        body: 'Organization field is wrong, please remove organization first and then add correct organization'
+                    });
+                }
             }
         }
     } catch (error) {
