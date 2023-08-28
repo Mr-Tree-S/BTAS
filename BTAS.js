@@ -830,7 +830,7 @@ function HTSCAlertHandler(...kwargs) {
                 const formatJson = log.substring(log.indexOf('{')).trim();
                 // const logObj = JSON.parse(formatJson);
                 const logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
-                const eventEvidence = decodeHtml(logObj.event_evidence);
+                const eventEvidence = decodeHtml(logObj.event_evidence).split('End time')[0];
                 const alert = {
                     attackType: logObj.tag,
                     hostRisk: logObj.hostRisk,
