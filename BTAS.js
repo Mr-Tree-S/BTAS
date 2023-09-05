@@ -326,7 +326,7 @@ function checkOrg() {
 
     try {
         // not first handle ticket
-        if (desc !== 'Click to add description') {
+        if (desc !== 'Click to add description' && desc !== '点击添加描述信息') {
             if (organization == '') {
                 AJS.banner({ body: 'Please add organization field' });
             } else {
