@@ -770,11 +770,11 @@ function MDEAlertHandler(...kwargs) {
                     const tmp = [];
                     for (const evidenceItem of evidence) {
                         if (evidenceItem.entityType === 'File') {
-                            const description = `filename:${evidenceItem.fileName}\nfilePath:${evidenceItem.filePath}\nsha1:${evidenceItem.sha1}\n`;
+                            const description = `filename: ${evidenceItem.fileName}\nfilePath: ${evidenceItem.filePath}\nsha1: ${evidenceItem.sha1}\n`;
                             tmp.push(description);
                         }
                         if (evidenceItem.entityType === 'Process') {
-                            const description = `cmd:${evidenceItem.processCommandLine}\naccount:${evidenceItem.accountName}\nsha1:${evidenceItem.sha1}\n`;
+                            const description = `cmd: ${evidenceItem.processCommandLine}\naccount: ${evidenceItem.accountName}\nsha1: ${evidenceItem.sha1}\n`;
                             tmp.push(description);
                         }
                     }
