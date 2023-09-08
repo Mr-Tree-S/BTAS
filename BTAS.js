@@ -290,18 +290,55 @@ function checkupdate(NotifyControls) {
 /**
  * This function checks for specific keywords within a string
  * Advises the user to double-check and contact L2 or TL if suspicious.
- * @param {Array} keywords - An array of strings containing the high risk keywords to check for
+ * @param {Array} keywords - a CSV file download from remote containing the high risk keywords to check for
  */
 function checkKeywords() {
     console.log('#### Code checkKeywords run ####');
-    const keywords = ['keyword1', 'mimikatz', 'keyword3'];
-    const strToCheck = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().toLowerCase();
-    const matchedKeyword = keywords.find((keyword) => strToCheck.includes(keyword.toLowerCase()));
-    if (matchedKeyword) {
-        AJS.banner({
-            body: `High Risk Keyword: <strong>${matchedKeyword}</strong><br>Please double-check it, and if it seems suspicious, contact L2 or TL.`
+
+    function parseCSV(csv) {
+        const lines = csv.trim().split('\r\n'); // 将CSV拆分成行
+        const header = lines[0].split(','); // 解析标题行
+        const data = [];
+
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(',');
+            const entry = {};
+
+            for (let j = 0; j < header.length; j++) {
+                entry[header[j]] = values[j];
+            }
+            data.push(entry);
+        }
+        return data;
+    }
+
+    function fetchKeywordsList() {
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: 'https://aspirepig-1251964320.cos.ap-shanghai.myqcloud.com/keywords.csv',
+            onload: function (response) {
+                if (response.status === 200) {
+                    const keywords = parseCSV(response.responseText);
+                    const rawLog = $('#customfield_10219-val').text().trim().toLowerCase();
+
+                    for (const keyword of keywords) {
+                        if (rawLog.includes(keyword['Keyword'].toLowerCase())) {
+                            AJS.banner({
+                                body: `\"${keyword['Keyword']}\" was found in the ticket, it is maybe used for "${keyword['Remark']}", please double-check and contact L2 or TL if suspicious.`
+                            });
+                        }
+                    }
+                } else {
+                    console.error('Error fetching Keywords List:', response.status);
+                }
+            },
+            onerror: function (error) {
+                console.error('Error fetching Keywords List:', error);
+            }
         });
     }
+
+    fetchKeywordsList();
 }
 
 function checkOrg() {
@@ -1248,7 +1285,7 @@ function CSAlertHandler(...kwargs) {
     }
 
     // Issue page: Alert Handler
-    setInterval(() => {
+    setTimeout(() => {
         const LogSourceDomain = $('#customfield_10223-val').text().trim();
         const rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
         const summary = $('#summary-val').text().trim();
@@ -1270,20 +1307,20 @@ function CSAlertHandler(...kwargs) {
                 handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, summary: summary });
             }
         }
-    }, 3000);
+    }, 1000);
 
     // Issue page: check Keywords and ATT&CK and Org
-    setInterval(() => {
+    setTimeout(() => {
         if ($('#issue-content').length && !$('.aui-banner-error').length) {
             console.log('#### Code Issue page: check Keywords ####');
             checkKeywords();
             checkATTCK();
             checkOrg();
         }
-    }, 3000);
+    }, 1000);
 
     // Issue page: Edit Notify
-    setInterval(() => {
+    setTimeout(() => {
         const LogSourceDomain = $('#customfield_10223-val').text().trim();
         const Labels = $('.labels-wrap .labels li a span').text();
         const LogSource = $('#customfield_10204-val').text().trim();
@@ -1297,7 +1334,7 @@ function CSAlertHandler(...kwargs) {
             console.log('#### Code Issue page: Edit Notify ####');
             editNotify(pageData);
         }
-    }, 3000);
+    }, 1000);
 
     // Issue page: Quick Reply
     setInterval(() => {
