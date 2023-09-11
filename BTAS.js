@@ -270,7 +270,7 @@ function checkupdate(NotifyControls) {
         const diffMs = currentTime - datetime;
         const diffMinutes = Math.floor(diffMs / 60000);
         if (diffMinutes > 30 && diffMinutes < 120) {
-            overdueTickets += `${issuekey}, `;
+            overdueTickets += `<a href="https://caas.pwchk.com/browse/${issuekey}" target="_blank">${issuekey}</a>, `;
         }
     });
     if (overdueTickets && promptCheckbox.find('input').prop('checked')) {
@@ -281,7 +281,7 @@ function checkupdate(NotifyControls) {
         }
     `);
         AJS.banner({
-            body: `ticket: <strong>${overdueTickets}</strong><br>30 minutes have passed since the ticket's status changed, please handle it as soon as possible`,
+            body: `Ticket: ${overdueTickets}<br>30 minutes have passed since the ticket's status changed, please handle it as soon as possible`,
             type: 'warning'
         });
     }
