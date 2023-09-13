@@ -449,18 +449,16 @@ function editNotify(pageData) {
 
         function processSection(keyFromPage) {
             // Gets data for a specific section of a configuration file
-            const sectionConfig = orgNotifydict[keyFromPage];
+            const notifyConfig = orgNotifydict[keyFromPage];
             // Gets the value of a specific field extracted from web page
             const valueFromPage = pageData[keyFromPage];
             // Convert to Array List to handle mutil values from page
-            const valueArray = Array.isArray(valueFromPage) ? valueFromPage : [valueFromPage];
+            const valueFromPageArray = Array.isArray(valueFromPage) ? valueFromPage : [valueFromPage];
 
-            for (const value of valueArray) {
-                // convert to Array List to handle mutil values from JSON
-                const alerts = Array.isArray(sectionConfig[value]) ? sectionConfig[value] : [sectionConfig[value]];
-                if (alerts[0] !== undefined) {
-                    for (const alert of alerts) {
-                        const { ticketname, message, properties, click } = alert;
+            for (const value of valueFromPageArray) {
+                for (const [notifyConfigKey, notifyConfigValue] of Object.entries(notifyConfig)) {
+                    if (value.includes(notifyConfigKey)) {
+                        const { ticketname, message, properties, click } = notifyConfigValue;
                         const button = clickButton(click);
 
                         if (checkProperties(properties, pageData)) {
