@@ -528,7 +528,8 @@ function cortexAlertHandler(...kwargs) {
         'newworld': 'https://nwcs.xdr.sg.paloaltonetworks.com/',
         'nws': 'https://nws.xdr.sg.paloaltonetworks.com/',
         'toppanmerrill': 'https://tpm-apac.xdr.us.paloaltonetworks.com/',
-        'welab': 'https://welabbank.xdr.sg.paloaltonetworks.com/'
+        'welab': 'https://welabbank.xdr.sg.paloaltonetworks.com/',
+        'goldpeak': 'https://gpbi-poc.xdr.sg.paloaltonetworks.com/'
     };
     const orgNavigator = orgDict[LogSourceDomain];
 
