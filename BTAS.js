@@ -136,32 +136,69 @@ function registerSearchMenu() {
     });
 }
 
-function registerQuickReplyMenu() {
-    const commentBar = $(
-        '#issue-workflow-transition > div.form-body > div.sd-comment-field-edit-root > div > sd-comment-field > div.sd-comment-tab-container.tabwrap.tabs2'
-    );
-    commentBar.append(`<button class="aui-button aui-dropdown2-trigger" aria-controls="is-radio-checked">Quick Reply</button>
+function registerCustomQuickReplyMenu() {
+    GM_registerMenuCommand('Add Custom Quick Reply', () => {
+        const userInput_name = prompt('Enter saved quick reply name (the name should be unique)').toString();
+        const userInput_reply = prompt('Enter a custom quick reply (<br> is used for line break)').toString();
+        if (userInput_name !== null && userInput_reply !== null) {
+            const key = `customReply_${userInput_name}`;
+            // local save
+            localStorage.setItem(key, userInput_reply);
+        }
+    });
+
+    GM_registerMenuCommand('Remove Custom Quick Reply', () => {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('customReply_')) {
+                localStorage.removeItem(key);
+            }
+        }
+        showFlag('success', 'Cleared All Custom Replies', '', 'auto');
+    });
+}
+
+function QuickReply() {
+    const replyButton = `<button class="aui-button aui-dropdown2-trigger" aria-controls="is-radio-checked">Quick Reply</button>
     <aui-dropdown-menu id="is-radio-checked">
     <aui-section id="reply" label="reply">
         <aui-item-radio interactive>Reply 1</aui-item-radio>
         <aui-item-radio interactive>Reply 2</aui-item-radio>
     </aui-section>
-    </aui-dropdown-menu>`);
+    </aui-dropdown-menu>`;
+    const commentBar = $($('.aui-toolbar2-primary')[1]);
+    commentBar.append(replyButton);
 
-    const section = document.querySelector('aui-section#reply');
+    const commentBarSection = document.querySelector('aui-section#reply');
     const replyComment = {
         'Reply 1': 'Dear Customer,<br>Thanks for your reply, we will close this case.<br>Best Regards.',
         'Reply 2': 'Dear Customer,<br>Thanks for your reply, we will keep monitor.<br>Best Regards.'
     };
 
-    try {
-        section.addEventListener('change', function (e) {
-            if (e.target.hasAttribute('checked')) {
-                tinymce.activeEditor.setContent('');
-                let replyValue = replyComment[e.target.textContent];
-                tinymce.activeEditor.execCommand('mceInsertContent', false, replyValue);
+    // Check local storage at initialization time
+    function getAllCustomReply() {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('customReply_')) {
+                const storedReply = localStorage.getItem(key).toString();
+                const storeReplyName = key.split('_')[1].toString();
+                replyComment[storeReplyName] = storedReply;
+                $('#reply').append(`<aui-item-radio interactive>${storeReplyName}</aui-item-radio>`);
             }
-        });
+        }
+    }
+    getAllCustomReply();
+
+    try {
+        if (commentBarSection !== null) {
+            commentBarSection.addEventListener('change', function (e) {
+                if (e.target.hasAttribute('checked')) {
+                    tinymce.activeEditor.setContent('');
+                    let replyValue = replyComment[e.target.textContent];
+                    tinymce.activeEditor.execCommand('mceInsertContent', false, replyValue);
+                }
+            });
+        }
     } catch (error) {
         console.error(error);
     }
@@ -1267,6 +1304,7 @@ function CSAlertHandler(...kwargs) {
 
     registerSearchMenu();
     registerExceptionMenu();
+    registerCustomQuickReplyMenu();
 
     // Filter page: audio control registration and regular issues table update
     if (window.location.href.includes('filter=15200') && !window.location.href.includes('MSS')) {
@@ -1338,7 +1376,7 @@ function CSAlertHandler(...kwargs) {
     // Issue page: Quick Reply
     setInterval(() => {
         if (document.querySelector('#reply') == null) {
-            registerQuickReplyMenu();
+            QuickReply();
         }
     }, 3000);
 })();
