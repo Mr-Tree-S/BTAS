@@ -1299,6 +1299,57 @@ function CSAlertHandler(...kwargs) {
     addButton('openCS', 'CS', openCS);
 }
 
+function SophosAlertHandler(...kwargs) {
+    let { rawLog } = kwargs[0];
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                log.replace(/[\[(].*?[\])]/g, '');
+                const { sophos } = JSON.parse(log);
+                const { data } = sophos;
+                const summary = sophos.name;
+                const alertHost = sophos.dhost;
+                const alertUser = sophos.suser;
+                const alertIP =
+                    sophos?.source_info?.ip !== undefined ? sophos.source_info.ip : sophos.data.source_info.ip;
+                const alertExtraInfo = {
+                    Sha256: sophos.appSha256,
+                    Filename: sophos?.data?.fileName ? sophos.data.fileName : undefined,
+                    Processname: sophos?.data?.processName ? sophos.data.processName : undefined,
+                    Process: sophos?.data?.process ? sophos.data.process : undefined
+                };
+                acc.push({ summary, alertHost, alertIP, alertUser, alertExtraInfo });
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            let desc = `Observed ${info.summary}\nHost: ${info.alertHost} IP: ${info.alertIP}\nUser: ${info.alertUser}\n`;
+            for (const key in info.alertExtraInfo) {
+                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                    const value = info.alertExtraInfo[key];
+                    if (value !== undefined) {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            desc += '\n' + 'Please help to verify if this activity is legitimate.' + '\n';
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -1336,7 +1387,8 @@ function CSAlertHandler(...kwargs) {
                 'carbonblack_cef': CBAlertHandler,
                 'windows_eventchannel': WineventAlertHandler,
                 'fortigate-firewall-v5': FortigateAlertHandler,
-                'crowdstrike_cef': CSAlertHandler
+                'crowdstrike_cef': CSAlertHandler,
+                'sophos': SophosAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
