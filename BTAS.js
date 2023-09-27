@@ -843,14 +843,24 @@ function MDEAlertHandler(...kwargs) {
                 if (evidence) {
                     const tmp = [];
                     for (const evidenceItem of evidence) {
+                        let description = '';
                         if (evidenceItem.entityType === 'File') {
-                            const description = `filename: ${evidenceItem.fileName}\nfilePath: ${evidenceItem.filePath}\nsha1: ${evidenceItem.sha1}\n`;
+                            description = `filename: ${evidenceItem.fileName}\nfilePath: ${evidenceItem.filePath}\nsha1: ${evidenceItem.sha1}`;
                             tmp.push(description);
                         }
                         if (evidenceItem.entityType === 'Process') {
-                            const description = `cmd: ${evidenceItem.processCommandLine}\naccount: ${evidenceItem.accountName}\nsha1: ${evidenceItem.sha1}\n`;
+                            description = `cmd: ${evidenceItem.processCommandLine}\naccount: ${evidenceItem.accountName}\nsha1: ${evidenceItem.sha1}`;
                             tmp.push(description);
                         }
+                        if (evidenceItem.entityType === 'Url') {
+                            description += `Url: ${evidenceItem.url}`;
+                            tmp.push(description);
+                        }
+                        if (evidenceItem.entityType === 'Ip') {
+                            description += `IP: ${evidenceItem.ipAddress}`;
+                            tmp.push(description);
+                        }
+                        //tmp.push(description);
                     }
                     const uniqueDescriptions = Array.from(new Set(tmp));
                     extrainfo = uniqueDescriptions.join('\n');
@@ -869,7 +879,7 @@ function MDEAlertHandler(...kwargs) {
         const alertDescriptions = [];
         for (const info of alertInfo) {
             const { title, computerDnsName, userName, extrainfo } = info;
-            const desc = `Observed ${title}\nHost: ${computerDnsName}\nusername: ${userName}\n${extrainfo}\nPlease help to verify if it is legitimate.\n`;
+            const desc = `Observed ${title}\nHost: ${computerDnsName}\nusername: ${userName}\n${extrainfo}\n\nPlease help to verify if it is legitimate.\n`;
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
