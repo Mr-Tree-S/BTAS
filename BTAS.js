@@ -17,6 +17,7 @@
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
 // @grant        GM_xmlhttpRequest
+// @grant        GM_openInTab
 // @connect      raw.githubusercontent.com
 // @connect      myqcloud.com
 // @run-at       document-idle
@@ -1305,11 +1306,12 @@ function SophosAlertHandler(...kwargs) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
                 log.replace(/[\[(].*?[\])]/g, '');
-                const { sophos } = JSON.parse(log);
+                const { sophos, logsource } = JSON.parse(log);
                 const { data } = sophos;
                 const summary = sophos.name;
                 const alertHost = sophos.dhost;
                 const alertUser = sophos.suser;
+                const alertID = sophos.id;
                 const alertIP =
                     sophos?.source_info?.ip !== undefined ? sophos.source_info.ip : sophos.data.source_info.ip;
                 const alertExtraInfo = {
@@ -1318,7 +1320,7 @@ function SophosAlertHandler(...kwargs) {
                     Processname: sophos?.data?.processName ? sophos.data.processName : undefined,
                     Process: sophos?.data?.process ? sophos.data.process : undefined
                 };
-                acc.push({ summary, alertHost, alertIP, alertUser, alertExtraInfo });
+                acc.push({ summary, alertHost, alertIP, alertUser, alertID, logsource, alertExtraInfo });
             } catch (error) {
                 console.log(`Error: ${error.message}`);
             }
@@ -1347,7 +1349,23 @@ function SophosAlertHandler(...kwargs) {
         showDialog(alertMsg);
     }
 
+    function openSophos() {
+        let searchID = '';
+        for (const info of alertInfo) {
+            const { alertHost, alertID, logsource } = info;
+            if (alertID || alertHost) {
+                searchID += `<strong>[${logsource}] ${alertHost}</strong>:<br>${alertID}<br><br>`;
+            }
+        }
+        showFlag('info', 'Host and Alert ID', `${searchID}`, 'manual');
+        GM_openInTab('https://cloud.sophos.com/manage/enterprise/alerts-list', {
+            active: false, // 设置为 false，以在后台打开，不激活新标签页
+            insert: true // 设置为 true，将新标签页插入到当前标签页之后
+        });
+    }
+
     addButton('generateDescription', 'Description', generateDescription);
+    addButton('openSophos', 'Open Sophos', openSophos);
 }
 
 (function () {
