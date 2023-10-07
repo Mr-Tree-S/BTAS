@@ -1434,7 +1434,7 @@ function SophosAlertHandler(...kwargs) {
             checkATTCK();
             checkOrg();
         }
-    }, 1000);
+    }, 3000);
 
     // Issue page: Edit Notify
     setTimeout(() => {
