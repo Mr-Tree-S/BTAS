@@ -469,20 +469,66 @@ function editNotify(pageData) {
         }
 
         // check all the condition
+        /*
         function checkProperties(properties, valueFromPage) {
+            // Iterate through all key-value pairs of the properties object
+            if (properties !== undefined) {
+                // If properties is null, always return true
+                if (Object.keys(properties).length === 0) {
+                    return true;
+                }
+
+                for (const [property, value] of Object.entries(properties)) {
+                    // Converts the value of the valueFromPage property to an array
+                    const propertyValue = Array.isArray(valueFromPage[property])
+                        ? valueFromPage[property]
+                        : [valueFromPage[property]];
+                    // Check whether the value of the property is contained in the properties object
+                    if (
+                        propertyValue.some(function (item) {
+                            const valueArray = Array.isArray(value) ? value : [value];
+                            for (const eachvalue of valueArray) {
+                                if (item.includes(eachvalue)) {
+                                    return true;
+                                }
+                            }
+                        })
+                    ) {
+                        return true;
+                    }
+                }
+                // Returns false if all properties does not match
+                return false;
+            }
+        }
+        */
+
+        function checkProperties(properties, valueFromPage) {
+            // If properties is null or undefined, always return true
+            if (Object.keys(properties).length === 0) {
+                return true;
+            }
+
             // Iterate through all key-value pairs of the properties object
             for (const [property, value] of Object.entries(properties)) {
                 // Converts the value of the valueFromPage property to an array
                 const propertyValue = Array.isArray(valueFromPage[property])
                     ? valueFromPage[property]
                     : [valueFromPage[property]];
+
                 // Check whether the value of the property is contained in the properties object
-                if (!propertyValue.some((item) => item.includes(value))) {
-                    return false;
+                if (
+                    propertyValue.some((item) => {
+                        const valueArray = Array.isArray(value) ? value : [value];
+                        return valueArray.some((eachvalue) => item.includes(eachvalue));
+                    })
+                ) {
+                    return true;
                 }
             }
-            // Returns true if all properties match
-            return true;
+
+            // Returns false if no properties match
+            return false;
         }
 
         function processSection(keyFromPage) {
@@ -495,17 +541,25 @@ function editNotify(pageData) {
 
             for (const value of valueFromPageArray) {
                 for (const [notifyConfigKey, notifyConfigValue] of Object.entries(notifyConfig)) {
+                    // 判断当前工单对应的配置项
                     if (value.includes(notifyConfigKey)) {
-                        const { ticketname, message, properties, click } = notifyConfigValue;
-                        const button = clickButton(click);
+                        // convert notifyConfigValue to array
+                        const notifyConfigValueArray = Array.isArray(notifyConfigValue)
+                            ? notifyConfigValue
+                            : [notifyConfigValue];
 
-                        if (checkProperties(properties, pageData)) {
-                            if (button == '') {
-                                showFlag('warning', `${ticketname} ticket`, `${message}`, 'manual');
-                            } else
-                                $(button).on('click', () => {
+                        for (let eachNotifyConfigValue of notifyConfigValueArray) {
+                            const { ticketname, message, properties, click } = eachNotifyConfigValue;
+                            const button = clickButton(click);
+
+                            if (checkProperties(properties, pageData)) {
+                                if (button == '') {
                                     showFlag('warning', `${ticketname} ticket`, `${message}`, 'manual');
-                                });
+                                } else
+                                    $(button).on('click', () => {
+                                        showFlag('warning', `${ticketname} ticket`, `${message}`, 'manual');
+                                    });
+                            }
                         }
                     }
                 }
