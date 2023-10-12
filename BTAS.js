@@ -165,8 +165,9 @@ function QuickReply() {
     <aui-section id="reply" label="reply">
         <aui-item-radio interactive>Reply 1</aui-item-radio>
         <aui-item-radio interactive>Reply 2</aui-item-radio>
-        <aui-item-radio interactive>Haeco escalate</aui-item-radio>
-        <aui-item-radio interactive>Haeco de-escalate</aui-item-radio>
+        <aui-item-radio interactive>Haeco high severity</aui-item-radio>
+        <aui-item-radio interactive>Haeco medium severity</aui-item-radio>
+        <aui-item-radio interactive>Haeco low severity</aui-item-radio>
     </aui-section>
     </aui-dropdown-menu>`;
     const commentBar = $($('.aui-toolbar2-primary')[1]);
@@ -176,9 +177,11 @@ function QuickReply() {
     const replyComment = {
         'Reply 1': 'Dear Customer,<br>Thanks for your reply, we will close this case.<br>Best Regards.',
         'Reply 2': 'Dear Customer,<br>Thanks for your reply, we will keep monitor.<br>Best Regards.',
-        'Haeco escalate':
+        'Haeco high severity':
             '<h2><strong><span style="color: red;" data-mce-style="color: red;"><samp>[The ticket is escalated to High Severity]</samp></span></strong></h2>',
-        'Haeco de-escalate':
+        'Haeco medium severity':
+            '<h2><span style="color: rgb(255, 171, 0);" data-mce-style="color: #ffab00;"><strong><samp>[The ticket is escalated to Medium Severity]</samp></strong></span></h2>',
+        'Haeco low severity':
             '<h2><span style="color: rgb(76, 154, 255);" data-mce-style="color: #4c9aff;"><strong><samp>[The ticket is de-escalated to Low Severity]</samp></strong></span></h2>'
     };
 
