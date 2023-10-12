@@ -396,7 +396,7 @@ function checkOrg() {
         'toppanmerrill': ['TOPPAN'],
         'bossini': ['BOS'],
         'swireproperties': ['SPL_HK', 'Swireprop-unclassified', 'SHG_CHINA', 'SPL_CHINA'],
-        'k11-hk': ['K11-OnPrem', 'k11-CN', 'k11-Network']
+        'k11-hk': ['K11-OnPrem', 'k11-CN', 'k11-Network', 'k11-Cloud']
     };
 
     try {
