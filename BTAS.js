@@ -1407,6 +1407,60 @@ function SophosAlertHandler(...kwargs) {
     addButton('openSophos', 'Open Sophos', openSophos);
 }
 
+function SpemAlertHandler(...kwargs) {
+    const { rawLog, summary } = kwargs[0];
+
+    function parseLog(rawLog) {
+        let logObject = {};
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                logArray = log.split(',');
+                logArray[10] = 'Action:' + logArray[10];
+                for (const index of logArray) {
+                    const [key, value] = index.split(/:(.+)/, 2);
+                    logObject[key] = value;
+                }
+                acc.push({
+                    'Summary': logObject['Event Description'] !== undefined ? logObject['Event Description'] : summary,
+                    'User Name': logObject['User Name'],
+                    'Local Host IP': logObject['Local Host IP'],
+                    'Local Port': logObject['Local Port'],
+                    'Remote Host IP': logObject['Remote Host IP'],
+                    'Remote Port': logObject['Remote Port'],
+                    'Application': logObject['Application'],
+                    'SHA-256': logObject['SHA-256'],
+                    'Intrusion URL': logObject['Intrusion URL'],
+                    'Action': logObject['Action']
+                });
+            } catch (error) {
+                console.log(`Error: ${error}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLog(rawLog);
+
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            let desc = `Observed ${info['Summary']}\n`;
+            Object.entries(info).forEach(([index, value]) => {
+                if (value !== undefined && value !== ' ' && index != 'Summary') {
+                    desc += `${index}: ${value}\n`;
+                }
+            });
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -1445,7 +1499,9 @@ function SophosAlertHandler(...kwargs) {
                 'windows_eventchannel': WineventAlertHandler,
                 'fortigate-firewall-v5': FortigateAlertHandler,
                 'crowdstrike_cef': CSAlertHandler,
-                'sophos': SophosAlertHandler
+                'sophos': SophosAlertHandler,
+                'sepm-security': SpemAlertHandler,
+                'sepm-traffic': SpemAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
