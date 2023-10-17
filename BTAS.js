@@ -397,6 +397,7 @@ function checkOrg() {
         .toLowerCase();
     const LogSourceDomain = $('#customfield_10223-val').text().trim().toLowerCase();
     const desc = $('#description-val > div').text().trim();
+    const status = $('#opsbar-transitions_more > span').text();
     let orgDict = {
         'citysuper': ['C!S'],
         'huatai': ['HTSC'],
@@ -410,7 +411,7 @@ function checkOrg() {
 
     try {
         // not first handle ticket
-        if (desc !== 'Click to add description' && desc !== '点击添加描述信息') {
+        if (desc !== 'Click to add description' && desc !== '点击添加描述信息' && status !== 'Resolved') {
             if (organization == '') {
                 AJS.banner({ body: 'Please add organization field' });
             } else {
