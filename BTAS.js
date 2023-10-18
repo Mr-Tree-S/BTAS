@@ -977,44 +977,9 @@ function HTSCAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
-function CBAlertHandler(...kwargs) {
-    console.log('#### Code CBAlertHandler run ####');
-    const { rawLog, LogSourceDomain } = kwargs[0];
-    // For Swire
-    function parseLeefLog(rawLog) {
-        const alertInfo = rawLog.reduce((acc, log) => {
-            const cb_log = {};
-            try {
-                const log_obj = log.split('\t');
-                log_obj.forEach((log_item) => {
-                    try {
-                        const [key, value] = log_item.split('=');
-                        cb_log[key] = value;
-                    } catch (error) {
-                        console.error(`Error: ${error.message}`);
-                    }
-                });
-                if (log.trim() !== '') {
-                    acc.push({
-                        Summary: cb_log.watchlist_name,
-                        HostName: cb_log.computer_name,
-                        HostIp: cb_log.interface_ip,
-                        UserName: cb_log.username,
-                        CmdLine: cb_log.cmdline,
-                        CBlink: cb_log.link_process,
-                        Filepath: cb_log.path,
-                        Sha256: cb_log.process_sha256
-                    });
-                }
-            } catch (error) {
-                console.error(`Error: ${error.message}`);
-            }
-            return acc;
-        }, []);
-        return alertInfo;
-    }
+function VMCEFAlertHandler(...kwargs) {
+    const { rawLog } = kwargs[0];
 
-    // For Jetco and other CEF log tickets
     function parseCefLog(rawLog) {
         function cefToJson(cefLog) {
             let json = {};
@@ -1071,15 +1036,7 @@ function CBAlertHandler(...kwargs) {
         }, []);
         return alertInfo;
     }
-
-    let alertInfo;
-    if (LogSourceDomain == 'swireproperties') {
-        alertInfo = parseLeefLog(rawLog);
-    } else if (LogSourceDomain == 'jetco') {
-        alertInfo = parseCefLog(rawLog);
-    } else {
-        alertInfo = '';
-    }
+    const alertInfo = parseCefLog(rawLog);
 
     function generateDescription() {
         const alertDescriptions = [];
@@ -1097,6 +1054,66 @@ function CBAlertHandler(...kwargs) {
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
         showDialog(alertMsg);
     }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
+function CBAlertHandler(...kwargs) {
+    console.log('#### Code CBAlertHandler run ####');
+    const { rawLog } = kwargs[0];
+
+    function parseLeefLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            const cb_log = {};
+            try {
+                const log_obj = log.split('\t');
+                log_obj.forEach((log_item) => {
+                    try {
+                        const [key, value] = log_item.split('=');
+                        cb_log[key] = value;
+                    } catch (error) {
+                        console.error(`Error: ${error.message}`);
+                    }
+                });
+                if (log.trim() !== '') {
+                    acc.push({
+                        Summary: cb_log.watchlist_name,
+                        HostName: cb_log.computer_name,
+                        HostIp: cb_log.interface_ip,
+                        UserName: cb_log.username,
+                        CmdLine: cb_log.cmdline,
+                        CBlink: cb_log.link_process,
+                        Filepath: cb_log.path,
+                        Sha256: cb_log.process_sha256
+                    });
+                }
+            } catch (error) {
+                console.error(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLeefLog(rawLog);
+
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            const { Summary } = info;
+            let desc = `Observed ${Summary}\n`;
+            Object.entries(info).forEach(([index, value]) => {
+                if (value !== undefined && index != 'Summary' && index != 'CBlink') {
+                    desc += `${index}: ${value}\n`;
+                }
+            });
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
     function openCB() {
         let CBURL = '';
         for (const info of alertInfo) {
@@ -1107,6 +1124,7 @@ function CBAlertHandler(...kwargs) {
         }
         showFlag('info', 'CB URL:', `${CBURL}`, 'manual');
     }
+
     addButton('generateDescription', 'Description', generateDescription);
     addButton('openCB', 'CB', openCB);
 }
@@ -1496,13 +1514,14 @@ function SpemAlertHandler(...kwargs) {
                 'mde-api-json': MDEAlertHandler,
                 'sangfor-ccom-json': HTSCAlertHandler,
                 'carbonblack': CBAlertHandler,
-                'carbonblack_cef': CBAlertHandler,
+                'carbonblack_cef': VMCEFAlertHandler,
                 'windows_eventchannel': WineventAlertHandler,
                 'fortigate-firewall-v5': FortigateAlertHandler,
                 'crowdstrike_cef': CSAlertHandler,
                 'sophos': SophosAlertHandler,
                 'sepm-security': SpemAlertHandler,
-                'sepm-traffic': SpemAlertHandler
+                'sepm-traffic': SpemAlertHandler,
+                'vmwarecarbonblack_cef': VMCEFAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
