@@ -1480,6 +1480,49 @@ function SpemAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function AwsAlertHandler(...kwargs) {
+    const { rawLog, summary } = kwargs[0];
+
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const { aws } = JSON.parse(log);
+                acc.push({
+                    SourceIP: aws.sourceIPAddress,
+                    User: aws.userIdentity.arn,
+                    UserAgent: aws.userAgent,
+                    PrincipalId: aws.userIdentity.principalId,
+                    Result: aws.errorCode
+                });
+            } catch (error) {
+                console.log(`Error: ${error}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLog(rawLog);
+
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            let desc = `Observed ${summary}\n`;
+            Object.entries(info).forEach(([index, value]) => {
+                if (value !== undefined && value !== ' ' && index != 'Summary') {
+                    desc += `${index}: ${value}\n`;
+                }
+            });
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -1521,7 +1564,8 @@ function SpemAlertHandler(...kwargs) {
                 'sophos': SophosAlertHandler,
                 'sepm-security': SpemAlertHandler,
                 'sepm-traffic': SpemAlertHandler,
-                'vmwarecarbonblack_cef': VMCEFAlertHandler
+                'vmwarecarbonblack_cef': VMCEFAlertHandler,
+                'aws-cloudtrail': AwsAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
