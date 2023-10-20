@@ -42,6 +42,10 @@ function showFlag(type, title, body, close) {
     });
 }
 
+/**
+ * This function shows alert message in dialog and create a copy button
+ * @param {string} body - Alert Message String
+ */
 function showDialog(body) {
     // Create custom dialog style
     const customDialogContent = AJS.$(`<section
@@ -137,6 +141,11 @@ function registerSearchMenu() {
     });
 }
 
+/**
+ * This function registers custom add/remove quick reply menus in Tampermonkey
+ * Add custom reply: input custom reply and store in local
+ * Remove quick reply: remove all local storage custom replies
+ */
 function registerCustomQuickReplyMenu() {
     GM_registerMenuCommand('Add Custom Quick Reply', () => {
         const userInput_name = prompt('Enter saved quick reply name (the name should be unique)').toString();
@@ -159,6 +168,9 @@ function registerCustomQuickReplyMenu() {
     });
 }
 
+/**
+ * This function create a Quick Reply button in editor
+ */
 function QuickReply() {
     const replyButton = `<button class="aui-button aui-dropdown2-trigger" aria-controls="is-radio-checked">Quick Reply</button>
     <aui-dropdown-menu id="is-radio-checked">
@@ -282,6 +294,7 @@ function createNotifyControls() {
 
     return { audioControl, audioCheckbox, keepCheckbox, promptCheckbox };
 }
+
 /**
  * Check for updates in the issues list and play a sound if new issues are found
  * @param {Object} NotifyControls - Object containing the audio control, audio checkbox, keep checkbox, prompt checkbox
@@ -337,7 +350,6 @@ function checkupdate(NotifyControls) {
 /**
  * This function checks for specific keywords within a string
  * Advises the user to double-check and contact L2 or TL if suspicious.
- * @param {Array} keywords - a CSV file download from remote containing the high risk keywords to check for
  */
 function checkKeywords() {
     console.log('#### Code checkKeywords run ####');
@@ -388,6 +400,9 @@ function checkKeywords() {
     fetchKeywordsList();
 }
 
+/**
+ * This function is used for checking Orgnazation field
+ */
 function checkOrg() {
     const organization = $(
         '#customfield_10002-val > sd-customer-organizations > ul > li > span > span.sd-organization-value'
@@ -430,6 +445,9 @@ function checkOrg() {
     }
 }
 
+/**
+ * This function is used for checking ATT&CK field
+ */
 function checkATTCK() {
     const status = $('#status-val > span').text().trim();
     const attck = $('#rowForcustomfield_10220 > div > strong > label').text();
@@ -439,12 +457,12 @@ function checkATTCK() {
 }
 
 /**
- * This function initializes the edit notification functionality.
- * It adds click event listeners to the "Edit" button based on certain conditions,
- * and generates a specific HTML element for the edit notification.
+ * This function is used for popping up MSS ticket considerations when clicked "Edit" and "Resolved" button or page loading.
+ * Ticket Considerations file is store in cloud server
+ * @param {Object} pageData - Gets the specified fields from the jira page
  */
-function editNotify(pageData) {
-    console.log('#### Code editNotify run ####');
+function ticketNotify(pageData) {
+    console.log('#### Code ticketNotify run ####');
 
     function fetchOrgNotifydict() {
         GM_xmlhttpRequest({
@@ -551,7 +569,7 @@ function editNotify(pageData) {
     // add a element into toolbar
     function generateNotify() {
         const toolbar = $('.aui-toolbar2-primary');
-        const element = $('<div id="generateEditnotify"></div>');
+        const element = $('<div id="generateTicketNotify"></div>');
         toolbar.append(element);
     }
 }
@@ -573,6 +591,7 @@ function addButton(id, text, onClick) {
     `);
     $('#' + id).click(onClick);
 }
+
 /**
  * Creates three buttons on a JIRA issue page to handle Cortex XDR alerts
  * The buttons allow users to generate a description of the alerts, open the alert card page and timeline page
@@ -857,6 +876,10 @@ function cortexAlertHandler(...kwargs) {
     addButton('openTimeline', 'Timeline', openTimeline);
 }
 
+/**
+ * Create Description and Open MDE button
+ * @param  {...any} kwargs - Include LogSourceDomain, Labels, LogSource, TicketAutoEscalate, Status, RawLog, Summary fields
+ */
 function MDEAlertHandler(...kwargs) {
     console.log('#### Code MDEAlertHandler run ####');
     const { rawLog } = kwargs[0];
@@ -1139,18 +1162,7 @@ function WineventAlertHandler(...kwargs) {
                 const { win } = JSON.parse(log);
                 const { eventdata, system } = win;
                 const alertHost = system.computer;
-                const alertExtraInfo = {
-                    UserName: eventdata.subjectUserName,
-                    TargetUserName: eventdata.targetUserName,
-                    Member: eventdata.memberName,
-                    Process: eventdata.newProcessName,
-                    Command: eventdata.commandLine,
-                    ParentProcess: eventdata.parentProcessName,
-                    IP: eventdata.ipAddress,
-                    ObjectDN: eventdata.objectDN,
-                    ObjectGUID: eventdata.objectGUID
-                };
-                acc.push({ summary, alertHost, alertExtraInfo });
+                acc.push({ summary, alertHost, eventdata });
             } catch (error) {
                 console.error(`Error: ${error.message}`);
             }
@@ -1164,9 +1176,9 @@ function WineventAlertHandler(...kwargs) {
         const alertDescriptions = [];
         for (const info of alertInfo) {
             let desc = `Observed${info.summary}\nHost: ${info.alertHost}\n`;
-            for (const key in info.alertExtraInfo) {
-                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
-                    const value = info.alertExtraInfo[key];
+            for (const key in info.eventdata) {
+                if (Object.hasOwnProperty.call(info.eventdata, key)) {
+                    const value = info.eventdata[key];
                     if (value !== undefined) {
                         desc += `${key}: ${value}\n`;
                     }
@@ -1596,9 +1608,9 @@ function AwsAlertHandler(...kwargs) {
         const Summary = $('#summary-val').text().trim();
         const pageData = { LogSourceDomain, Labels, LogSource, TicketAutoEscalate, Status, RawLog, Summary };
         // If it pops up once, it will not be reminded again
-        if ($('#issue-content').length && !$('#generateEditnotify').length) {
+        if ($('#issue-content').length && !$('#generateTicketNotify').length) {
             console.log('#### Code Issue page: Edit Notify ####');
-            editNotify(pageData);
+            ticketNotify(pageData);
         }
     }, 1000);
 
