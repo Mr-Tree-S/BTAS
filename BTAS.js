@@ -598,7 +598,8 @@ function addButton(id, text, onClick) {
  */
 function cortexAlertHandler(...kwargs) {
     console.log('#### Code cortexAlertHandler run ####');
-    const { rawLog, LogSourceDomain } = kwargs[0];
+    const { LogSourceDomain } = kwargs[0];
+    const rawLog = $('#field-customfield_10232 > div.twixi-wrap.verbose > div > div > div > pre').text();
     /**
      * Extracts the log information and organization name from the current JIRA issue page
      * @param {Object} orgDict - A dictionary that maps organization name to navigator name
@@ -626,152 +627,149 @@ function cortexAlertHandler(...kwargs) {
      * @returns {Array} An array of objects containing the alert relevant information
      */
     function parseLog(rawLog) {
-        const alertInfo = rawLog.reduce((acc, log) => {
-            try {
-                const { cortex_xdr } = JSON.parse(log);
-                const { source, alert_id, name, description } = cortex_xdr;
-                const isPANNGFW = source === 'PAN NGFW';
-                const alert = { source, alert_id, name, description };
-                if (isPANNGFW) {
-                    const { action_local_ip, action_local_port, action_remote_ip, action_remote_port, action_pretty } =
-                        cortex_xdr;
-                    acc.push({
-                        ...alert,
-                        action_local_ip,
-                        action_local_port,
-                        action_remote_ip,
-                        action_remote_port,
-                        action_pretty
-                    });
-                } else {
-                    const {
-                        action_local_ip,
-                        action_file_macro_sha256,
-                        action_file_name,
-                        action_file_path,
-                        action_file_sha256,
-                        action_process_image_name,
-                        action_process_image_sha256,
-                        action_process_image_command_line,
-                        actor_process_image_name,
-                        actor_process_image_path,
-                        actor_process_image_sha256,
-                        actor_process_command_line,
-                        causality_actor_process_image_name,
-                        causality_actor_process_command_line,
-                        causality_actor_process_image_path,
-                        causality_actor_process_image_sha256,
-                        os_actor_process_image_name,
-                        os_actor_process_image_path,
-                        os_actor_process_command_line,
-                        os_actor_process_image_sha256,
-                        action_pretty,
-                        host_name,
-                        host_ip,
-                        user_name
-                    } = cortex_xdr;
-                    const action_list = {
-                        action_file_name,
-                        action_file_path,
-                        action_file_sha256,
-                        action_process_image_name,
-                        action_process_image_sha256,
-                        action_process_image_command_line
-                    };
-                    const actor_list = {
-                        actor_process_image_name,
-                        actor_process_image_path,
-                        actor_process_image_sha256,
-                        actor_process_command_line
-                    };
-                    const causality_actor_list = {
-                        causality_actor_process_image_name,
-                        causality_actor_process_command_line,
-                        causality_actor_process_image_path,
-                        causality_actor_process_image_sha256
-                    };
-                    const os_actor_list = {
-                        os_actor_process_image_name,
-                        os_actor_process_image_path,
-                        os_actor_process_command_line,
-                        os_actor_process_image_sha256
-                    };
+        let alertInfo = [];
+        try {
+            const { cortex_xdr } = JSON.parse(rawLog).data;
+            const { source, alert_id, name, description } = cortex_xdr;
+            const isPANNGFW = source === 'PAN NGFW';
+            const alert = { source, alert_id, name, description };
+            if (isPANNGFW) {
+                const { action_local_ip, action_local_port, action_remote_ip, action_remote_port, action_pretty } =
+                    cortex_xdr;
+                alertInfo.push({
+                    ...alert,
+                    action_local_ip,
+                    action_local_port,
+                    action_remote_ip,
+                    action_remote_port,
+                    action_pretty
+                });
+            } else {
+                const {
+                    action_local_ip,
+                    action_file_macro_sha256,
+                    action_file_name,
+                    action_file_path,
+                    action_file_sha256,
+                    action_process_image_name,
+                    action_process_image_sha256,
+                    action_process_image_command_line,
+                    actor_process_image_name,
+                    actor_process_image_path,
+                    actor_process_image_sha256,
+                    actor_process_command_line,
+                    causality_actor_process_image_name,
+                    causality_actor_process_command_line,
+                    causality_actor_process_image_path,
+                    causality_actor_process_image_sha256,
+                    os_actor_process_image_name,
+                    os_actor_process_image_path,
+                    os_actor_process_command_line,
+                    os_actor_process_image_sha256,
+                    action_pretty,
+                    host_name,
+                    host_ip,
+                    user_name
+                } = cortex_xdr;
+                const action_list = {
+                    action_file_name,
+                    action_file_path,
+                    action_file_sha256,
+                    action_process_image_name,
+                    action_process_image_sha256,
+                    action_process_image_command_line
+                };
+                const actor_list = {
+                    actor_process_image_name,
+                    actor_process_image_path,
+                    actor_process_image_sha256,
+                    actor_process_command_line
+                };
+                const causality_actor_list = {
+                    causality_actor_process_image_name,
+                    causality_actor_process_command_line,
+                    causality_actor_process_image_path,
+                    causality_actor_process_image_sha256
+                };
+                const os_actor_list = {
+                    os_actor_process_image_name,
+                    os_actor_process_image_path,
+                    os_actor_process_command_line,
+                    os_actor_process_image_sha256
+                };
 
-                    function countValidProperties(obj) {
-                        const validPropsCount = Object.keys(obj).reduce((count, key) => {
-                            if (obj[key] !== undefined) {
-                                count++;
-                            }
-                            return count;
-                        }, 0);
-                        return validPropsCount;
-                    }
-
-                    const actionPropsCount = countValidProperties(action_list)
-                        ? countValidProperties(action_list) + 1
-                        : 0;
-                    const actorPropsCount = countValidProperties(actor_list);
-                    const causalityPropsCount = countValidProperties(causality_actor_list);
-                    const osPropsCount = countValidProperties(os_actor_list);
-                    const maxCount = Math.max(actionPropsCount, actorPropsCount, causalityPropsCount, osPropsCount);
-
-                    const action_cmd_length = action_process_image_command_line
-                        ? action_process_image_command_line.length
-                        : 0;
-                    const actor_cmd_length = actor_process_command_line ? actor_process_command_line.length : 0;
-                    const causality_cmd_length = causality_actor_process_command_line
-                        ? causality_actor_process_command_line.length
-                        : 0;
-                    const os_cmd_length = os_actor_process_command_line ? os_actor_process_command_line.length : 0;
-                    const lengths = [action_cmd_length, actor_cmd_length, causality_cmd_length, os_cmd_length];
-                    const maxLength = Math.max(...lengths);
-
-                    let filename;
-                    let filepath;
-                    let sha256;
-                    let cmd;
-
-                    if (action_cmd_length === maxLength && actionPropsCount === maxCount) {
-                        filename = action_file_name || action_process_image_name;
-                        filepath = action_file_path;
-                        cmd = action_process_image_command_line;
-                        sha256 = action_file_sha256 || action_process_image_sha256;
-                    } else if (actor_cmd_length === maxLength && actorPropsCount === maxCount) {
-                        filename = actor_process_image_name;
-                        filepath = actor_process_image_path;
-                        cmd = actor_process_command_line;
-                        sha256 = actor_process_image_sha256;
-                    } else if (causality_cmd_length === maxLength && causalityPropsCount === maxCount) {
-                        filename = causality_actor_process_image_name;
-                        filepath = causality_actor_process_image_path;
-                        cmd = causality_actor_process_command_line;
-                        sha256 = causality_actor_process_image_sha256;
-                    } else if (os_actor_process_image_name && osPropsCount === maxCount) {
-                        filename = os_actor_process_image_name;
-                        filepath = os_actor_process_image_path;
-                        cmd = os_actor_process_command_line;
-                        sha256 = os_actor_process_image_sha256;
-                    }
-
-                    acc.push({
-                        ...alert,
-                        host_name,
-                        host_ip,
-                        user_name,
-                        filename,
-                        filepath,
-                        cmd,
-                        sha256,
-                        action_pretty,
-                        action_local_ip,
-                        action_file_macro_sha256
-                    });
+                function countValidProperties(obj) {
+                    const validPropsCount = Object.keys(obj).reduce((count, key) => {
+                        if (obj[key] !== undefined) {
+                            count++;
+                        }
+                        return count;
+                    }, 0);
+                    return validPropsCount;
                 }
-            } catch (error) {
-                console.error(`Error: ${error.message}`);
+
+                const actionPropsCount = countValidProperties(action_list) ? countValidProperties(action_list) + 1 : 0;
+                const actorPropsCount = countValidProperties(actor_list);
+                const causalityPropsCount = countValidProperties(causality_actor_list);
+                const osPropsCount = countValidProperties(os_actor_list);
+                const maxCount = Math.max(actionPropsCount, actorPropsCount, causalityPropsCount, osPropsCount);
+
+                const action_cmd_length = action_process_image_command_line
+                    ? action_process_image_command_line.length
+                    : 0;
+                const actor_cmd_length = actor_process_command_line ? actor_process_command_line.length : 0;
+                const causality_cmd_length = causality_actor_process_command_line
+                    ? causality_actor_process_command_line.length
+                    : 0;
+                const os_cmd_length = os_actor_process_command_line ? os_actor_process_command_line.length : 0;
+                const lengths = [action_cmd_length, actor_cmd_length, causality_cmd_length, os_cmd_length];
+                const maxLength = Math.max(...lengths);
+
+                let filename;
+                let filepath;
+                let sha256;
+                let cmd;
+
+                if (action_cmd_length === maxLength && actionPropsCount === maxCount) {
+                    filename = action_file_name || action_process_image_name;
+                    filepath = action_file_path;
+                    cmd = action_process_image_command_line;
+                    sha256 = action_file_sha256 || action_process_image_sha256;
+                } else if (actor_cmd_length === maxLength && actorPropsCount === maxCount) {
+                    filename = actor_process_image_name;
+                    filepath = actor_process_image_path;
+                    cmd = actor_process_command_line;
+                    sha256 = actor_process_image_sha256;
+                } else if (causality_cmd_length === maxLength && causalityPropsCount === maxCount) {
+                    filename = causality_actor_process_image_name;
+                    filepath = causality_actor_process_image_path;
+                    cmd = causality_actor_process_command_line;
+                    sha256 = causality_actor_process_image_sha256;
+                } else if (os_actor_process_image_name && osPropsCount === maxCount) {
+                    filename = os_actor_process_image_name;
+                    filepath = os_actor_process_image_path;
+                    cmd = os_actor_process_command_line;
+                    sha256 = os_actor_process_image_sha256;
+                }
+
+                alertInfo.push({
+                    ...alert,
+                    host_name,
+                    host_ip,
+                    user_name,
+                    filename,
+                    filepath,
+                    cmd,
+                    sha256,
+                    action_pretty,
+                    action_local_ip,
+                    action_file_macro_sha256
+                });
             }
-            return acc;
-        }, []);
+        } catch (error) {
+            console.error(`Error: ${error.message}`);
+        }
+
         return alertInfo;
     }
     const alertInfo = parseLog(rawLog);
