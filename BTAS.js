@@ -116,15 +116,29 @@ function showDialog(body) {
 function registerSearchMenu() {
     console.log('#### Code registerSearchMenu run ####');
     const LogSourceDomain = $('#customfield_10223-val').text().trim() || '*';
+    const Host = function () {
+        let search = {
+            'Source IP(s) and Hostname(s)': $('#customfield_10206-val').text().trim(),
+            'Destination IP(s) and Hostname(s)': $('#customfield_10208-val').text().trim()
+        };
+        if (search['Source IP(s) and Hostname(s)']) {
+            return `AND 'Source IP(s) and Hostname(s)' ~ '${search['Source IP(s) and Hostname(s)']}'`;
+        } else if (search['Destination IP(s) and Hostname(s)']) {
+            return `AND 'Destination IP(s) and Hostname(s)' ~ '${search['Destination IP(s) and Hostname(s)']}'`;
+        } else {
+            return '';
+        }
+    };
+
     const searchEngines = [
         {
             name: 'Jira',
             url:
                 'https://caas.pwchk.com/issues/?jql=text%20~%20%22%s%22%20AND%20' +
                 '%22Log%20Source%20Domain%22%20~%20%22%D%22%20' +
-                'ORDER%20BY%20created%20DESC'
+                `${Host()}` +
+                '%20ORDER%20BY%20created%20DESC'
         },
-        // { name: 'Reputation', url: 'https://172.18.2.23/instance/execute/reputation/ip?ip=%s' },
         { name: 'VT', url: 'https://www.virustotal.com/gui/search/%s' },
         { name: 'AbuseIPDB', url: 'https://www.abuseipdb.com/check/%s' }
     ];
