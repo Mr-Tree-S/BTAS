@@ -80,7 +80,7 @@ function showDialog(body) {
     AJS.$('#dialog-close-button').on('click', function (e) {
         e.preventDefault();
         AJS.dialog2(customDialogContent).hide();
-        tippy.destroy();
+        //tippy.destroy();
     });
 
     // Init tippy instance
@@ -1547,6 +1547,105 @@ function AwsAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function Defender365AlertHandler(...kwargs) {
+    const { rawLog } = kwargs[0];
+
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                let jsonLog = JSON.parse(log);
+                const alerts = jsonLog['incidents']['alerts'][0];
+                let entities = {};
+                alerts['entities'].forEach(function (entity) {
+                    if (entity['entityType'] == 'User') {
+                        entities['user'] = `${entity['domainName']}\\\\${entity['accountName']}`;
+                    }
+
+                    if (entity['entityType'] == 'Process') {
+                        if (!entities['process']) {
+                            entities['process'] = [];
+                        }
+                        entities['process'].push({
+                            filename: entity['fileName'],
+                            filePath: entity['filePath'],
+                            cmd: entity['processCommandLine'],
+                            sha256: entity['sha256']
+                        });
+                    }
+
+                    if (entity['entityType'] == 'File') {
+                        if (!entities['file']) {
+                            entities['file'] = [];
+                        }
+                        entities['file'].push({
+                            filename: entity['fileName'],
+                            filePath: entity['filePath'],
+                            sha256: entity['sha256']
+                        });
+                    }
+
+                    if (entity['entityType'] == 'Ip') {
+                        if (!entities['ip']) {
+                            entities['ip'] = [];
+                        }
+                        entities['ip'].push({
+                            ip: entity['ipAddress']
+                        });
+                    }
+                });
+                acc.push({
+                    summary: alerts.title,
+                    host: alerts?.devices[0]?.deviceDnsName,
+                    user: entities.user,
+                    process: entities.process,
+                    file: entities.file,
+                    ip: entities.ip
+                });
+            } catch (error) {
+                console.log(`Error: ${error}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            let desc = `Observed ${info.summary}\n`;
+            try {
+                for (let key in info) {
+                    if (info.hasOwnProperty(key)) {
+                        if (Array.isArray(info[key])) {
+                            info[key].forEach((item) => {
+                                for (let subKey in item) {
+                                    if (item.hasOwnProperty(subKey) && item[subKey] !== '') {
+                                        desc += `${subKey}: ${item[subKey]}\n`;
+                                    }
+                                }
+                            });
+                        } else {
+                            if (info[key] !== undefined && info[key] !== ' ' && key !== 'summary') {
+                                desc += `${key}: ${info[key]}\n`;
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error(`Error: ${error}`);
+            }
+
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -1589,7 +1688,8 @@ function AwsAlertHandler(...kwargs) {
                 'sepm-security': SpemAlertHandler,
                 'sepm-traffic': SpemAlertHandler,
                 'vmwarecarbonblack_cef': VMCEFAlertHandler,
-                'aws-cloudtrail': AwsAlertHandler
+                'aws-cloudtrail': AwsAlertHandler,
+                'm365-defender-json': Defender365AlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
