@@ -1557,51 +1557,54 @@ function Defender365AlertHandler(...kwargs) {
                 let jsonLog = JSON.parse(log);
                 const alerts = jsonLog['incidents']['alerts'][0];
                 let entities = {};
-                alerts['entities'].forEach(function (entity) {
-                    if (entity['entityType'] == 'User') {
-                        entities['user'] = `${entity['domainName']}\\\\${entity['accountName']}`;
-                    }
-
-                    if (entity['entityType'] == 'Process') {
-                        if (!entities['process']) {
-                            entities['process'] = [];
+                if (alerts !== undefined) {
+                    alerts['entities'].forEach(function (entity) {
+                        if (entity['entityType'] == 'User') {
+                            entities['user'] = `${entity['domainName']}\\\\${entity['accountName']}`;
                         }
-                        entities['process'].push({
-                            filename: entity['fileName'],
-                            filePath: entity['filePath'],
-                            cmd: entity['processCommandLine'],
-                            sha256: entity['sha256']
-                        });
-                    }
 
-                    if (entity['entityType'] == 'File') {
-                        if (!entities['file']) {
-                            entities['file'] = [];
+                        if (entity['entityType'] == 'Process') {
+                            if (!entities['process']) {
+                                entities['process'] = [];
+                            }
+                            entities['process'].push({
+                                filename: entity['fileName'],
+                                filePath: entity['filePath'],
+                                cmd: entity['processCommandLine'],
+                                sha256: entity['sha256']
+                            });
                         }
-                        entities['file'].push({
-                            filename: entity['fileName'],
-                            filePath: entity['filePath'],
-                            sha256: entity['sha256']
-                        });
-                    }
 
-                    if (entity['entityType'] == 'Ip') {
-                        if (!entities['ip']) {
-                            entities['ip'] = [];
+                        if (entity['entityType'] == 'File') {
+                            if (!entities['file']) {
+                                entities['file'] = [];
+                            }
+                            entities['file'].push({
+                                filename: entity['fileName'],
+                                filePath: entity['filePath'],
+                                sha256: entity['sha256']
+                            });
                         }
-                        entities['ip'].push({
-                            ip: entity['ipAddress']
-                        });
-                    }
-                });
+
+                        if (entity['entityType'] == 'Ip') {
+                            if (!entities['ip']) {
+                                entities['ip'] = [];
+                            }
+                            entities['ip'].push({
+                                ip: entity['ipAddress']
+                            });
+                        }
+                    });
+                }
                 acc.push({
-                    summary: alerts.title,
+                    summary: jsonLog['incidents'].incidentName,
                     host: alerts?.devices[0]?.deviceDnsName,
                     user: entities.user,
                     process: entities.process,
                     file: entities.file,
                     ip: entities.ip,
-                    alertid: alerts.alertId
+                    alertid: alerts?.alertId,
+                    incidenturi: jsonLog['incidents'].incidentUri
                 });
             } catch (error) {
                 console.log(`Error: ${error}`);
@@ -1632,7 +1635,8 @@ function Defender365AlertHandler(...kwargs) {
                                 info[key] !== undefined &&
                                 info[key] !== ' ' &&
                                 key !== 'summary' &&
-                                key !== 'alertid'
+                                key !== 'alertid' &&
+                                key !== 'incidenturi'
                             ) {
                                 desc += `${key}: ${info[key]}\n`;
                             }
@@ -1653,9 +1657,12 @@ function Defender365AlertHandler(...kwargs) {
     function openMDE() {
         let MDEURL = '';
         for (const info of alertInfo) {
-            const { alertid } = info;
+            const { alertid, incidenturi } = info;
             if (alertid && !MDEURL.includes(alertid)) {
                 MDEURL += `https://security.microsoft.com/alerts/${alertid}<br><br>`;
+            }
+            if (!alertid && incidenturi) {
+                MDEURL += incidenturi.replace('hXXps[:]', 'https:') + '<br><br>';
             }
         }
         showFlag('info', 'MDE URL:', `${MDEURL}`, 'manual');
@@ -1663,6 +1670,78 @@ function Defender365AlertHandler(...kwargs) {
 
     addButton('generateDescription', 'Description', generateDescription);
     addButton('openMDE', 'MDE', openMDE);
+}
+
+function AzureAlertHandler(...kwargs) {
+    const { rawLog } = kwargs[0];
+
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const { eventhub } = JSON.parse(log);
+                const { ExtendedProperties, Entities } = eventhub;
+                let entities = {};
+                Entities.forEach(function (entity) {
+                    if (entity.Type === 'host') {
+                        entities['host'] = entity['HostName'];
+                    }
+                });
+                acc.push({
+                    summary: eventhub['AlertDisplayName'],
+                    host: ExtendedProperties['Machine Name'] || entities['host'],
+                    user: ExtendedProperties['Account'],
+                    process: ExtendedProperties['Process Name'],
+                    cmd: ExtendedProperties['Command Line'],
+                    domain: ExtendedProperties['DomainName'],
+                    clientIP: ExtendedProperties['Client IP address'] || ExtendedProperties['Client IP Address'],
+                    clientHost: ExtendedProperties['Client hostname'],
+                    UPN: ExtendedProperties['UPN'],
+                    userAgent: ExtendedProperties['Client Information'],
+                    principalName: ExtendedProperties['Client principal name'],
+                    application: ExtendedProperties['Client application'],
+                    SampleIps: ExtendedProperties['SampleIps'],
+                    SampleURIs: ExtendedProperties['SampleURIs'],
+                    alerturi: eventhub['AlertUri']
+                });
+            } catch (error) {
+                console.log(`Error: ${error}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLog(rawLog);
+
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            let desc = `Observed ${info.summary}\n`;
+            Object.entries(info).forEach(([index, value]) => {
+                if (value !== undefined && value !== ' ' && index !== 'summary' && index !== 'alerturi') {
+                    desc += `${index}: ${value}\n`;
+                }
+            });
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    function openAzure() {
+        let AzureURL = '';
+        for (const info of alertInfo) {
+            const { alerturi } = info;
+            if (alerturi) {
+                AzureURL += `${alerturi.replace('hXXps', 'https').replace(/\[|\]/g, '')}<br><br>`;
+            }
+        }
+        showFlag('info', 'Azure URL:', `${AzureURL}`, 'manual');
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+    addButton('openAzure', 'Azure', openAzure);
 }
 
 (function () {
@@ -1708,7 +1787,8 @@ function Defender365AlertHandler(...kwargs) {
                 'sepm-traffic': SpemAlertHandler,
                 'vmwarecarbonblack_cef': VMCEFAlertHandler,
                 'aws-cloudtrail': AwsAlertHandler,
-                'm365-defender-json': Defender365AlertHandler
+                'm365-defender-json': Defender365AlertHandler,
+                'azureeventhub': AzureAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
