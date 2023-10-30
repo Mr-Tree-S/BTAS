@@ -1599,7 +1599,8 @@ function Defender365AlertHandler(...kwargs) {
                     user: entities.user,
                     process: entities.process,
                     file: entities.file,
-                    ip: entities.ip
+                    ip: entities.ip,
+                    alertid: alerts.alertId
                 });
             } catch (error) {
                 console.log(`Error: ${error}`);
@@ -1626,7 +1627,12 @@ function Defender365AlertHandler(...kwargs) {
                                 }
                             });
                         } else {
-                            if (info[key] !== undefined && info[key] !== ' ' && key !== 'summary') {
+                            if (
+                                info[key] !== undefined &&
+                                info[key] !== ' ' &&
+                                key !== 'summary' &&
+                                key !== 'alertid'
+                            ) {
                                 desc += `${key}: ${info[key]}\n`;
                             }
                         }
@@ -1643,7 +1649,19 @@ function Defender365AlertHandler(...kwargs) {
         showDialog(alertMsg);
     }
 
+    function openMDE() {
+        let MDEURL = '';
+        for (const info of alertInfo) {
+            const { alertid } = info;
+            if (alertid && !MDEURL.includes(alertid)) {
+                MDEURL += `https://security.microsoft.com/alerts/${alertid}<br><br>`;
+            }
+        }
+        showFlag('info', 'MDE URL:', `${MDEURL}`, 'manual');
+    }
+
     addButton('generateDescription', 'Description', generateDescription);
+    addButton('openMDE', 'MDE', openMDE);
 }
 
 (function () {
