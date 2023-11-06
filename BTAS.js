@@ -1767,7 +1767,7 @@ function AzureAlertHandler(...kwargs) {
     }
 
     // Issue page: Alert Handler
-    setTimeout(() => {
+    setInterval(() => {
         const LogSourceDomain = $('#customfield_10223-val').text().trim();
         const rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
         const summary = $('#summary-val').text().trim();
