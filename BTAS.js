@@ -140,12 +140,19 @@ function registerSearchMenu() {
                 '%20ORDER%20BY%20created%20DESC'
         },
         { name: 'VT', url: 'https://www.virustotal.com/gui/search/%s' },
-        { name: 'AbuseIPDB', url: 'https://www.abuseipdb.com/check/%s' }
+        { name: 'AbuseIPDB', url: 'https://www.abuseipdb.com/check/%s' },
+        {
+            name: 'Base64 Decode',
+            url: `https://icyberchef.com/#recipe=From_Base64('A-Za-z0-9%2B/%3D',true,false)&input=%b`
+        }
     ];
     searchEngines.forEach((engine) => {
         GM_registerMenuCommand(engine.name, () => {
             const selectedText = window.getSelection().toString();
-            const searchURL = engine.url.replace('%s', selectedText).replace('%D', LogSourceDomain);
+            const searchURL = engine.url
+                .replace('%s', selectedText)
+                .replace('%D', LogSourceDomain)
+                .replace('%b', btoa(selectedText));
             if (selectedText.length === 0) {
                 showFlag('error', 'No text selected', 'Please select some text and try again', 'auto');
             } else {
