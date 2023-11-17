@@ -470,7 +470,7 @@ function checkOrg() {
  * This function is used for checking ATT&CK field
  */
 function checkATTCK() {
-    const status = $('#status-val > span').text().trim();
+    const status = $('#opsbar-transitions_more > span').text().trim();
     const attck = $('#rowForcustomfield_10220 > div > strong > label').text();
     if (status == 'Waiting for customer' && attck == '') {
         AJS.banner({ body: `The ATT&CK field is not filled in` });
