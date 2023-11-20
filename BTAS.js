@@ -1037,8 +1037,6 @@ function VMCEFAlertHandler(...kwargs) {
                 let value = field.slice(1).join('=');
 
                 if (value) {
-                    value = value.replace(/\\\\=/g, '=').replace(/\\\\s/g, ' ');
-
                     if (key === 'filePath' || key === 'msg' || key === 'start' || key === 'rt') {
                         let nextFieldIndex = i + 1;
                         while (nextFieldIndex < fields.length && !fields[nextFieldIndex].includes('=')) {
@@ -1313,8 +1311,6 @@ function CSAlertHandler(...kwargs) {
                 let value = field.slice(1).join('=');
 
                 if (value) {
-                    value = value.replace(/\\\\=/g, '=').replace(/\\\\s/g, ' ');
-
                     if (key === 'filePath' || key === 'msg' || key === 'cs5' || key === 'start' || key === 'rt') {
                         let nextFieldIndex = i + 1;
                         while (nextFieldIndex < fields.length && !fields[nextFieldIndex].includes('=')) {
