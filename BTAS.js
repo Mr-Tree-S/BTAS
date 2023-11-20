@@ -47,6 +47,9 @@ function showFlag(type, title, body, close) {
  * @param {string} body - Alert Message String
  */
 function showDialog(body) {
+    // avoid editor treat double backslash as breakline
+    body = body.replace(/\\\\/g, '\\');
+
     // Create custom dialog style
     const customDialogContent = AJS.$(`<section
             id="custom-dialog"
