@@ -211,14 +211,15 @@ function QuickReply() {
 
     const commentBarSection = document.querySelector('aui-section#reply');
     const replyComment = {
-        'Reply 1': 'Dear Customer,<br>Thanks for your reply, we will close this case.<br>Best Regards.',
-        'Reply 2': 'Dear Customer,<br>Thanks for your reply, we will keep monitor.<br>Best Regards.',
+        'Close ticket': 'Dear Customer,<br>Thanks for your reply, we will close this case.<br>Best Regards.',
+        'Monitor ticket': 'Dear Customer,<br>Thanks for your reply, we will keep monitor.<br>Best Regards.',
+        'Waiting ticket': '',
         'Haeco high severity':
-            '<h2><strong><span style="color: red;" data-mce-style="color: red;"><samp>[The ticket is escalated to High Severity]</samp></span></strong></h2>',
+            '<h2><strong><span style="color: red;" data-mce-style="color: red;"><samp>[The ticket is escalated to High Severity]</samp></span></strong></h2><br>',
         'Haeco medium severity':
-            '<h2><span style="color: rgb(255, 171, 0);" data-mce-style="color: #ffab00;"><strong><samp>[The ticket is escalated to Medium Severity]</samp></strong></span></h2>',
+            '<h2><span style="color: rgb(255, 171, 0);" data-mce-style="color: #ffab00;"><strong><samp>[The ticket is escalated to Medium Severity]</samp></strong></span></h2><br>',
         'Haeco low severity':
-            '<h2><span style="color: rgb(76, 154, 255);" data-mce-style="color: #4c9aff;"><strong><samp>[The ticket is de-escalated to Low Severity]</samp></strong></span></h2>'
+            '<h2><span style="color: rgb(76, 154, 255);" data-mce-style="color: #4c9aff;"><strong><samp>[The ticket is de-escalated to Low Severity]</samp></strong></span></h2><br>'
     };
 
     // Check local storage at initialization time
