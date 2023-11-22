@@ -1821,11 +1821,21 @@ function AzureAlertHandler(...kwargs) {
         const LogSourceDomain = $('#customfield_10223-val').text().trim();
         const Labels = $('.labels-wrap .labels li a span').text();
         const LogSource = $('#customfield_10204-val').text().trim();
+        const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
         const TicketAutoEscalate = $('#customfield_12202-val').text().trim();
         const Status = $('#status-val > span').text().trim();
         const RawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
         const Summary = $('#summary-val').text().trim();
-        const pageData = { LogSourceDomain, Labels, LogSource, TicketAutoEscalate, Status, RawLog, Summary };
+        const pageData = {
+            LogSourceDomain,
+            Labels,
+            LogSource,
+            DecoderName,
+            TicketAutoEscalate,
+            Status,
+            RawLog,
+            Summary
+        };
         // If it pops up once, it will not be reminded again
         if ($('#issue-content').length && !$('#generateTicketNotify').length) {
             console.log('#### Code Issue page: Edit Notify ####');
