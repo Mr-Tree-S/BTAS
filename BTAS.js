@@ -569,16 +569,23 @@ function ticketNotify(pageData) {
                             : [notifyConfigValue];
 
                         for (let eachNotifyConfigValue of notifyConfigValueArray) {
-                            const { ticketname, message, properties, click } = eachNotifyConfigValue;
+                            const { ticketname, starttime, endtime, message, properties, click } =
+                                eachNotifyConfigValue;
                             const button = clickButton(click);
 
-                            if (checkProperties(properties, pageData)) {
+                            // 判断是否在时间范围内
+                            const isInTimeRange =
+                                (!starttime || new Date() >= new Date(starttime)) &&
+                                (!endtime || new Date() <= new Date(endtime));
+
+                            if (isInTimeRange && checkProperties(properties, pageData)) {
                                 if (button == '') {
                                     showFlag('warning', `${ticketname} ticket`, `${message}`, 'manual');
-                                } else
+                                } else {
                                     $(button).on('click', () => {
                                         showFlag('warning', `${ticketname} ticket`, `${message}`, 'manual');
                                     });
+                                }
                             }
                         }
                     }
