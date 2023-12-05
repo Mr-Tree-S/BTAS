@@ -262,51 +262,49 @@ let notifyKey = [...exceptionKey];
 
 /**jsonView */
 function jsonToTree(data) {
-    let flag = false
+    let flag = false;
     let html = '<ul class="code-java" style="list-style-type: none;margin-top: 0px;padding-left: 20px;">';
     if (Array.isArray(data)) {
-        let temp = "["
-        data.forEach(element=>{
-            temp += jsonToTree(element)
-        }
-        );
+        let temp = '[';
+        data.forEach((element) => {
+            temp += jsonToTree(element);
+        });
         html += temp + '],';
     } else if (data != null && typeof data === 'object' && Object.keys(data).length !== 0) {
-        flag = true
+        flag = true;
         for (let key in data) {
             if (data.hasOwnProperty(key)) {
                 html += '<li class="code-quote">"' + key + '": ';
                 if (Array.isArray(data[key])) {
-                    let temp = "["
-                    data[key].forEach(element=>{
-                        temp += jsonToTree(element)
-                    }
-                    );
+                    let temp = '[';
+                    data[key].forEach((element) => {
+                        temp += jsonToTree(element);
+                    });
                     html += temp + '],';
                 } else if (typeof data[key] === 'object') {
                     try {
                         if (Object.keys(data[key]).length == 0) {
-                            html += '{},'
+                            html += '{},';
                         } else {
-                            const str = jsonToTree(data[key])
-                            html += str
+                            const str = jsonToTree(data[key]);
+                            html += str;
                         }
                     } catch (TypeError) {
-                        html += '"",'
+                        html += '"",';
                     }
                 } else {
-                    html += '"' + data[key].toString() + '",'
+                    html += '"' + data[key].toString() + '",';
                 }
                 html += '</li>';
             }
         }
     } else {
-        html += '"' + data.toString() + '",'
+        html += '"' + data.toString() + '",';
     }
     if (flag === true) {
-        html = "{" + html + "},"
+        html = '{' + html + '},';
     }
-    html += '</ul>'
+    html += '</ul>';
     return html;
 }
 
@@ -330,10 +328,10 @@ function registerExceptionMenu() {
     });
 
     GM_registerMenuCommand('JsonViewer', () => {
-        var isJson = function(str){
-            try{
+        var isJson = function (str) {
+            try {
                 JSON.parse(str);
-            }catch(e){
+            } catch (e) {
                 showFlag('error', 'Please select json format data', '', 'auto');
                 return false;
             }
@@ -343,12 +341,12 @@ function registerExceptionMenu() {
         if (!selection) {
             showFlag('error', 'No Issue Key selected', '', 'auto');
             return;
-        }else if(isJson(selection)){
+        } else if (isJson(selection)) {
             var jsonData = jsonToTree(JSON.parse(selection));
-          /**  var jsonView = document.createElement('pre');
+            /**  var jsonView = document.createElement('pre');
             jsonView.textContent = JSON.stringify(jsonData,null,2);
             **/
-            showDialog(jsonData,"Json Format");
+            showDialog(jsonData, 'Json Format');
         }
     });
 
@@ -358,17 +356,15 @@ function registerExceptionMenu() {
             showFlag('error', 'No Issue Key selected', '', 'auto');
             return;
         }
-        let result ="";
-        try{
+        let result = '';
+        try {
             result = atob(selection);
-        }catch(e){
-            showFlag('error','发生异常'+e,'','auto')
+        } catch (e) {
+            showFlag('error', '发生异常' + e, '', 'auto');
             return false;
         }
-        showDialog(result,"Decode Base64");
+        showDialog(result, 'Decode Base64');
     });
-
-
 }
 
 /**
@@ -1356,6 +1352,7 @@ function FortigateAlertHandler(...kwargs) {
                 dstcountry,
                 hostname,
                 url,
+                referralurl,
                 action,
                 devname,
                 user,
@@ -1371,7 +1368,8 @@ function FortigateAlertHandler(...kwargs) {
                 url: url,
                 action: action,
                 cfgattr: cfgattr,
-                msg: msg
+                msg: msg,
+                referralurl: referralurl
             };
             acc.push(extract_alert_info);
             return acc;
