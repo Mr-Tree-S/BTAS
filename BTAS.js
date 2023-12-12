@@ -14,6 +14,7 @@
 // @require      https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js
 // @require      https://unpkg.com/@popperjs/core@2/dist/umd/popper.min.js
 // @require      https://unpkg.com/tippy.js@6/dist/tippy-bundle.umd.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js
 // @grant        GM_registerMenuCommand
 // @grant        GM_unregisterMenuCommand
 // @grant        GM_xmlhttpRequest
@@ -36,8 +37,8 @@ var $ = window.jQuery;
 function showFlag(type, title, body, close) {
     AJS.flag({
         type: type,
-        title: title,
-        body: body,
+        title: DOMPurify.sanitize(title),
+        body: DOMPurify.sanitize(body),
         close: close
     });
 }
@@ -47,8 +48,8 @@ function showFlag(type, title, body, close) {
  * @param {string} body - Alert Message String
  */
 function showDialog(body) {
-    // avoid editor treat double backslash as breakline
-    body = body.replace(/\\\\/g, '\\');
+    // avoid editor treat double backslash as breakline and avoid xss attack
+    body = DOMPurify.sanitize(body.replace(/\\\\/g, '\\'));
 
     // Create custom dialog style
     const customDialogContent = AJS.$(`<section
