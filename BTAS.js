@@ -743,7 +743,8 @@ function cortexAlertHandler(...kwargs) {
         'toppanmerrill': 'https://tpm-apac.xdr.us.paloaltonetworks.com/',
         'welab': 'https://welabbank.xdr.sg.paloaltonetworks.com/',
         'goldpeak': 'https://gpbi-poc.xdr.sg.paloaltonetworks.com/',
-        'hkbn': 'https://elite.xdr.sg.paloaltonetworks.com/'
+        'hkbn': 'https://elite.xdr.sg.paloaltonetworks.com/',
+        'cityu': 'https://cityu.xdr.us.paloaltonetworks.com/'
     };
     const orgNavigator = orgDict[LogSourceDomain];
 
