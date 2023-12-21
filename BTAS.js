@@ -19,8 +19,11 @@
 // @grant        GM_unregisterMenuCommand
 // @grant        GM_xmlhttpRequest
 // @grant        GM_openInTab
+// @grant        GM_getValue
+// @grant        GM_setValue
 // @connect      raw.githubusercontent.com
 // @connect      myqcloud.com
+// @connect      172.18.4.120
 // @run-at       document-idle
 // @grant        GM_addStyle
 // ==/UserScript==
@@ -694,112 +697,106 @@ function ticketNotify(pageData) {
     console.log('#### Code ticketNotify run ####');
 
     function fetchOrgNotifydict() {
+        // 从本地存储获取缓存的文件内容和上次更新时间
+        const cachedContent = GM_getValue('cachedFileContent', null);
+
         GM_xmlhttpRequest({
             method: 'GET',
-            url: 'https://aspirepig-1251964320.cos.ap-shanghai.myqcloud.com/notify.json',
+            url: 'https://172.18.4.120/api/7vVKD9hF/notifys/',
+            headers: {
+                'api-key': 'Tnznjha3yhJgA7YG'
+            },
+            timeout: 2000, // 超过2秒未获取到文件则使用缓存文件
             onload: function (response) {
                 if (response.status === 200) {
                     const data = JSON.parse(response.responseText);
-                    addClickListener(data);
-                    generateNotify();
+
+                    // 本地无缓存，第一次获取文件保存到本地
+                    if (cachedContent == null) {
+                        // 更新本地存储中的文件内容和更新时间
+                        GM_setValue('cachedFileContent', data);
+
+                        checkNotify(data.items, pageData);
+                        generateNotify();
+                    }
+
+                    // 如果本地存储中有缓存，并且文件内容有变化
+                    if (cachedContent !== null && JSON.stringify(cachedContent) !== JSON.stringify(data)) {
+                        // 更新本地存储中的文件内容
+                        GM_setValue('cachedFileContent', data);
+
+                        // 使用最新文件
+                        checkNotify(data.items, pageData);
+                    }
+
+                    // 本地存在缓存，且内容相同则使用缓存文件
+                    if (cachedContent !== null && JSON.stringify(cachedContent) == JSON.stringify(data)) {
+                        checkNotify(cachedContent.items, pageData);
+                        generateNotify();
+                    }
                 } else {
                     console.error('Error fetching orgNotifydict:', response.status);
                 }
             },
+            ontimeout: function () {
+                // 未连接 Darklab VPN 时使用缓存文件
+                if (cachedContent !== null) {
+                    checkNotify(cachedContent.items, pageData);
+                    generateNotify();
+                } else {
+                    showFlag('Error', '文件获取失败', '未连接到 Darklab VPN，请连接后刷新页面', 'auto');
+                }
+            },
             onerror: function (error) {
-                console.error('Error fetching orgNotifydict:', error);
+                console.error('Error:', error);
             }
         });
     }
     fetchOrgNotifydict();
 
-    // Add a click event listener to button
-    function addClickListener(orgNotifydict) {
+    function checkNotify(Notifydict, pageData) {
         // get button path
-        function clickButton(click) {
-            const buttonMap = {
-                Edit: '#edit-issue',
-                Resolve: '#action_id_761',
-                None: ''
-            };
-            return buttonMap[click] || '';
-        }
+        const buttonMap = {
+            Edit: '#edit-issue',
+            Resolve: '#action_id_761',
+            None: ''
+        };
 
-        // check all the condition
-        function checkProperties(properties, valueFromPage) {
-            // If properties is null or undefined, always return true
-            if (Object.keys(properties).length === 0) {
-                return true;
-            }
-
-            // Iterate through all key-value pairs of the properties object
-            for (const [property, value] of Object.entries(properties)) {
-                // Converts the value of the valueFromPage property to an array
-                const propertyValue = Array.isArray(valueFromPage[property])
-                    ? valueFromPage[property]
-                    : [valueFromPage[property]];
-
-                // Check whether the value of the property is contained in the properties object
-                if (
-                    propertyValue.some((item) => {
-                        const valueArray = Array.isArray(value) ? value : [value];
-                        return valueArray.some((eachvalue) => item.includes(eachvalue));
-                    })
-                ) {
-                    return true;
-                }
-            }
-
-            // Returns false if no properties match
-            return false;
-        }
-
-        function processSection(keyFromPage) {
-            // Gets data for a specific section of a configuration file
-            const notifyConfig = orgNotifydict[keyFromPage];
-            // Gets the value of a specific field extracted from web page
-            const valueFromPage = pageData[keyFromPage];
-            // Convert to Array List to handle mutil values from page
-            const valueFromPageArray = Array.isArray(valueFromPage) ? valueFromPage : [valueFromPage];
-
-            for (const value of valueFromPageArray) {
-                for (const [notifyConfigKey, notifyConfigValue] of Object.entries(notifyConfig)) {
-                    // 判断当前工单对应的配置项
-                    if (value.includes(notifyConfigKey)) {
-                        // convert notifyConfigValue to array
-                        const notifyConfigValueArray = Array.isArray(notifyConfigValue)
-                            ? notifyConfigValue
-                            : [notifyConfigValue];
-
-                        for (let eachNotifyConfigValue of notifyConfigValueArray) {
-                            const { ticketname, starttime, endtime, message, properties, click } =
-                                eachNotifyConfigValue;
-                            const button = clickButton(click);
-
-                            // 判断是否在时间范围内
-                            const isInTimeRange =
-                                (!starttime || new Date() >= new Date(starttime)) &&
-                                (!endtime || new Date() <= new Date(endtime));
-
-                            if (isInTimeRange && checkProperties(properties, pageData)) {
-                                if (button == '') {
-                                    showFlag('warning', `${ticketname} ticket`, `${message}`, 'manual');
-                                } else {
-                                    $(button).on('click', () => {
-                                        showFlag('warning', `${ticketname} ticket`, `${message}`, 'manual');
-                                    });
-                                }
-                            }
-                        }
+        function checkProperties(properties, pageData) {
+            const condition = (property) => {
+                const propertyArray = property.propertiesVal.split(',');
+                for (const val of propertyArray) {
+                    if (pageData[property.propertiesKey].includes(val)) {
+                        return true;
                     }
                 }
-            }
+            };
+
+            return properties.reduce((acc, property) => {
+                return acc && condition(property);
+            }, true);
         }
 
-        processSection('LogSourceDomain');
-        processSection('LogSource');
-        processSection('TicketAutoEscalate');
-        processSection('Summary');
+        for (const notify of Notifydict) {
+            const { ticketname, starttime, endtime, message, properties, button, status } = notify;
+            const isInTimeRange =
+                (!starttime || new Date() >= new Date(starttime)) && (!endtime || new Date() <= new Date(endtime));
+            const clickButton = buttonMap[button];
+
+            if (status == 'Disable' || !isInTimeRange) {
+                continue;
+            }
+
+            if (checkProperties(properties, pageData)) {
+                if (clickButton == '') {
+                    showFlag('warning', `${ticketname} ticket`, `${message.replace(/\r?\n/g, '<br>')}`, 'manual');
+                } else {
+                    $(clickButton).on('click', () => {
+                        showFlag('warning', `${ticketname} ticket`, `${message.replace(/\r?\n/g, '<br>')}`, 'manual');
+                    });
+                }
+            }
+        }
     }
 
     // add a element into toolbar
@@ -2050,7 +2047,9 @@ function AzureAlertHandler(...kwargs) {
         const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
         const TicketAutoEscalate = $('#customfield_12202-val').text().trim();
         const Status = $('#status-val > span').text().trim();
-        const RawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
+        const RawLog =
+            $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim() ||
+            $('#field-customfield_10232 > div.twixi-wrap.verbose > div > div > div > pre').text();
         const Summary = $('#summary-val').text().trim();
         const pageData = {
             LogSourceDomain,
