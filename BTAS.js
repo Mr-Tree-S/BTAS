@@ -1915,7 +1915,7 @@ function AzureAlertHandler(...kwargs) {
             console.log('#### Code Issue page: check Keywords ####');
             checkKeywords();
             checkATTCK();
-            checkOrg();
+            //checkOrg();
         }
     }, 4500);
 
