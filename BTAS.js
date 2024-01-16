@@ -633,10 +633,16 @@ function checkOrg() {
                     'SPAC-SCC-HK-ONPrem': ['SPAC-SCC-HK-ONPrem']
                 };
                 if (organization == '') {
-                    alert('请填写Organization');
+                    let result = confirm('请填写 Organization 字段，若不升级请点击取消忽略该提示');
+                    if (!result) {
+                        $('#edit-issue-submit').off('click'); // 点击取消则不再弹出提示
+                    }
                 } else if (!orgDict[LogSourceDomain].includes(organization)) {
-                    let alertinfo = `Organization:${organization}\nLog Source Doamin:${LogSourceDomain}\n所选 Organization 不符，请升级到 ${LogSourceDomain} 后再提交`;
-                    alert(alertinfo);
+                    let alertinfo = `Organization:${organization}\nLog Source Doamin:${LogSourceDomain}\n所选 Organization 不符，请升级到 ${LogSourceDomain} 后再提交\n若不升级请点击取消忽略该提示`;
+                    let result = confirm(alertinfo);
+                    if (!result) {
+                        $('#edit-issue-submit').off('click'); // 点击取消则不再弹出提示
+                    }
                 } else {
                     $('#edit-issue-submit').off('click'); // 如果验证通过，则解绑事件再模拟点击提交
                     document.getElementById('edit-issue-submit').click();
