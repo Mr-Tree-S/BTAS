@@ -506,153 +506,172 @@ function checkKeywords() {
  * This function is used for checking Orgnazation field
  */
 function checkOrg() {
-    // 监视页面动态元素的变化，出现edit-issue-submit时绑定事件
-    const observer = new MutationObserver(() => {
-        if (document.getElementById('edit-issue-submit')) {
-            // 先解绑事件，再绑定，避免重复绑定
-            $('#edit-issue-submit').off('click');
-            $('#edit-issue-submit').click((e) => {
-                e.preventDefault(); // 阻止表单提交
-                const organization =
-                    DOMPurify.sanitize(
-                        $('#customfield_10002-multi-select > div.representation > ul > li').text().trim()
-                    ) || '';
-                const LogSourceDomain = DOMPurify.sanitize($('#customfield_10223').val().trim()) || '';
-                const orgDict = {
-                    'je-pilot': ['JE-pilot', 'JE-Past'],
-                    'welab': ['WELAB'],
-                    'jsshk': ['JSSHK'],
-                    'hashkey': ['HASHKEY'],
-                    'kerrypropshk': ['KerryPropsHK'],
-                    'newworld': ['NWS', 'NWD-OnPrem', 'NWD-Network', 'NWD-Cloud', 'K11-OnPrem', 'NWD'],
-                    'k11-cn': ['K11-CN', 'K11-OnPrem'],
-                    'spac-haeco-hk': ['SPAC-Haeco-HK'],
-                    'k11-hk': ['K11-CN', 'NWD-Cloud', 'K11-Network', 'K11-OnPrem', 'K11-Cloud', 'K11', 'K11-Luxba'],
-                    'spac-haesl-hk': ['SPAC-Haesl-HK'],
-                    'spac-motors': ['SPAC-Motors'],
-                    'toysrus': ['TOYSRUS'],
-                    'swireproperties': ['Swireprop-unclassified', 'SPL_CHINA', 'SPL_HK', 'SHG_CHINA', 'SHG_HK'],
-                    'ckah': ['CKAH'],
-                    'spac-scc-hk-aws': ['SPAC-SCC-HK-AWS'],
-                    'lsh-kr-hsmcl': ['LSH-KR-HSMCL'],
-                    'mizuho-sc': ['MIZUHO-SC'],
-                    'aeon': ['AEON', 'AEON CLOUD'],
-                    'huatai': ['HTSC'],
-                    'ctfj': ['CTFJ'],
-                    'esf-is': ['ESF-IS'],
-                    'esf-dc': [
-                        'ESF-IS',
-                        'ESF-SC',
-                        'ESF-DC',
-                        'ESF-KGV',
-                        'ESF-WIS',
-                        'ESF-DISCOVERYCOLLEGE',
-                        'ESF-HQ',
-                        'ESF-SJS',
-                        'ESF-QBS',
-                        'ESF-BHS',
-                        'ESF-JCSRS',
-                        'ESF-BS'
-                    ],
-                    'nws': ['NWS'],
-                    'spac-haeco-amrhcs': ['SPAC-Haeco-AMRHCS'],
-                    'esf-sc': ['ESF-SC'],
-                    'esf-kgv': ['ESF-KGV'],
-                    'hkbn': ['HKBN'],
-                    'esf-sis': ['ESF-SIS'],
-                    'ctfe': ['CTFE'],
-                    'spac-resources-hk': ['SPAC-Resources-HK'],
-                    'hkexpress': ['HKEXPRESS'],
-                    'spac-sugar-hk': ['SPAC-Sugar-HK'],
-                    'maxims-hk': ['MAXIMS-HK', 'MAXIMS-HKCloud', 'MAXIMS-HKServer'],
-                    'hktvmall': ['HKTVMALL'],
-                    'spac-scc-hk-onprem': ['SPAC-SCC-HK-ONPrem'],
-                    'esf-wis': ['ESF-WIS'],
-                    'esf-discoverycollege': ['ESF-DISCOVERYCOLLEGE'],
-                    'toppanmerrill': ['TOPPAN'],
-                    'lsh-tw': ['LSH-TW'],
-                    'lsh-vn': ['LSH-VN'],
-                    'sino': ['SINO'],
-                    'esf-kjs': ['ESF-KJS'],
-                    'esf-hq': ['ESF-DISCOVERYCOLLEGE', 'ESF-HQ', 'ESF-RC', 'ESF-BHS'],
-                    'tvb': ['TVB'],
-                    'kef': ['KEF'],
-                    'esf-ks': ['ESF-KS'],
-                    'citysuper': ['C!S'],
-                    'hkgta': ['HKGTA'],
-                    'lsh-hk': ['LSH-HK-Corp', 'LSH-HK-Corp-SAP', 'LSH-HK-Auto-SAP\uff0cLSH-HK-Auto'],
-                    'spac-scc-tw-onprem': ['SPAC-SCC-TW-ONPrem'],
-                    'esf-rc': ['ESF-RC'],
-                    'hkuniversity': ['HKU-CPOS'],
-                    'bossini': ['BOS'],
-                    'lsh-kr-smc': ['LSH-KR-SMC'],
-                    'NewWorld': ['K11-CN', 'NWD-Network', 'K11-Network', 'K11'],
-                    'esf-sjs': ['ESF-SJS'],
-                    'glshk': ['GLSHK'],
-                    'esf-cwbs': ['ESF-CWBS'],
-                    'jetco': ['Jetco'],
-                    'esf-qbs': ['ESF-QBS'],
-                    'goldpeak': ['GOLDPEAK'],
-                    'mdb': ['MDB'],
-                    'wynn': ['WYNN'],
-                    'esf-abs': ['ESF-ABS'],
-                    'NWD-Network': ['NWD-Network'],
-                    'cityu': ['CityU'],
-                    'esf-ps': ['ESF-PS'],
-                    'esf-gs': ['ESF-GS'],
-                    'spac-haeco-dfw': ['SPAC-Haeco-DFW'],
-                    'SPAC-YoungDomain': ['Swireprop-unclassified', 'SPAC-YoungDomain'],
-                    'esf-bhs': ['ESF-BHS'],
-                    'kadensa': ['Kadensa'],
-                    'melco': ['MELCO'],
-                    'esf-hs': ['ESF-HS'],
-                    'MDB': ['MDB'],
-                    'esf-bs': ['ESF-BS'],
-                    'esf-jcsrs': ['ESF-JCSRS'],
-                    'esf-tyk': ['ESF-TYK'],
-                    'esf-wksk': ['ESF-WKSK'],
-                    'JSSHK': ['JSSHK'],
-                    'SPAC-Haeco-HK': ['SPAC-Haeco-HK'],
-                    'HKTVMALL': ['HKTVMALL'],
-                    'qvp': ['QVP'],
-                    'SPAC-Motors': ['SPAC-Motors'],
-                    'esf-tck': ['ESF-TCK'],
-                    'fung': ['FUNG HK'],
-                    'hthk': ['HTHK'],
-                    'K11-Network': ['K11-Network'],
-                    'pwcsoc': ['SOC'],
-                    'SPAC-HAECO-HK': ['SPAC-Haeco-HK'],
-                    'CTFJ': ['CTFJ'],
-                    'ESF-WIS': ['ESF-WIS', 'ESF-HQ'],
-                    'Goldpeak': ['GOLDPEAK'],
-                    'JE-pilot': ['JE-pilot'],
-                    'KerryPropsHK': ['KerryPropsHK'],
-                    'nwd': ['NWD'],
-                    'nwd-cloud': ['NWD-Cloud'],
-                    'safeguards': ['SAFEGUARDS'],
-                    'SPAC-SCC-HK-ONPrem': ['SPAC-SCC-HK-ONPrem']
-                };
-                if (organization == '') {
-                    let result = confirm('请填写 Organization 字段，若不升级请点击取消忽略该提示');
-                    if (!result) {
-                        $('#edit-issue-submit').off('click'); // 点击取消则不再弹出提示
-                    }
-                } else if (!orgDict[LogSourceDomain].includes(organization)) {
-                    let alertinfo = `Organization:${organization}\nLog Source Doamin:${LogSourceDomain}\n所选 Organization 不符，请升级到 ${LogSourceDomain} 后再提交\n若不升级请点击取消忽略该提示`;
-                    let result = confirm(alertinfo);
-                    if (!result) {
-                        $('#edit-issue-submit').off('click'); // 点击取消则不再弹出提示
-                    }
-                } else {
-                    $('#edit-issue-submit').off('click'); // 如果验证通过，则解绑事件再模拟点击提交
-                    document.getElementById('edit-issue-submit').click();
-                }
-            });
-        }
-    });
+    const projectType = $('#project-name-val').text().trim();
 
-    // 绑定目标节点并启动监视者
-    observer.observe(document.body, { childList: true });
+    if (projectType == 'MSS') {
+        // 监视页面动态元素的变化，出现edit-issue-submit时绑定事件
+        const observer = new MutationObserver(() => {
+            if (document.getElementById('edit-issue-submit')) {
+                // 先解绑事件，再绑定，避免重复绑定
+                $('#edit-issue-submit').off('click');
+                $('#edit-issue-submit').click((e) => {
+                    e.preventDefault(); // 阻止表单提交
+                    const organization =
+                        DOMPurify.sanitize(
+                            $('#customfield_10002-multi-select > div.representation > ul > li').text().trim()
+                        ) || '';
+                    const LogSourceDomain = DOMPurify.sanitize($('#customfield_10223').val().trim()) || '';
+                    const orgDict = {
+                        'Test': ['Test Organization'],
+                        'je-pilot': ['JE-pilot', 'JE-Past'],
+                        'welab': ['WELAB'],
+                        'jsshk': ['JSSHK'],
+                        'hashkey': ['HASHKEY'],
+                        'kerrypropshk': ['KerryPropsHK'],
+                        'newworld': ['NWS', 'NWD-OnPrem', 'NWD-Network', 'NWD-Cloud', 'K11-OnPrem', 'NWD'],
+                        'k11-cn': ['K11-CN', 'K11-OnPrem'],
+                        'spac-haeco-hk': ['SPAC-Haeco-HK'],
+                        'k11-hk': ['K11-CN', 'NWD-Cloud', 'K11-Network', 'K11-OnPrem', 'K11-Cloud', 'K11', 'K11-Luxba'],
+                        'spac-haesl-hk': ['SPAC-Haesl-HK'],
+                        'spac-motors': ['SPAC-Motors'],
+                        'toysrus': ['TOYSRUS'],
+                        'swireproperties': ['Swireprop-unclassified', 'SPL_CHINA', 'SPL_HK', 'SHG_CHINA', 'SHG_HK'],
+                        'ckah': ['CKAH'],
+                        'spac-scc-hk-aws': ['SPAC-SCC-HK-AWS'],
+                        'lsh-kr-hsmcl': ['LSH-KR-HSMCL'],
+                        'mizuho-sc': ['MIZUHO-SC'],
+                        'aeon': ['AEON', 'AEON CLOUD'],
+                        'huatai': ['HTSC'],
+                        'ctfj': ['CTFJ'],
+                        'esf-is': ['ESF-IS'],
+                        'esf-dc': [
+                            'ESF-IS',
+                            'ESF-SC',
+                            'ESF-DC',
+                            'ESF-KGV',
+                            'ESF-WIS',
+                            'ESF-DISCOVERYCOLLEGE',
+                            'ESF-HQ',
+                            'ESF-SJS',
+                            'ESF-QBS',
+                            'ESF-BHS',
+                            'ESF-JCSRS',
+                            'ESF-BS'
+                        ],
+                        'nws': ['NWS'],
+                        'spac-haeco-amrhcs': ['SPAC-Haeco-AMRHCS'],
+                        'esf-sc': ['ESF-SC'],
+                        'esf-kgv': ['ESF-KGV'],
+                        'hkbn': ['HKBN'],
+                        'esf-sis': ['ESF-SIS'],
+                        'ctfe': ['CTFE'],
+                        'spac-resources-hk': ['SPAC-Resources-HK'],
+                        'hkexpress': ['HKEXPRESS'],
+                        'spac-sugar-hk': ['SPAC-Sugar-HK'],
+                        'maxims-hk': ['MAXIMS-HK', 'MAXIMS-HKCloud', 'MAXIMS-HKServer'],
+                        'hktvmall': ['HKTVMALL'],
+                        'spac-scc-hk-onprem': ['SPAC-SCC-HK-ONPrem'],
+                        'esf-wis': ['ESF-WIS'],
+                        'esf-discoverycollege': ['ESF-DISCOVERYCOLLEGE'],
+                        'toppanmerrill': ['TOPPAN'],
+                        'lsh-tw': ['LSH-TW'],
+                        'lsh-vn': ['LSH-VN'],
+                        'sino': ['SINO'],
+                        'esf-kjs': ['ESF-KJS'],
+                        'esf-hq': ['ESF-DISCOVERYCOLLEGE', 'ESF-HQ', 'ESF-RC', 'ESF-BHS'],
+                        'tvb': ['TVB'],
+                        'kef': ['KEF'],
+                        'esf-ks': ['ESF-KS'],
+                        'citysuper': ['C!S'],
+                        'hkgta': ['HKGTA'],
+                        'lsh-hk': ['LSH-HK-Corp', 'LSH-HK-Corp-SAP', 'LSH-HK-Auto-SAP', 'LSH-HK-Auto'],
+                        'spac-scc-tw-onprem': ['SPAC-SCC-TW-ONPrem'],
+                        'esf-rc': ['ESF-RC'],
+                        'hkuniversity': ['HKU-CPOS'],
+                        'bossini': ['BOS'],
+                        'lsh-kr-smc': ['LSH-KR-SMC'],
+                        'NewWorld': ['K11-CN', 'NWD-Network', 'K11-Network', 'K11'],
+                        'esf-sjs': ['ESF-SJS'],
+                        'glshk': ['GLSHK'],
+                        'esf-cwbs': ['ESF-CWBS'],
+                        'jetco': ['Jetco'],
+                        'esf-qbs': ['ESF-QBS'],
+                        'goldpeak': ['GOLDPEAK'],
+                        'mdb': ['MDB'],
+                        'wynn': ['WYNN'],
+                        'esf-abs': ['ESF-ABS'],
+                        'NWD-Network': ['NWD-Network'],
+                        'cityu': ['CityU'],
+                        'esf-ps': ['ESF-PS'],
+                        'esf-gs': ['ESF-GS'],
+                        'spac-haeco-dfw': ['SPAC-Haeco-DFW'],
+                        'SPAC-YoungDomain': ['Swireprop-unclassified', 'SPAC-YoungDomain'],
+                        'esf-bhs': ['ESF-BHS'],
+                        'kadensa': ['Kadensa'],
+                        'melco': ['MELCO'],
+                        'esf-hs': ['ESF-HS'],
+                        'MDB': ['MDB'],
+                        'esf-bs': ['ESF-BS'],
+                        'esf-jcsrs': ['ESF-JCSRS'],
+                        'esf-tyk': ['ESF-TYK'],
+                        'esf-wksk': ['ESF-WKSK'],
+                        'JSSHK': ['JSSHK'],
+                        'SPAC-Haeco-HK': ['SPAC-Haeco-HK'],
+                        'HKTVMALL': ['HKTVMALL'],
+                        'qvp': ['QVP'],
+                        'SPAC-Motors': ['SPAC-Motors'],
+                        'esf-tck': ['ESF-TCK'],
+                        'fung': ['FUNG HK'],
+                        'hthk': ['HTHK'],
+                        'K11-Network': ['K11-Network'],
+                        'pwcsoc': ['SOC'],
+                        'SPAC-HAECO-HK': ['SPAC-Haeco-HK'],
+                        'CTFJ': ['CTFJ'],
+                        'ESF-WIS': ['ESF-WIS', 'ESF-HQ'],
+                        'Goldpeak': ['GOLDPEAK'],
+                        'JE-pilot': ['JE-pilot'],
+                        'KerryPropsHK': ['KerryPropsHK'],
+                        'nwd': ['NWD'],
+                        'nwd-cloud': ['NWD-Cloud'],
+                        'safeguards': ['SAFEGUARDS'],
+                        'SPAC-SCC-HK-ONPrem': ['SPAC-SCC-HK-ONPrem']
+                    };
+
+                    try {
+                        if (organization == '') {
+                            let result = confirm('请填写 Organization 字段，若不升级请点击取消忽略该提示');
+                            if (!result) {
+                                $('#edit-issue-submit').off('click'); // 点击取消则不再弹出提示
+                            }
+                        } else if (!orgDict[LogSourceDomain].includes(organization)) {
+                            let alertinfo = `Organization:${organization}\nLog Source Doamin:${LogSourceDomain}\n所选 Organization 不符，请升级到 ${LogSourceDomain} 后再提交\n若确认所选 Organization 无误，请点击取消忽略该提示`;
+                            let result = confirm(DOMPurify.sanitize(alertinfo));
+                            if (!result) {
+                                $('#edit-issue-submit').off('click'); // 点击取消则不再弹出提示
+                            }
+                        } else {
+                            // 如果验证通过，则解绑事件再模拟点击提交
+                            $('#edit-issue-submit').off('click');
+                            document.getElementById('edit-issue-submit').click();
+                        }
+                    } catch (error) {
+                        if (
+                            error.name === 'TypeError' &&
+                            error.message == "Cannot read properties of undefined (reading 'includes')"
+                        ) {
+                            $('#edit-issue-submit').off('click'); // 对于LogSourceDomain为空或者LogSourceDomain不在列表的工单跳过验证
+                            document.getElementById('edit-issue-submit').click();
+                        } else {
+                            throw error;
+                        }
+                    }
+                });
+            }
+        });
+
+        // 绑定目标节点并启动监视者
+        observer.observe(document.body, { childList: true });
+    }
 }
 
 /**
