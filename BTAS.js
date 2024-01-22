@@ -873,15 +873,22 @@ function cortexAlertHandler(...kwargs) {
             const isPANNGFW = source === 'PAN NGFW';
             const alert = { source, alert_id, name, description };
             if (isPANNGFW) {
-                const { action_local_ip, action_local_port, action_remote_ip, action_remote_port, action_pretty } =
-                    cortex_xdr;
+                const {
+                    action_local_ip,
+                    action_local_port,
+                    action_remote_ip,
+                    action_remote_port,
+                    action_pretty,
+                    alert_link
+                } = cortex_xdr;
                 alertInfo.push({
                     ...alert,
                     action_local_ip,
                     action_local_port,
                     action_remote_ip,
                     action_remote_port,
-                    action_pretty
+                    action_pretty,
+                    alert_link
                 });
             } else {
                 const {
@@ -908,7 +915,8 @@ function cortexAlertHandler(...kwargs) {
                     action_pretty,
                     host_name,
                     host_ip,
-                    user_name
+                    user_name,
+                    alert_link
                 } = cortex_xdr;
                 const action_list = {
                     action_file_name,
@@ -995,6 +1003,7 @@ function cortexAlertHandler(...kwargs) {
                     ...alert,
                     host_name,
                     host_ip,
+                    alert_link,
                     user_name,
                     filename,
                     filepath,
@@ -1038,18 +1047,21 @@ function cortexAlertHandler(...kwargs) {
                 cmd,
                 sha256,
                 description,
-                action_file_macro_sha256
+                action_file_macro_sha256,
+                alert_link
             } = info;
             if (source === 'PAN NGFW') {
-                const desc = `Observed ${name}\nSrcip: ${action_local_ip}   Srcport: ${action_local_port}\nDstip: ${action_remote_ip}   Dstport: ${action_remote_port}\nAction: ${action_pretty}\n\nPlease help to verify if this activity is legitimate.\n`;
+                const desc = `Observed ${name}\nSrcip: ${action_local_ip}   Srcport: ${action_local_port}\nDstip: ${action_remote_ip}   Dstport: ${action_remote_port}\nAction: ${action_pretty}\n${
+                    LogSourceDomain === 'cityu' ? 'Cortex Portal: ' + alert_link + '\n' : ''
+                }\n\nPlease help to verify if this activity is legitimate.\n`;
                 alertDescriptions.push(desc);
             } else {
                 const desc = `Observed ${description || name}\nHost: ${host_name}   IP: ${host_ip}\n${
                     action_local_ip ? 'action_local_ip: ' + action_local_ip + '\n' : ''
                 }username: ${user_name}\ncmd: ${cmd}\nfilename: ${filename}\nfilepath: ${filepath}\naction: ${action_pretty}\n${
                     action_file_macro_sha256 ? 'macro file hash: ' + action_file_macro_sha256 + '\n' : ''
-                }https://www.virustotal.com/gui/file/${
-                    action_file_macro_sha256 || sha256
+                }https://www.virustotal.com/gui/file/${action_file_macro_sha256 || sha256}\n${
+                    LogSourceDomain === 'cityu' ? 'Cortex Portal: ' + alert_link + '\n' : ''
                 }\n\nPlease help to verify if this activity is legitimate.\n`;
                 alertDescriptions.push(desc);
             }
