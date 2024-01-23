@@ -762,12 +762,21 @@ function ticketNotify(pageData) {
             None: ''
         };
 
-        function checkProperties(properties, pageData) {
+        function checkProperties(properties, pageData, ticketname) {
             const condition = (property) => {
                 const propertyArray = property.propertiesVal.split(',');
                 for (const val of propertyArray) {
-                    if (pageData[property.propertiesKey].includes(val)) {
-                        return true;
+                    try {
+                        if (pageData[property.propertiesKey].includes(val)) {
+                            return true;
+                        }
+                    } catch (error) {
+                        if (
+                            error.name === 'TypeError' &&
+                            error.message == "Cannot read properties of undefined (reading 'includes')"
+                        ) {
+                            console.warn(`${ticketname} 提醒未加条件，请检查配置`);
+                        }
                     }
                 }
             };
@@ -787,7 +796,7 @@ function ticketNotify(pageData) {
                 continue;
             }
 
-            if (checkProperties(properties, pageData)) {
+            if (checkProperties(properties, pageData, ticketname)) {
                 if (clickButton == '') {
                     showFlag('warning', `${ticketname} ticket`, `${message.replace(/\r?\n/g, '<br>')}`, 'manual');
                 } else {
