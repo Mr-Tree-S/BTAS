@@ -1498,7 +1498,8 @@ function FortigateAlertHandler(...kwargs) {
                 devname,
                 user,
                 cfgattr,
-                msg
+                msg,
+                forwardedfor
             } = alertInfo;
             const extract_alert_info = {
                 srcip: srcip ? `${srcip}:${srcport}[${srccountry}]` : undefined,
@@ -1510,7 +1511,8 @@ function FortigateAlertHandler(...kwargs) {
                 action: action,
                 cfgattr: cfgattr,
                 msg: msg,
-                referralurl: referralurl
+                referralurl: referralurl,
+                forwardedfor: forwardedfor || undefined
             };
             acc.push(extract_alert_info);
             return acc;
