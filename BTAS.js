@@ -1646,10 +1646,11 @@ function SophosAlertHandler(...kwargs) {
                 const alertIP =
                     sophos?.source_info?.ip !== undefined ? sophos.source_info.ip : sophos.data.source_info.ip;
                 const alertExtraInfo = {
-                    Sha256: sophos.appSha256,
-                    Filename: sophos?.data?.fileName ? sophos.data.fileName : undefined,
-                    Processname: sophos?.data?.processName ? sophos.data.processName : undefined,
-                    Process: sophos?.data?.process ? sophos.data.process : undefined
+                    'Sha256': sophos.appSha256,
+                    'Filename': sophos?.data?.fileName ? sophos.data.fileName : undefined,
+                    'Processname': sophos?.data?.processName ? sophos.data.processName : undefined,
+                    'Process': sophos?.data?.process ? sophos.data.process : undefined,
+                    'Clean Up Result': sophos?.core_remedy_items?.items[0]?.result
                 };
                 acc.push({ summary, alertHost, alertIP, alertUser, alertID, logsource, alertExtraInfo });
             } catch (error) {
