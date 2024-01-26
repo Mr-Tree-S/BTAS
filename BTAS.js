@@ -1926,30 +1926,31 @@ function AzureAlertHandler(...kwargs) {
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
-                const { eventhub } = JSON.parse(log);
+                const { eventhub, azure } = JSON.parse(log);
                 const { ExtendedProperties, Entities } = eventhub;
                 let entities = {};
-                Entities.forEach(function (entity) {
-                    if (entity.Type === 'host') {
-                        entities['host'] = entity['HostName'];
-                    }
-                });
+                if (Entities) {
+                    Entities.forEach(function (entity) {
+                        if (entity.Type === 'host') {
+                            entities['host'] = entity['HostName'];
+                        }
+                        if (entity.Type === 'network-connection') {
+                            entities['SourceIP'] = entity['SourceAddress']['Address'];
+                        }
+                    });
+                }
                 acc.push({
-                    summary: eventhub['AlertDisplayName'],
-                    host: ExtendedProperties['Machine Name'] || entities['host'],
-                    user: ExtendedProperties['Account'],
-                    process: ExtendedProperties['Process Name'],
-                    cmd: ExtendedProperties['Command Line'],
-                    domain: ExtendedProperties['DomainName'],
-                    clientIP: ExtendedProperties['Client IP address'] || ExtendedProperties['Client IP Address'],
-                    clientHost: ExtendedProperties['Client hostname'],
-                    UPN: ExtendedProperties['UPN'],
-                    userAgent: ExtendedProperties['Client Information'],
-                    principalName: ExtendedProperties['Client principal name'],
-                    application: ExtendedProperties['Client application'],
-                    SampleIps: ExtendedProperties['SampleIps'],
-                    SampleURIs: ExtendedProperties['SampleURIs'],
-                    alerturi: eventhub['AlertUri']
+                    summary: azure['ThreatDescription'] || eventhub['AlertDisplayName'],
+                    Protocol: azure['Protocol'],
+                    SourceIP: azure['SourceIp'],
+                    SourcePort: azure['SourcePort'],
+                    DestinationIp: azure['DestinationIp'],
+                    DestinationPort: azure['DestinationPort'],
+                    URL: azure['Url'],
+                    Action: azure['Action'],
+                    alerturi: eventhub['AlertUri'],
+                    ExtendedProperties: JSON.stringify(ExtendedProperties, null, 4),
+                    ...entities
                 });
             } catch (error) {
                 console.log(`Error: ${error}`);
@@ -1966,7 +1967,7 @@ function AzureAlertHandler(...kwargs) {
         for (const info of alertInfo) {
             let desc = `Observed ${info.summary}\n`;
             Object.entries(info).forEach(([index, value]) => {
-                if (value !== undefined && value !== ' ' && index !== 'summary' && index !== 'alerturi') {
+                if (value !== undefined && value !== '' && index !== 'summary' && index !== 'alerturi') {
                     desc += `${index}: ${value}\n`;
                 }
             });
