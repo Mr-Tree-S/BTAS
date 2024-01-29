@@ -531,7 +531,7 @@ function checkOrg() {
                         ) || '';
                     const LogSourceDomain = DOMPurify.sanitize($('#customfield_10223').val().trim()) || '';
                     const orgDict = {
-                        'Test': ['Test Organization'],
+                        'nanfung': ['Nanfung'],
                         'je-pilot': ['JE-pilot', 'JE-Past'],
                         'welab': ['WELAB'],
                         'jsshk': ['JSSHK'],
@@ -652,6 +652,10 @@ function checkOrg() {
                             if (!result) {
                                 $('#edit-issue-submit').off('click'); // 点击取消则不再弹出提示
                             }
+                        } else if (orgDict[organization] == undefined) {
+                            // 当前客户不在配置列表中，直接提交
+                            $('#edit-issue-submit').off('click');
+                            document.getElementById('edit-issue-submit').click();
                         } else if (!orgDict[LogSourceDomain].includes(organization)) {
                             let alertinfo = `Organization:${organization}\nLog Source Doamin:${LogSourceDomain}\n所选 Organization 不符，请升级到 ${LogSourceDomain} 后再提交\n若确认所选 Organization 无误，请点击取消忽略该提示`;
                             let result = confirm(DOMPurify.sanitize(alertinfo));
