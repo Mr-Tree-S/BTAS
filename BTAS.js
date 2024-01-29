@@ -219,15 +219,14 @@ function QuickReply() {
 
     const commentBarSection = document.querySelector('aui-section#reply');
     const replyComment = {
-        'Close ticket': 'Dear Customer,<br>Thanks for your reply, we will close this case.<br>Best Regards.',
+        'Close ticket': 'Dear Customer,<br>Thanks for your reply, we will close this ticket.<br>Best Regards.',
         'Monitor ticket': 'Dear Customer,<br>Thanks for your reply, we will keep monitor.<br>Best Regards.',
         'Waiting ticket': 'Dear Customer,<br>Thanks, we look forward to hearing from you.',
         'Waiting Full Scan':
             'Dear Customer,<br>Full scan have been triggered , if suspicious files detected new MDE alert/ticket will be created.',
-        'Ask for Whitelist':
-            'Dear Customer,<br>We will close this case, can we add the case to white list?<br>Best Regards.',
+        'Ask for Whitelist': 'Dear Customer,<br>Can we add the ticket to white list?<br>Best Regards.',
         'Whitelist Done':
-            'Dear Customer,<br>We have informed the relevant parties to add this case to the white list and will close this case<br>Best Regards.',
+            'Dear Customer,<br>We have informed the relevant parties to add this ticket to the white list and will close this ticket<br>Best Regards.',
         'Haeco high severity':
             '<h2><strong><span style="color: red;" data-mce-style="color: red;"><samp>[The ticket is escalated to High Severity]</samp></span></strong></h2><br>',
         'Haeco medium severity':
