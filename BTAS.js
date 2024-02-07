@@ -2006,18 +2006,25 @@ function AzureAlertHandler(...kwargs) {
     checkOrg();
 
     // Filter page: audio control registration and regular issues table update
-    if (window.location.href.includes('filter=15200') && !window.location.href.includes('MSS')) {
+    if (
+        (window.location.href.includes('filter=15200') || window.location.href.includes('filter=26405')) &&
+        !window.location.href.includes('MSS')
+    ) {
         console.log('#### Code includes filter run ####');
         const NotifyControls = createNotifyControls();
 
         setInterval(() => {
             $('.aui-button.aui-button-primary.search-button').click();
             setTimeout(checkupdate(NotifyControls), 5000);
+            if (window.location.href.includes('filter=15200')) {
+                notifyKey = [];
+                window.location.href = 'https://caas.pwchk.com/issues/?filter=15200';
+            }
+            if (window.location.href.includes('filter=26405')) {
+                notifyKey = [];
+                window.location.href = 'https://caas.pwchk.com/issues/?filter=26405';
+            }
         }, 180000);
-        setInterval(() => {
-            notifyKey = [];
-            window.location.href = 'https://caas.pwchk.com/issues/?filter=15200';
-        }, 1800000);
     }
 
     // Issue page: Alert Handler
