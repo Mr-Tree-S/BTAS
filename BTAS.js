@@ -2003,6 +2003,65 @@ function AzureAlertHandler(...kwargs) {
     addButton('openAzure', 'Azure', openAzure);
 }
 
+function paloaltoAlertHandler(...kwargs) {
+    const { rawLog, summary } = kwargs[0];
+
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                let logArray = log.split(',');
+                let logType = logArray[3];
+                if (logType == 'TRAFFIC') {
+                    acc.push({
+                        'Summary': summary.split(']')[1],
+                        'Source IP': logArray[7],
+                        'Destination IP': logArray[8],
+                        'Destination Port': logArray[25],
+                        'Destination Location': logArray[42] != 0 ? logArray[42] : logArray[39]
+                    });
+                }
+                if (logType == 'THREAT') {
+                    acc.push({
+                        'Source IP': logArray[7],
+                        'Destination IP': logArray[8],
+                        'Destination Port': logArray[25],
+                        'Destination Location': logArray[42] != 0 ? logArray[42] : logArray[39],
+                        'IoC': logArray[31],
+                        'Summary': summary.split(']')[1]
+                    });
+                }
+            } catch (error) {
+                console.error(`Error:${error}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLog(rawLog);
+
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            if (info.Summary == undefined) {
+                continue;
+            }
+            let desc = `Observed ${info.Summary}\n`;
+            Object.entries(info).forEach(([index, value]) => {
+                if (value !== undefined && value !== '' && index !== 'Summary') {
+                    desc += `${index}: ${value}\n`;
+                }
+            });
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -2055,7 +2114,8 @@ function AzureAlertHandler(...kwargs) {
                 'vmwarecarbonblack_cef': VMCEFAlertHandler,
                 'aws-cloudtrail': AwsAlertHandler,
                 'm365-defender-json': Defender365AlertHandler,
-                'azureeventhub': AzureAlertHandler
+                'azureeventhub': AzureAlertHandler,
+                'paloalto-firewall': paloaltoAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
