@@ -1647,13 +1647,11 @@ function SophosAlertHandler(...kwargs) {
             try {
                 log.replace(/[\[(].*?[\])]/g, '');
                 const { sophos, logsource } = JSON.parse(log);
-                const { data } = sophos;
                 const summary = sophos.name;
                 const alertHost = sophos.dhost;
                 const alertUser = sophos.suser;
                 const alertID = sophos.id;
-                const alertIP =
-                    sophos?.source_info?.ip !== undefined ? sophos.source_info.ip : sophos.data.source_info.ip;
+                const alertIP = sophos?.source_info?.ip || sophos?.data?.source_info?.ip || '';
                 const alertExtraInfo = {
                     'Sha256': sophos.appSha256,
                     'Filename': sophos?.data?.fileName ? sophos.data.fileName : undefined,
@@ -1674,7 +1672,9 @@ function SophosAlertHandler(...kwargs) {
     function generateDescription() {
         const alertDescriptions = [];
         for (const info of alertInfo) {
-            let desc = `Observed ${info.summary}\nHost: ${info.alertHost} IP: ${info.alertIP}\nUser: ${info.alertUser}\n`;
+            let desc = `Observed ${info.summary}\nHost: ${info.alertHost} IP: ${info.alertIP || 'N/A'}\nUser: ${
+                info.alertUser
+            }\n`;
             for (const key in info.alertExtraInfo) {
                 if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
                     const value = info.alertExtraInfo[key];
