@@ -2062,6 +2062,83 @@ function paloaltoAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function ImpervaincCEFAlertHandler(...kwargs) {
+    const { rawLog } = kwargs[0];
+
+    function parseCefLog(rawLog) {
+        function cefToJson(cefLog) {
+            let json = {};
+            let fields = cefLog.split(' ');
+
+            for (let i = 0; i < fields.length; i++) {
+                let field = fields[i].split('=');
+                let key = field[0];
+                let value = field.slice(1).join('=');
+
+                if (value) {
+                    if (key === 'filePath' || key === 'msg' || key === 'start' || key === 'rt' || key === 'cs1') {
+                        let nextFieldIndex = i + 1;
+                        while (nextFieldIndex < fields.length && !fields[nextFieldIndex].includes('=')) {
+                            value += ' ' + fields[nextFieldIndex];
+                            nextFieldIndex++;
+                        }
+                    }
+                    json[key] = value;
+                }
+            }
+            return json;
+        }
+
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                // Determine whether the log is empty
+                if (Object.keys(log).length !== 0) {
+                    // Split CEF log
+                    let cef_log = log.split('|');
+                    // Parsing CEF Header
+                    const cef_log_header = cef_log.slice(1, 7);
+                    // Parsing CEF Extends
+                    const cef_log_extends = cefToJson(cef_log[7]);
+
+                    acc.push({
+                        summary: cef_log_extends.cs1,
+                        // for some like "server error" tickets
+                        username: cef_log_extends.duser,
+                        srcIP: cef_log_extends.src,
+                        dstIP: cef_log_extends.dst,
+                        dstPort: cef_log_extends.dpt,
+                        protocol: cef_log_extends.proto
+                    });
+                }
+                return acc;
+            } catch (error) {
+                console.error(`Error: ${error.message}`);
+            }
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseCefLog(rawLog);
+
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            const { summary } = info;
+            let desc = `Observed ${summary}\n`;
+            Object.entries(info).forEach(([index, value]) => {
+                if (value !== undefined && index != 'summary' && index != 'CBlink') {
+                    desc += `${index}: ${value}\n`;
+                }
+            });
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -2115,7 +2192,8 @@ function paloaltoAlertHandler(...kwargs) {
                 'aws-cloudtrail': AwsAlertHandler,
                 'm365-defender-json': Defender365AlertHandler,
                 'azureeventhub': AzureAlertHandler,
-                'paloalto-firewall': paloaltoAlertHandler
+                'paloalto-firewall': paloaltoAlertHandler,
+                'impervainc_cef': ImpervaincCEFAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
