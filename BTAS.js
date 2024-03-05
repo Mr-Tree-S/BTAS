@@ -1852,6 +1852,14 @@ function Defender365AlertHandler(...kwargs) {
                                 ip: entity['ipAddress']
                             });
                         }
+                        if (entity['entityType'] == 'Url') {
+                            if (!entities['url']) {
+                                entities['url'] = [];
+                            }
+                            entities['url'].push({
+                                url: entity['url']
+                            });
+                        }
                     });
                 }
                 acc.push({
@@ -1861,6 +1869,7 @@ function Defender365AlertHandler(...kwargs) {
                     process: entities.process,
                     file: entities.file,
                     ip: entities.ip,
+                    url: entities.url,
                     alertid: alerts?.alertId,
                     incidenturi: jsonLog['incidents'].incidentUri
                 });
