@@ -383,8 +383,8 @@ function createNotifyControls() {
         const currentDate = new Date();
         const audioURL =
             currentDate.getHours() >= 9 && currentDate.getHours() < 21
-                ? 'https://172.18.4.120/wav/12221.wav'
-                : 'https://172.18.4.120/wav/alerts.wav';
+                ? 'https://gitee.com/aspirepig/aspirepig/raw/master/12221.wav'
+                : 'https://gitee.com/aspirepig/aspirepig/raw/master/alerts.wav';
         audioControl.html(`<audio src="${audioURL}" type="audio/mpeg" controls></audio>`);
         parentNode.prepend(audioControl);
     }
@@ -490,7 +490,7 @@ function checkKeywords() {
     function fetchKeywordsList() {
         GM_xmlhttpRequest({
             method: 'GET',
-            url: 'https://172.18.4.120/wav/keywords.csv',
+            url: 'https://aspirepig-1251964320.cos.ap-shanghai.myqcloud.com/keywords.csv',
             onload: function (response) {
                 if (response.status === 200) {
                     const keywords = parseCSV(response.responseText);
