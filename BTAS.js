@@ -270,14 +270,6 @@ function QuickReply() {
     }
 }
 
-/**
- * This function registers two Tampermonkey exception menu command
- * Add Exception: adds the currently selected text to an exception list stored in local storage
- * Clear Exception: clears the exception list from local storage
- */
-let exceptionKey = localStorage.getItem('exceptionKey')?.split(',') || [];
-let notifyKey = [...exceptionKey];
-
 /**jsonView */
 function jsonToTree(data) {
     let flag = false;
@@ -326,6 +318,13 @@ function jsonToTree(data) {
     return html;
 }
 
+/**
+ * This function registers two Tampermonkey exception menu command
+ * Add Exception: adds the currently selected text to an exception list stored in local storage
+ * Clear Exception: clears the exception list from local storage
+ */
+let exceptionKey = localStorage.getItem('exceptionKey')?.split(',') || [];
+let notifyKey = [...exceptionKey];
 function registerExceptionMenu() {
     console.log('#### Code registerExceptionMenu run ####');
     GM_registerMenuCommand('Add Exception', () => {
@@ -2163,10 +2162,13 @@ function ImpervaincCEFAlertHandler(...kwargs) {
     ) {
         console.log('#### Code includes filter run ####');
         const NotifyControls = createNotifyControls();
-
         setInterval(() => {
             $('.aui-button.aui-button-primary.search-button').click();
-            setTimeout(checkupdate(NotifyControls), 5000);
+            setTimeout(() => {
+                checkupdate(NotifyControls);
+            }, 10000);
+        }, 180000);
+        setInterval(() => {
             if (window.location.href.includes('filter=15200')) {
                 notifyKey = [];
                 window.location.href = 'https://caas.pwchk.com/issues/?filter=15200';
@@ -2175,7 +2177,7 @@ function ImpervaincCEFAlertHandler(...kwargs) {
                 notifyKey = [];
                 window.location.href = 'https://caas.pwchk.com/issues/?filter=26405';
             }
-        }, 180000);
+        }, 1800000);
     }
 
     // Issue page: Alert Handler
