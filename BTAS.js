@@ -1770,11 +1770,15 @@ function AwsAlertHandler(...kwargs) {
             try {
                 const { aws } = JSON.parse(log);
                 acc.push({
-                    SourceIP: aws.sourceIPAddress,
-                    User: aws.userIdentity.arn,
-                    UserAgent: aws.userAgent,
-                    PrincipalId: aws.userIdentity.principalId,
-                    Result: aws.errorCode
+                    SourceIP: aws?.sourceIPAddress || aws?.internal_ip,
+                    ExternalIP: aws?.external_ip,
+                    Domain: aws?.domain,
+                    User: aws?.userIdentity?.arn,
+                    UserAgent: aws?.userAgent,
+                    PrincipalId: aws?.userIdentity?.principalId,
+                    Result: aws?.errorCode,
+                    QueryType: aws?.query_type,
+                    Action: aws?.action
                 });
             } catch (error) {
                 console.log(`Error: ${error}`);
@@ -1789,7 +1793,7 @@ function AwsAlertHandler(...kwargs) {
     function generateDescription() {
         const alertDescriptions = [];
         for (const info of alertInfo) {
-            let desc = `Observed ${summary}\n`;
+            let desc = `Observed ${summary.split(']')[1]}\n`;
             Object.entries(info).forEach(([index, value]) => {
                 if (value !== undefined && value !== ' ' && index != 'Summary') {
                     desc += `${index}: ${value}\n`;
@@ -2201,6 +2205,7 @@ function ImpervaincCEFAlertHandler(...kwargs) {
                 'sepm-traffic': SpemAlertHandler,
                 'vmwarecarbonblack_cef': VMCEFAlertHandler,
                 'aws-cloudtrail': AwsAlertHandler,
+                'aws-cisco-umbrella': AwsAlertHandler,
                 'm365-defender-json': Defender365AlertHandler,
                 'azureeventhub': AzureAlertHandler,
                 'paloalto-firewall': paloaltoAlertHandler,
