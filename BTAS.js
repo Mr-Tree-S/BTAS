@@ -2151,6 +2151,68 @@ function ImpervaincCEFAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function AzureGraphAlertHandler(...kwargs) {
+    const { summary, rawLog } = kwargs[0];
+
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const { azure } = JSON.parse(log);
+                let properties = {};
+                if (azure.targetResources) {
+                    for (const resource of azure.targetResources) {
+                        if (resource.type == 'User') {
+                            const resourceProperties = { TargetUser: resource.userPrincipalName };
+
+                            properties = { ...properties, ...resourceProperties };
+                        }
+
+                        for (const prop of resource.modifiedProperties) {
+                            properties = { ...properties, [prop['displayName']]: prop['newValue'] };
+                        }
+                    }
+                }
+
+                acc.push({
+                    AppDisplayName: azure?.appDisplayName || azure?.initiatedBy?.app?.displayName,
+                    SourceUser: azure?.userPrincipalName || azure?.initiatedBy?.user?.userPrincipalName,
+                    IpAddress: azure?.ipAddress || azure?.initiatedBy?.user?.ipAddress,
+                    Location:
+                        azure?.location?.countryOrRegion && azure?.location?.state && azure?.location?.city
+                            ? `${azure?.location?.countryOrRegion}\\${azure?.location?.state}\\${azure?.location?.city}`
+                            : undefined,
+                    ...properties,
+                    Result: azure?.status?.failureReason || azure.result
+                });
+            } catch (error) {
+                console.log(`Error: ${error}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLog(rawLog);
+
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            let desc = `Observed ${summary.split(']')[1]}\n`;
+            Object.entries(info).forEach(([index, value]) => {
+                if (value !== undefined && value !== '' && index !== 'summary' && index !== 'alerturi') {
+                    desc += `${index}: ${value}\n`;
+                }
+            });
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -2208,6 +2270,7 @@ function ImpervaincCEFAlertHandler(...kwargs) {
                 'aws-cisco-umbrella': AwsAlertHandler,
                 'm365-defender-json': Defender365AlertHandler,
                 'azureeventhub': AzureAlertHandler,
+                'azuregraphapi-json': AzureGraphAlertHandler,
                 'paloalto-firewall': paloaltoAlertHandler,
                 'impervainc_cef': ImpervaincCEFAlertHandler
             };
