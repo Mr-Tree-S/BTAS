@@ -494,9 +494,13 @@ function checkKeywords() {
                 if (response.status === 200) {
                     const keywords = parseCSV(response.responseText);
                     const rawLog = $('#customfield_10219-val').text().trim().toLowerCase();
+                    const summary = $('#summary-val').text().trim();
 
                     for (const keyword of keywords) {
-                        if (rawLog.includes(keyword['Keyword'].toLowerCase())) {
+                        if (
+                            rawLog.includes(keyword['Keyword'].toLowerCase()) ||
+                            summary.includes(keyword['Keyword'].toLowerCase())
+                        ) {
                             AJS.banner({
                                 body: `\"${keyword['Keyword']}\" was found in the ticket, it is maybe used for "${keyword['Remark']}", please double-check and contact L2 or TL if suspicious.`
                             });
