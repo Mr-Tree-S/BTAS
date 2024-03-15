@@ -1686,7 +1686,9 @@ function SophosAlertHandler(...kwargs) {
                     }
                 }
             }
-            desc += '\n' + 'Please help to verify if this activity is legitimate.' + '\n';
+            if (!info.summary.includes('Failed to protect computer')) {
+                desc += '\n' + 'Please help to verify if this activity is legitimate.' + '\n';
+            }
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
