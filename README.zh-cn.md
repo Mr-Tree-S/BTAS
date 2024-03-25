@@ -1,72 +1,37 @@
 ###### tags: `zh-cn`
+
 # BTAS
 
 > Blue Team Assistance Script
 
-**BTAS** is being developed by Barry & Jack & Xingyu
-
+BTAS 是一款为安全运营中心(SOC)分析师开发的浏览器辅助脚本,旨在全面简化工作流程,显著提升工作效率。该脚本基于油猴(Tampermonkey)扩展运行,集成了多项实用功能,涵盖快速响应、威胁情报查询、日志解析、自动化操作等多个层面,大幅提高了分析师的工作效率。
 
 ## 安装 & 使用
-你可以使用 Greasy Fork 安装和更新BTAS脚本，点击下列地址:
 
-https://greasyfork.org/en/scripts/463908-btas
+你可以使用 Greasy Fork 安装和更新 BTAS 脚本，点击下列地址:
 
-如果你想体验最新的功能，或者帮助我们测试程序，你可以安装BTAS Beta版本，点击下列地址:
+-   [BTAS Stable Version](https://greasyfork.org/en/scripts/463908-btas)
+-   [BTAS Beta Version](https://greasyfork.org/zh-CN/scripts/469395-btas-beta)
 
-https://greasyfork.org/zh-CN/scripts/469395-btas-beta
+## 功能介绍: 蓝队增强 & BTAS
 
-## Difference: 蓝队增强 & BTAS
+### 主要功能
 
-### 代码架构和风格
-- 代码风格：使用ES6（ECMAScript 6）新语言特性和语法替换老版本用法；使用jQuery替换JavaScript原生函数来操作 HTML 文档、处理事件，代码整体变得简洁优雅
-
-- 可读性&维护性：变量和函数声明统一采用驼峰命名规则；文本信息统一使用英文描述；对主要函数以及特殊处理添加注释
-
-- 架构：对代码整体进行重构，抽象函数，减少代码复用，细节如下
-
-### 油猴图标按键
-- 功能介绍：
-    - 鼠标选中文本，右键或点击右上角油猴图标，即可调用Jira, VT, Reputation, AbuseIPDB进行搜索
-    - 如果遇到暂时无法处理的ticket，但是又并不希望因为filter队列里有它而持续响铃，可以鼠标选中issue key，然后右键或点击右上角油猴图标，调用Add Exception添加例外，Clear Exception则是清除所有例外
-
-- 添加：增加Reputation搜索功能，通过XSOAR平台查询IP声誉值
-  
-- 重构：将注册多个油猴菜单的功能，用数组整合搜索引擎，一次性循环注册解决
-
-- 移除：微步搜索引擎是中文界面，不利于用户体验，已移除
-
-### 提示音组件
-**仅支持List View（filter页面的默认模式）。**
-- 功能介绍：
-    - **audioNotify** 用于打开通知声音。它定期刷新筛选列表，并仅在出现与上次刷新列表不同的新票证时播放通知声音。
-    - **keepNotify** 用于保持通知声音。它定期刷新筛选列表，并只要存在未完成的票证，就会播放通知声音。
-    - **prompt** 用于打开横幅通知。它定期刷新筛选列表，如果有客户回复的票证超过30分钟未被处理，则会显示横幅通知。
-
-- 重构：将音频控件和复选框功能抽象成函数；多个提示音组件整合成一个对象作为返回值，方便后续调用
-
-- 移除：因为在Detail View下Edit升级ticket时，定期刷新filter列表，会中断当前操作，导致填入description的信息丢失，所以现在提示音组件不支持Detail View，只支持List View（即filter页面的默认模式）
-
-### 高危关键词检查
-- 功能介绍：
-    - 当检测到日志中存在类似mimikatz的高危关键词，会弹出提醒“Please double-check it, and if it seems suspicious, contact L2 or TL.”
-- 优化：将检查高危关键词功能抽象成函数，方便后续开发维护
-
-### 日志摘要和安全平台快捷键
-- 功能介绍：
-    - 在具体的MSS-ticket界面，工具栏处添加Description，Card，Timeline按键
-        - Description：日志摘要信息
-        - Card，Timeline：Alter对应安全平台的快捷跳转或URL信息
-
-- 重构：将信息摘要，平台跳转功能抽象成函数，增强可读性；抽象添加按钮函数，减少重复代码，更加简洁
-
-- 优化：创建cortex平台客户和导航的对象，方便后续添加客户和维护
-
-- 修复：每点一次Description都会追加hash文本的问题已修复；welab等新客户Card无法跳转的问题已修复；HTSC部分ticket的Description为空白已修复；Carbonblack平台Description undefined已修复
-
+1. **快速回复**: 内置 10+种常用场景的预设回复模板,支持一键快速回复,同时可自定义回复内容。
+2. **快捷菜单**: 集成 JIRA Search、VirusTotal、AbuseIPDB、Base64 解码等 10+种常用工具的快捷方式。
+3. **异常检测**: 根据预设的 400+种关键词规则和 50+种异常行为进行检测,有效提升分析准确性,确保不会遗漏重大安全告警。
+4. **日志解析**: 支持解析 19 种主流安全及云产品(如 Cortex XDR、Microsoft Endpoint Defender 和 Azure Cloud 等)的日志格式,覆盖约 80%工单场景。能够快速解析原始日志并生成告警摘要信息提供给客户；同时集成安全平台一键跳转功能,无需重复登录即可快速查看安全平台原始告警信息。
+5. **重要字段检查**: 检查 Organization 字段和 ATT&CK 字段,确保工单正确分类。
+6. **提示音通知**: 实时监控工单列表,出现新增/变更工单时发出提示音,及时提醒分析师处理,最大程度避免遗漏情况。
+7. **工单跟踪**: 对长时间(可设置时间阈值)未处理或未响应的工单发出视觉提醒,确保所有工单能够及时处理。
+8. **提醒事项**：分析师在打开特定工单页面时会弹出相应的提醒信息,包括客户要求和应遵守的 SOP 等,指导规范操作。
+9. **提醒事项管理系统**: 设有后台可视化管理系统,管理员能够以可视化的方式高效地添加、编辑、查询和删除提醒事项,并提供审计日志功能。该系统支持基于 10 种不同字段(如客户名称、事件类型以及特定关键字等)的匹配规则,更精准地确定应弹出提醒的工单,目前已添加近 100 条提醒事项内容。
+10. **多项目支持**: 目前已在香港、上海和澳门三地项目中应用并实施,提升了整个 SDC Cyber Team 的工作效率。
 
 ## 贡献
-由Barry在0.93版本之前开发，并由Jack在1.0.1版本进行了重构，并负责后续的开发和维护工作，Xingyu将在1.3.2版本之后参与开发工作。
 
+由 Barry 在 0.93 版本之前开发，并由 Jack 在 1.0.1 版本进行了重构，负责后续的开发和维护工作，Xingyu 在 1.3.2 版本之后参与开发工作。
 
 ## 许可证
+
 License: Apache License 2.0

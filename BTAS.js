@@ -494,7 +494,7 @@ function checkKeywords() {
                 if (response.status === 200) {
                     const keywords = parseCSV(response.responseText);
                     const rawLog = $('#customfield_10219-val').text().trim().toLowerCase();
-                    const summary = $('#summary-val').text().trim();
+                    const summary = $('#summary-val').text().trim().toLowerCase();
 
                     for (const keyword of keywords) {
                         if (

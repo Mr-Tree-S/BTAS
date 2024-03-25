@@ -2,64 +2,35 @@
 
 > Blue Team Assistance Script
 
-**BTAS** is being developed by Barry & Jack & Xingyu
+BTAS is a browser assistant script developed for Security Operations Center (SOC) analysts, designed to fully simplify workflows and significantly enhance efficiency. The script runs on the Tampermonkey extension and integrates multiple practical functions, including rapid response, threat intelligence search, log parsing, and automation, greatly improving the efficiency of analysts.
 
 [中文版本(Chinese version)](README.zh-cn.md)
 
 ## Installation & Usage
 
-You can use Greasy Fork to install and update BTAS scripts, as follows:
+You can install and update the BTAS script using Greasy Fork by clicking the following links:
 
-<https://greasyfork.org/en/scripts/463908-btas>
+-   [BTAS Stable Version](https://greasyfork.org/en/scripts/463908-btas)
+-   [BTAS Beta Version](https://greasyfork.org/zh-CN/scripts/469395-btas-beta)
 
-## Features
+## Function Introduction: Blue Team Enhancement & BTAS
 
-### Code Architecture and Style
+### Main Features
 
-- Code Style: Use new language features and syntax of ECMAScript 6 (ES6); Use jQuery to manipulate HTML documents and handle events, making the code concise and elegant.
+1. **Quick Reply**: Comes with over 10 preset reply templates for common scenarios, supports one-click quick replies, and allows for custom reply content.
+2. **Convenience Menu**: Integrates shortcuts for over 10 commonly used tools such as JIRA Search, VirusTotal, AbuseIPDB, and Base64 decoding.
+3. **Anomaly Detection**: Detects based on over 400 keyword rules and more than 50 abnormal behaviors, improving analysis accuracy and ensuring no major security alerts are missed.
+4. **Log Parsing**: Supports parsing log formats from 19 mainstream security and cloud products (e.g., Cortex XDR, Microsoft Endpoint Defender, and Azure Cloud), covering about 80% of ticket scenarios. It quickly parses raw logs and generates alert summary information for customers; it also integrates a one-click jump function to security platforms, eliminating the need for repeated logins.
+5. **Important Field Check**: Checks the Organization field and ATT&CK field to ensure tickets are correctly categorized.
+6. **Prompt Sound Notification**: Monitors ticket lists in real-time and plays a notification sound for new or updated tickets, prompting analysts to handle them promptly and minimizing omissions.
+7. **Ticket Tracking**: Provides visual reminders for tickets that have not been processed or responded to for a long time (time threshold can be set), ensuring all tickets are handled in a timely manner.
+8. **Reminders**: Analysts will be prompted with relevant information when opening specific ticket pages, including customer requirements and SOPs, guiding standardized operations.
+9. **Reminders Management System**: Features a backend visual management system where administrators can efficiently add, edit, query, and delete reminders, and provides an audit log function. The system supports matching rules based on 10 different fields, such as customer name, event type, and specific keywords, and has added nearly 100 reminder items.
+10. **Multiple Project Support**: Currently implemented in projects in Hong Kong, Shanghai, and Macau, improving the efficiency of the entire SDC Cyber Team.
 
-- Readability & Maintainability: Use camel case naming conventions for variables and function declarations; Use English to describe text information uniformly; Add comments to main functions and special treatments.
+## Contributions
 
-- Architecture: Refactor the code as a whole, abstract functions, reduce code reuse.
-
-### Tampermonkey Menu Command
-
-- Function introduction
-  - When selecting text with the mouse, clicking on the Tampermonkey icon in the upper right corner will call Jira, Reputation, VT, and AbuseIPDB for searching.
-
-  - If you encounter a ticket that cannot be processed temporarily, but you don't want it to keep ringing in the filter queue, you can select the issue key with the mouse, and then click on the Tampermonkey icon in the upper right corner to call Add Exception to add an exception. Clear Exception is to clear all exceptions.
-  
-- Addition: Integrate Reputation search functionality, enabling IP reputation value queries through the XSOAR platform.
-
-### Notification Controls
-
-**Only supports List View (the default mode on the filter page).**
-
-- Function introduction
-  - **audioNotify** is for turning on notification sound. It regularly refreshes the filter list and plays a notification sound only when there are new tickets that are different from the last time the list was refreshed.
-
-  - **keepNotify** is for keeping the notification sound. It regularly refreshes the filter list and plays the notification sound as long as there are unfinished tickets.
-
-  - **prompt** is for turning on banner notifications. It regularly refreshes the filter list and displays a banner notification if there are tickets with customer responses that have not been processed for more than 30 minutes.
-
-### High-Risk Keyword Check
-
-- Function introduction
-  
-  - When high-risk keywords such as "mimikatz" are detected in the log, a reminder will pop up saying "Please double-check it, and if it seems suspicious, contact L2 or TL."
-
-- Optimization: Abstract the high-risk keyword checking functionality into a function to facilitate future development and maintenance.
-
-### Log Summary and Security Platform Shortcut Keys
-
-- Function Introduction
-  - In the specific MSS-ticket interface, add Description, Card, and Timeline buttons to the toolbar.
-    - Description: Log summary information.
-    - Card, Timeline: Shortcut jumps or URL information to the corresponding security platform in Alter.
-
-## Contribution
-
-Developed by Barry before version 0.93, and refactored by Jack for version 1.0.1 and responsible for subsequent development and maintenance. Xingyu will be actively engaged in the development tasks following the release of version 1.3.2
+Developed by Barry before version 0.93, restructured by Jack for version 1.0.1 and subsequent development and maintenance, with Xingyu contributing to development after version 1.3.2.
 
 ## License
 
