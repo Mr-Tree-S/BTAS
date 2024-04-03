@@ -1816,7 +1816,7 @@ function AwsAlertHandler(...kwargs) {
 }
 
 function Defender365AlertHandler(...kwargs) {
-    const { rawLog } = kwargs[0];
+    const { rawLog, summary } = kwargs[0];
 
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
@@ -1828,6 +1828,7 @@ function Defender365AlertHandler(...kwargs) {
                     alerts['entities'].forEach(function (entity) {
                         if (entity['entityType'] == 'User') {
                             entities['user'] = `${entity['domainName']}\\\\${entity['accountName']}`;
+                            entities['userPrincipalName'] = entity['userPrincipalName'];
                         }
 
                         if (entity['entityType'] == 'Process') {
@@ -1875,12 +1876,14 @@ function Defender365AlertHandler(...kwargs) {
                     summary: jsonLog['incidents'].incidentName,
                     host: alerts?.devices[0]?.deviceDnsName,
                     user: entities.user,
+                    userPrincipalName: entities.userPrincipalName,
                     process: entities.process,
                     file: entities.file,
                     ip: entities.ip,
                     url: entities.url,
                     alertid: alerts?.alertId,
-                    incidenturi: jsonLog['incidents'].incidentUri
+                    incidenturi: jsonLog['incidents'].incidentUri,
+                    severity: jsonLog['incidents'].severity
                 });
             } catch (error) {
                 console.log(`Error: ${error}`);
@@ -1893,38 +1896,84 @@ function Defender365AlertHandler(...kwargs) {
 
     function generateDescription() {
         const alertDescriptions = [];
-        for (const info of alertInfo) {
-            let desc = `Observed ${info.summary}\n`;
-            try {
-                for (let key in info) {
-                    if (info.hasOwnProperty(key)) {
-                        if (Array.isArray(info[key])) {
-                            info[key].forEach((item) => {
-                                for (let subKey in item) {
-                                    if (item.hasOwnProperty(subKey) && item[subKey] !== '') {
-                                        desc += `${subKey}: ${item[subKey]}\n`;
+        if (summary.includes('M365 Defender High Severity Alerts: Logon from a risky country involving one user')) {
+            const ticketnumber = $('#key-val').text();
+            for (const info of alertInfo) {
+                let desc = `Dear Customer,
+ 
+                Reasons for escalating:
+                 
+                Observed Logon from a risky country involving one user in [time]
+                 
+                Here is information about this login:
+                 
+                source IP: ${info.ip[0].ip}
+                 
+                user: ${info.user}
+                 
+                active: Microsoft 365
+                 
+                userPrincipalName: ${info.userPrincipalName}
+                 
+                Device type:
+                 
+                UserAgent:
+                 
+                location:
+                 
+                logging status:
+                 
+                LoginStatus:
+                 
+                MfaRequired:
+                 
+                the user suddenly logged in from [Location1] but the user used to be logged in from [Location2], aberdeen. Please confirm whether the login behavior of the user is normal.if not, could block the ip.
+                 
+                 
+                Suggestion: We suggest to confirm whether the behavior of this customer logging in at ${info.ip[0].ip}: is normal or not, if not, we suggest to block the IP and change the user's password and perform a full scan on the user's commonly used PCs, thank you!
+                 
+                Severity: ${info.severity}
+                 
+                Correlation ticket: ${ticketnumber}
+                
+                `;
+                alertDescriptions.push(desc);
+            }
+        } else {
+            for (const info of alertInfo) {
+                let desc = `Observed ${info.summary}\n`;
+                try {
+                    for (let key in info) {
+                        if (info.hasOwnProperty(key)) {
+                            if (Array.isArray(info[key])) {
+                                info[key].forEach((item) => {
+                                    for (let subKey in item) {
+                                        if (item.hasOwnProperty(subKey) && item[subKey] !== '') {
+                                            desc += `${subKey}: ${item[subKey]}\n`;
+                                        }
                                     }
+                                });
+                            } else {
+                                if (
+                                    info[key] !== undefined &&
+                                    info[key] !== ' ' &&
+                                    key !== 'summary' &&
+                                    key !== 'alertid' &&
+                                    key !== 'incidenturi' &&
+                                    key !== 'severity'
+                                ) {
+                                    desc += `${key}: ${info[key]}\n`;
                                 }
-                            });
-                        } else {
-                            if (
-                                info[key] !== undefined &&
-                                info[key] !== ' ' &&
-                                key !== 'summary' &&
-                                key !== 'alertid' &&
-                                key !== 'incidenturi'
-                            ) {
-                                desc += `${key}: ${info[key]}\n`;
                             }
                         }
                     }
+                } catch (error) {
+                    console.error(`Error: ${error}`);
                 }
-            } catch (error) {
-                console.error(`Error: ${error}`);
-            }
 
-            desc += `\nPlease verify if the activity is legitimate.\n`;
-            alertDescriptions.push(desc);
+                desc += `\nPlease verify if the activity is legitimate.\n`;
+                alertDescriptions.push(desc);
+            }
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
         showDialog(alertMsg);
