@@ -2268,6 +2268,291 @@ function AzureGraphAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function ProofpointAlertHandler(...kwargs) {
+    const { summary, rawLog } = kwargs[0];
+    var raw_alert = 0;
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const BraceIndex = log.toString().indexOf('{');
+                const lastBraceIndex = log.toString().lastIndexOf('}');
+                // If the braces are found
+                if (BraceIndex !== -1) {
+                    raw_alert += 1;
+                    console.log(`${raw_alert} iteration 'is being processed`);
+                    // Intercepts a substring from the beginning of the brace to the end of the string
+                    json_text = log.toString().substr(BraceIndex, lastBraceIndex);
+                    try {
+                        const json_alert = JSON.parse(json_text);
+                        if (json_alert.hasOwnProperty('messagesDelivered')) {
+                            console.log('存在messagesDelivered');
+                            for (const message of json_alert['messagesDelivered']) {
+                                const { subject, sender, senderIP, recipient } = message;
+                                const alertExtraInfo = {
+                                    subject: subject ? subject : undefined,
+                                    sender: sender ? sender : undefined,
+                                    recipient: recipient ? recipient : undefined,
+                                    senderIP: senderIP ? senderIP : undefined
+                                };
+                                acc.push({ alertExtraInfo });
+                            }
+                        } else {
+                            const { subject, sender, senderIP, recipient } = json_alert;
+                            console.log(subject, recipient);
+                            const alertExtraInfo = {
+                                subject: subject ? subject : undefined,
+                                sender: sender ? sender : undefined,
+                                recipient: recipient ? recipient : undefined,
+                                senderIP: senderIP ? senderIP : undefined
+                            };
+                            acc.push({ alertExtraInfo });
+                        }
+                    } catch (error) {
+                        console.log('Unable to parse JSON data, handling exception: ' + error);
+                        var split_str = json_text
+                            .split('"messagesDelivered" :')[1]
+                            .split('"messagesBlocked" :')[0]
+                            .slice(1, -2);
+                        const json_alerts = JSON.parse(split_str);
+                        for (const alert of json_alerts) {
+                            const { subject, sender, senderIP, recipient } = alert;
+                            console.log(subject, recipient);
+                            const alertExtraInfo = {
+                                subject: subject ? subject : undefined,
+                                sender: sender ? sender : undefined,
+                                recipient: recipient ? recipient : undefined,
+                                senderIP: senderIP ? senderIP : undefined
+                            };
+                            acc.push({ alertExtraInfo });
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLog(rawLog);
+    const num_alert = $('#customfield_10300-val').text().trim();
+    console.log('reduce the methods iterated altogether' + num_alert + ' times');
+    function generateDescription() {
+        const alertDescriptions = [];
+        console.log(alertInfo);
+        for (const info of alertInfo) {
+            let desc = `Observed ${summary.split(']')[1]}\n`;
+            for (const key in info.alertExtraInfo) {
+                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                    const value = info.alertExtraInfo[key];
+                    if (value !== undefined) {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        if (raw_alert < num_alert) {
+            let extra_message = `\n\nNumber Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.`;
+            alertDescriptions.push(extra_message);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
+function ZscalerAlertHandler(...kwargs) {
+    const { summary, rawLog } = kwargs[0];
+    var raw_alert = 0;
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const BraceIndex = log.toString().indexOf('{');
+                const lastBraceIndex = log.toString().lastIndexOf('}');
+
+                // If the braces are found
+                if (BraceIndex !== -1) {
+                    raw_alert += 1;
+                    // Intercepts a substring from the beginning of the brace to the end of the string
+                    json_text = log.toString().substr(BraceIndex, lastBraceIndex);
+                    const json_alert = JSON.parse(json_text);
+                    const { PrivateIP, PublicIP, Username, Customer, Hostname } = json_alert;
+                    const alertExtraInfo = {
+                        Hostname: Hostname ? Hostname : undefined,
+                        PublicIP: PublicIP ? PublicIP : undefined,
+                        PrivateIP: PrivateIP ? PrivateIP : undefined,
+                        Username: Username ? Username : undefined,
+                        Customer: Customer ? Customer : undefined
+                    };
+                    acc.push({ alertExtraInfo });
+                }
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLog(rawLog);
+    const num_alert = $('#customfield_10300-val').text().trim();
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            let desc = `Observed ${summary.split(']')[1]}\n`;
+            for (const key in info.alertExtraInfo) {
+                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                    const value = info.alertExtraInfo[key];
+                    if (value !== undefined) {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            desc += `\nPlease verify if the ip is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        if (raw_alert < num_alert) {
+            let extra_message = `\n\nNumber Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.`;
+            alertDescriptions.push(extra_message);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n'); //Can achieve automatic deduplication
+        showDialog(alertMsg);
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
+function PulseAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    var raw_alert = 0;
+    if (rawLog == '') {
+        var rawLog = $('#customfield_10219-val').text().trim().split('\n');
+    }
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                if (log.includes('PulseSecure')) {
+                    const lastIndex = log.toString().lastIndexOf('Vendor)');
+
+                    var firstSpaceIndex = log.indexOf(' '); // Find the location of the first space
+                    var secondSpaceIndex = log.indexOf(' ', firstSpaceIndex + 2); // Find the location of the second space
+                    var threeSpaceIndex = log.indexOf(' ', secondSpaceIndex + 1); // Find the location of the three space
+                    let alert_text = log
+                        .toString()
+                        .substr(lastIndex + 7)
+                        .replace('[][] -', '');
+                    const firstIndex = alert_text.toString().indexOf('-');
+                    alert_text = alert_text.substr(firstIndex + 1);
+                    const time_text = log.toString().substr(0, threeSpaceIndex);
+                    const alert_content = '\nObserved ' + alert_text + ' On ' + time_text;
+                    acc.push(alert_content);
+                    raw_alert += 1;
+                }
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLog(rawLog);
+    const num_alert = $('#customfield_10300-val').text().trim();
+    function generateDescription() {
+        const alertDescriptions = [];
+        console.log('alertInfo', alertInfo);
+        let desc = `Observed ${summary.split(']')[1]}\n`;
+        desc += alertInfo;
+        desc += `\n\nPlease verify if the login is legitimate.\n`;
+        alertDescriptions.push(desc);
+        if (raw_alert < num_alert) {
+            let extra_message = `\n\nNumber Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.`;
+            alertDescriptions.push(extra_message);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n'); //Can achieve automatic deduplication
+        showDialog(alertMsg);
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
+function Risky_Countries_AlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const json_alert = JSON.parse(log);
+                if (json_alert.hasOwnProperty('azure')) {
+                    const {
+                        userDisplayName,
+                        userPrincipalName,
+                        ipAddress,
+                        appDisplayName,
+                        clientAppUsed,
+                        resourceDisplayName,
+                        status
+                    } = json_alert['azure'];
+                    const { failureReason, additionalDetails } = status;
+
+                    const alertExtraInfo = {
+                        userDisplayName: userDisplayName ? userDisplayName : undefined,
+                        userPrincipalName: userPrincipalName ? userPrincipalName : undefined,
+                        appDisplayName: appDisplayName ? appDisplayName : undefined,
+                        ipAddress: ipAddress ? ipAddress : undefined,
+                        clientAppUsed: clientAppUsed ? clientAppUsed : undefined,
+                        resourceDisplayName: resourceDisplayName ? resourceDisplayName : undefined,
+                        failureReason: failureReason ? failureReason : undefined,
+                        additionalDetails: additionalDetails ? additionalDetails : undefined
+                    };
+                    acc.push({ alertExtraInfo });
+                }
+                if (json_alert.hasOwnProperty('office_365')) {
+                    const { Operation, Workload, ClientIP, UserId, ResultStatusDetail, UserAgent } =
+                        json_alert['office_365'];
+                    const alertExtraInfo = {
+                        Operation: Operation ? Operation : undefined,
+                        Workload: Workload ? Workload : undefined,
+                        UserId: UserId ? UserId : undefined,
+                        ClientIP: ClientIP ? ClientIP : undefined,
+                        UserAgent: UserAgent ? UserAgent : undefined
+                    };
+                    acc.push({ alertExtraInfo });
+                }
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    function generateDescription() {
+        const alertDescriptions = [];
+        console.log(alertInfo);
+        for (const info of alertInfo) {
+            const lastindex = summary.lastIndexOf(']');
+
+            let desc = `Observed ${summary.substr(lastindex + 1)}\n`;
+            for (const key in info.alertExtraInfo) {
+                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                    const value = info.alertExtraInfo[key];
+                    if (value !== undefined) {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -2327,12 +2612,29 @@ function AzureGraphAlertHandler(...kwargs) {
                 'azureeventhub': AzureAlertHandler,
                 'azuregraphapi-json': AzureGraphAlertHandler,
                 'paloalto-firewall': paloaltoAlertHandler,
-                'impervainc_cef': ImpervaincCEFAlertHandler
+                'impervainc_cef': ImpervaincCEFAlertHandler,
+                'proofpoint_tap': ProofpointAlertHandler,
+                'zscaler-zpa-json': ZscalerAlertHandler,
+                'pulse-secure': PulseAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
             if (handler) {
                 handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, summary: summary });
+            }
+            const No_Decoder_handlers = {
+                'detect aad, o365 sign-in from risky countries': Risky_Countries_AlertHandler
+            };
+            const Summary = $('#summary-val').text().trim();
+            let No_Decoder_handler = null;
+            Object.keys(No_Decoder_handlers).forEach((key) => {
+                if (Summary.toLowerCase().includes(key)) {
+                    No_Decoder_handler = No_Decoder_handlers[key];
+                }
+            });
+
+            if (No_Decoder_handler !== null) {
+                No_Decoder_handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, summary: Summary });
             }
         }
     }, 1000);
