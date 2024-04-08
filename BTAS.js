@@ -2643,7 +2643,7 @@ function Risky_Countries_AlertHandler(...kwargs) {
                 notifyKey = [];
                 window.location.href = 'https://caas.pwchk.com/issues/?filter=26405';
             }
-        }, 1800000);
+        }, 180000);
     }
 
     // Issue page: Alert Handler
