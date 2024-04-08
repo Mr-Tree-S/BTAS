@@ -2218,37 +2218,53 @@ function ImpervaincCEFAlertHandler(...kwargs) {
 
 function AzureGraphAlertHandler(...kwargs) {
     const { summary, rawLog } = kwargs[0];
-
+    var raw_alert = 0;
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
                 const { azure } = JSON.parse(log);
                 let properties = {};
+                raw_alert += 1;
                 if (azure.targetResources) {
                     for (const resource of azure.targetResources) {
-                        if (resource.type == 'User') {
-                            const resourceProperties = { TargetUser: resource.userPrincipalName };
+                        if (summary.toLowerCase().includes('conditional access policy updated')) {
+                            const { initiatedBy, targetResources, activityDateTime, activityDisplayName, result } =
+                                azure;
 
-                            properties = { ...properties, ...resourceProperties };
-                        }
-
-                        for (const prop of resource.modifiedProperties) {
-                            properties = { ...properties, [prop['displayName']]: prop['newValue'] };
+                            const alertExtraInfo = {
+                                userPrincipalName: initiatedBy?.user?.userPrincipalName
+                                    ? initiatedBy?.user?.userPrincipalName
+                                    : undefined,
+                                displayName: targetResources[0]?.displayName
+                                    ? targetResources[0]?.displayName
+                                    : undefined,
+                                activityDateTime: activityDateTime ? activityDateTime : undefined,
+                                activityDisplayName: activityDisplayName ? activityDisplayName : undefined,
+                                result: result ? result : undefined
+                            };
+                            acc.push({ alertExtraInfo });
+                        } else {
+                            if (resource.type == 'User') {
+                                const resourceProperties = { TargetUser: resource.userPrincipalName };
+                                properties = { ...properties, ...resourceProperties };
+                            }
+                            for (const prop of resource.modifiedProperties) {
+                                properties = { ...properties, [prop['displayName']]: prop['newValue'] };
+                            }
+                            acc.push({
+                                AppDisplayName: azure?.appDisplayName || azure?.initiatedBy?.app?.displayName,
+                                SourceUser: azure?.userPrincipalName || azure?.initiatedBy?.user?.userPrincipalName,
+                                IpAddress: azure?.ipAddress || azure?.initiatedBy?.user?.ipAddress,
+                                Location:
+                                    azure?.location?.countryOrRegion && azure?.location?.state && azure?.location?.city
+                                        ? `${azure?.location?.countryOrRegion}\\${azure?.location?.state}\\${azure?.location?.city}`
+                                        : undefined,
+                                ...properties,
+                                Result: azure?.status?.failureReason || azure.result
+                            });
                         }
                     }
                 }
-
-                acc.push({
-                    AppDisplayName: azure?.appDisplayName || azure?.initiatedBy?.app?.displayName,
-                    SourceUser: azure?.userPrincipalName || azure?.initiatedBy?.user?.userPrincipalName,
-                    IpAddress: azure?.ipAddress || azure?.initiatedBy?.user?.ipAddress,
-                    Location:
-                        azure?.location?.countryOrRegion && azure?.location?.state && azure?.location?.city
-                            ? `${azure?.location?.countryOrRegion}\\${azure?.location?.state}\\${azure?.location?.city}`
-                            : undefined,
-                    ...properties,
-                    Result: azure?.status?.failureReason || azure.result
-                });
             } catch (error) {
                 console.log(`Error: ${error}`);
             }
@@ -2258,18 +2274,52 @@ function AzureGraphAlertHandler(...kwargs) {
     }
 
     const alertInfo = parseLog(rawLog);
-
+    const num_alert = $('#customfield_10300-val').text().trim();
     function generateDescription() {
         const alertDescriptions = [];
-        for (const info of alertInfo) {
-            let desc = `Observed ${summary.split(']')[1]}\n`;
-            Object.entries(info).forEach(([index, value]) => {
-                if (value !== undefined && value !== '' && index !== 'summary' && index !== 'alerturi') {
-                    desc += `${index}: ${value}\n`;
+        if (summary.toLowerCase().includes('conditional access policy updated')) {
+            console.log('hello jordans');
+            for (const info of alertInfo) {
+                console.log(info['alertExtraInfo']['userPrincipalName']);
+                let desc = `Observed  the user "${info['alertExtraInfo']['userPrincipalName']}" was on ${
+                    info['alertExtraInfo']['activityDateTime'].split('.')[0]
+                } Updated the conditional access policy "${info['alertExtraInfo']['displayName']}"\n\n`;
+                for (const key in info.alertExtraInfo) {
+                    if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                        const value = info.alertExtraInfo[key];
+                        if (
+                            value !== undefined &&
+                            key != 'userPrincipalName' &&
+                            key != 'displayName' &&
+                            key != 'activityDateTime'
+                        ) {
+                            desc += `${key}: ${value}\n`;
+                        }
+                    }
                 }
-            });
-            desc += `\nPlease verify if the activity is legitimate.\n`;
-            alertDescriptions.push(desc);
+                desc += `\nIt is recommended that you verify that the user has permission to change the conditional access policy and that the action is a legitimate update known to the user. Thanks!\n`;
+                alertDescriptions.push(desc);
+            }
+        } else {
+            for (const info of alertInfo) {
+                let desc = `Observed ${summary.split(']')[1]}\n`;
+                console.log(info);
+                for (const key in info) {
+                    if (Object.hasOwnProperty.call(info, key)) {
+                        const value = info[key];
+                        if (value !== undefined && value !== '' && key != 'summary' && key != 'alerturi') {
+                            console.log(value);
+                            desc += `${key}: ${value}\n`;
+                        }
+                    }
+                }
+                desc += `\nPlease verify if the activity is legitimate.\n`;
+                alertDescriptions.push(desc);
+            }
+        }
+        if (raw_alert < num_alert) {
+            let extra_message = `\n\nNumber Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.`;
+            alertDescriptions.push(extra_message);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
         showDialog(alertMsg);
