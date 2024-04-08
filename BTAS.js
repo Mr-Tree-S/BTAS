@@ -46,6 +46,26 @@ function showFlag(type, title, body, close) {
     });
 }
 
+function hiddenFlag() {
+    const toolbar = $('.aui-toolbar2-primary');
+    toggleButton = `<div class="aui-buttons pluggable-ops">
+    <aui-toggle id="show-flag" label="Show Flag" checked tooltip-on="Enabled" tooltip-off="Disabled"></aui-toggle>
+    <aui-label for="show-flag">Show Flag</aui-label>
+    </div>`;
+    toolbar.append(toggleButton);
+    // Add click event listener to the toolbar using event delegation
+    toolbar.on('click', '#show-flag', function () {
+        // Code to toggle the flag visibility based on the button's checked state
+        $('.aui-flag').toggle(); // Assuming this selector targets the flag element
+    });
+    GM_addStyle(`
+  #show-flag {
+    justify-content: center;  /* 使子元素水平居中 */
+    align-items: center; /* 使子元素垂直居中 */
+  }
+`);
+}
+
 /**
  * This function shows alert message in dialog and create a copy button
  * @param {string} body - Alert Message String
@@ -735,7 +755,6 @@ function ticketNotify(pageData) {
                         GM_setValue('cachedFileContent', data);
 
                         checkNotify(data.items, pageData);
-                        generateNotify();
                     }
 
                     // 如果本地存储中有缓存，并且文件内容有变化
@@ -750,7 +769,6 @@ function ticketNotify(pageData) {
                     // 本地存在缓存，且内容相同则使用缓存文件
                     if (cachedContent !== null && JSON.stringify(cachedContent) == JSON.stringify(data)) {
                         checkNotify(cachedContent.items, pageData);
-                        generateNotify();
                     }
                 } else {
                     console.error('Error fetching orgNotifydict:', response.status);
@@ -760,7 +778,6 @@ function ticketNotify(pageData) {
                 // 未连接 Darklab VPN 时使用缓存文件
                 if (cachedContent !== null) {
                     checkNotify(cachedContent.items, pageData);
-                    generateNotify();
                 } else {
                     showFlag('Error', '文件获取失败', '未连接到 Darklab VPN，请连接后刷新页面', 'auto');
                 }
@@ -824,13 +841,6 @@ function ticketNotify(pageData) {
                 }
             }
         }
-    }
-
-    // add a element into toolbar
-    function generateNotify() {
-        const toolbar = $('.aui-toolbar2-primary');
-        const element = $('<div id="generateTicketNotify"></div>');
-        toolbar.append(element);
     }
 }
 /**
@@ -2675,6 +2685,7 @@ function Risky_Countries_AlertHandler(...kwargs) {
             console.log('#### Code Issue page: Edit Notify ####');
             ticketNotify(pageData);
         }
+        hiddenFlag();
     }, 1000);
 
     // Issue page: Quick Reply
