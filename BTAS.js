@@ -46,24 +46,8 @@ function showFlag(type, title, body, close) {
     });
 }
 
-function hiddenFlag() {
-    const toolbar = $('.aui-toolbar2-primary');
-    toggleButton = `<div class="aui-buttons pluggable-ops">
-    <aui-toggle id="show-flag" label="Show Flag" checked tooltip-on="Enabled" tooltip-off="Disabled"></aui-toggle>
-    <aui-label for="show-flag">Show Flag</aui-label>
-    </div>`;
-    toolbar.append(toggleButton);
-    // Add click event listener to the toolbar using event delegation
-    toolbar.on('click', '#show-flag', function () {
-        // Code to toggle the flag visibility based on the button's checked state
-        $('.aui-flag').toggle(); // Assuming this selector targets the flag element
-    });
-    GM_addStyle(`
-  #show-flag {
-    justify-content: center;  /* 使子元素水平居中 */
-    align-items: center; /* 使子元素垂直居中 */
-  }
-`);
+function hiddenReminder() {
+    $('.aui-flag').toggle();
 }
 
 /**
@@ -2732,10 +2716,13 @@ function Risky_Countries_AlertHandler(...kwargs) {
         };
         // If it pops up once, it will not be reminded again
         if ($('#issue-content').length && !$('#generateTicketNotify').length) {
-            console.log('#### Code Issue page: Edit Notify ####');
             ticketNotify(pageData);
         }
-        hiddenFlag();
+        // if ticket is belong to MSS project and is not macau ticket, show the hidden reminder button
+        const ticketType = $('#key-val').text();
+        if (ticketType.startsWith('MSS') && LogSourceDomain !== 'mdb') {
+            addButton('hidden-reminder', 'Hidden Reminder', hiddenReminder);
+        }
     }, 1000);
 
     // Issue page: Quick Reply
