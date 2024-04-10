@@ -48,14 +48,16 @@ function showFlag(type, title, body, close) {
     // 为 flag 的内容区域添加滚动条样式
     const flagBody = $('#aui-flag-container > div > div');
     flagBody.css({
-        'overflow': 'scroll',
+        'overflow': 'auto',
         'max-height': '150px' // 添加最大高度，超出部分将出现滚动条
     });
-    // 为 flag 的内容区域添加滚动条样式
+
+    // 为 flag 的container区域添加滚动条样式
     const flagContainer = $('#aui-flag-container');
     flagContainer.css({
         'overflow': 'auto',
-        'max-height': '800px' // 添加最大高度，超出部分将出现滚动条
+        'overflow-x': 'hidden', //隐藏水平滚动条
+        'max-height': '90%' // 添加最大高度，超出部分将出现滚动条
     });
 }
 
@@ -830,10 +832,10 @@ function ticketNotify(pageData) {
 
             if (checkProperties(properties, pageData, ticketname)) {
                 if (clickButton == '') {
-                    showFlag('warning', `${ticketname} ticket`, `${message.replace(/\r?\n/g, '<br>')}`, 'manual');
+                    showFlag('warning', `${ticketname}`, `${message.replace(/\r?\n/g, '<br>')}`, 'manual');
                 } else {
                     $(clickButton).on('click', () => {
-                        showFlag('warning', `${ticketname} ticket`, `${message.replace(/\r?\n/g, '<br>')}`, 'manual');
+                        showFlag('warning', `${ticketname}`, `${message.replace(/\r?\n/g, '<br>')}`, 'manual');
                     });
                 }
             }
