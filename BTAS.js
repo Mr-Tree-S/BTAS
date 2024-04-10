@@ -44,9 +44,22 @@ function showFlag(type, title, body, close) {
         body: DOMPurify.sanitize(body),
         close: close
     });
+
+    // 为 flag 的内容区域添加滚动条样式
+    const flagBody = $('#aui-flag-container > div > div');
+    flagBody.css({
+        'overflow': 'scroll',
+        'max-height': '150px' // 添加最大高度，超出部分将出现滚动条
+    });
+    // 为 flag 的内容区域添加滚动条样式
+    const flagContainer = $('#aui-flag-container');
+    flagContainer.css({
+        'overflow': 'auto',
+        'max-height': '800px' // 添加最大高度，超出部分将出现滚动条
+    });
 }
 
-function hiddenReminder() {
+function hideReminder() {
     $('.aui-flag').toggle();
 }
 
@@ -2720,10 +2733,10 @@ function Risky_Countries_AlertHandler(...kwargs) {
         if ($('#issue-content').length && !$('#generateTicketNotify').length) {
             ticketNotify(pageData);
         }
-        // if ticket is belong to MSS project and is not macau ticket, show the hidden reminder button
+        // if ticket is belong to MSS project and is not macau ticket, show the hide reminder button
         const ticketType = $('#key-val').text();
         if (ticketType.startsWith('MSS') && LogSourceDomain !== 'mdb') {
-            addButton('hidden-reminder', 'Hidden Reminder', hiddenReminder);
+            addButton('hide-reminder', 'Hide Reminder', hideReminder);
         }
     }, 1000);
 
