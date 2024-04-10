@@ -2479,19 +2479,21 @@ function PulseAlertHandler(...kwargs) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
                 if (log.includes('PulseSecure')) {
+                    var firstIndex = log.indexOf('PulseSecure:');
+                    let time_text = log.toString().substr(firstIndex + 13);
+                    const first_bar = time_text.indexOf(':');
+                    time_text = time_text.toString().substr(0, first_bar + 6);
                     const lastIndex = log.toString().lastIndexOf('Vendor)');
-
-                    var firstSpaceIndex = log.indexOf(' '); // Find the location of the first space
-                    var secondSpaceIndex = log.indexOf(' ', firstSpaceIndex + 2); // Find the location of the second space
-                    var threeSpaceIndex = log.indexOf(' ', secondSpaceIndex + 1); // Find the location of the three space
                     let alert_text = log
                         .toString()
                         .substr(lastIndex + 7)
                         .replace('[][] -', '');
-                    const firstIndex = alert_text.toString().indexOf('-');
-                    alert_text = alert_text.substr(firstIndex + 1);
-                    const time_text = log.toString().substr(0, threeSpaceIndex);
-                    const alert_content = '\nObserved ' + alert_text + ' On ' + time_text;
+                    const lastIndex_ = alert_text.toString().lastIndexOf(' - ');
+                    alert_text = alert_text.substr(lastIndex_ + 2);
+                    let first = log.indexOf('- ');
+                    let second = log.indexOf(' - [');
+                    let vpn_name = log.toString().substring(first + 2, second) + ' ';
+                    const alert_content = '\n' + vpn_name + alert_text + ' On ' + time_text + '\n';
                     acc.push(alert_content);
                     raw_alert += 1;
                 }
