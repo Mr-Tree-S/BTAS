@@ -2042,6 +2042,9 @@ function ImpervaincCEFAlertHandler(...kwargs) {
 function AzureGraphAlertHandler(...kwargs) {
     const { summary, rawLog } = kwargs[0];
     var raw_alert = 0;
+    if (summary.toLowerCase().includes('successful azure/o365 login from malware-ip')) {
+        return;
+    }
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
@@ -2371,37 +2374,50 @@ function Risky_Countries_AlertHandler(...kwargs) {
                 const json_alert = JSON.parse(log);
                 if (json_alert.hasOwnProperty('azure')) {
                     const {
+                        createdDateTime,
                         userDisplayName,
                         userPrincipalName,
                         ipAddress,
                         appDisplayName,
-                        clientAppUsed,
-                        resourceDisplayName,
+                        deviceDetail,
                         status
                     } = json_alert['azure'];
                     const { failureReason, additionalDetails } = status;
+                    const { displayName, operatingSystem } = deviceDetail;
 
                     const alertExtraInfo = {
+                        createdEventDateTime: createdDateTime ? createdDateTime : undefined,
                         userDisplayName: userDisplayName ? userDisplayName : undefined,
                         userPrincipalName: userPrincipalName ? userPrincipalName : undefined,
                         appDisplayName: appDisplayName ? appDisplayName : undefined,
                         ipAddress: ipAddress ? ipAddress : undefined,
-                        clientAppUsed: clientAppUsed ? clientAppUsed : undefined,
-                        resourceDisplayName: resourceDisplayName ? resourceDisplayName : undefined,
+                        operatingSystem: operatingSystem ? operatingSystem : undefined,
+                        displayName: displayName ? displayName : undefined,
                         failureReason: failureReason ? failureReason : undefined,
                         additionalDetails: additionalDetails ? additionalDetails : undefined
                     };
                     acc.push({ alertExtraInfo });
                 }
                 if (json_alert.hasOwnProperty('office_365')) {
-                    const { Operation, Workload, ClientIP, UserId, ResultStatusDetail, UserAgent } =
-                        json_alert['office_365'];
+                    const {
+                        CreationTime,
+                        Operation,
+                        Workload,
+                        ClientIP,
+                        UserId,
+                        ResultStatusDetail,
+                        UserAgent,
+                        ActorIpAddress
+                    } = json_alert['office_365'];
                     const alertExtraInfo = {
+                        CreationEventTime: CreationTime ? CreationTime : undefined,
                         Operation: Operation ? Operation : undefined,
                         Workload: Workload ? Workload : undefined,
                         UserId: UserId ? UserId : undefined,
                         ClientIP: ClientIP ? ClientIP : undefined,
-                        UserAgent: UserAgent ? UserAgent : undefined
+                        ActorIpAddress: ActorIpAddress ? ActorIpAddress : undefined,
+                        UserAgent: UserAgent ? UserAgent : undefined,
+                        ResultStatusDetail: ResultStatusDetail ? ResultStatusDetail : undefined
                     };
                     acc.push({ alertExtraInfo });
                 }
@@ -2507,7 +2523,8 @@ function Risky_Countries_AlertHandler(...kwargs) {
                 handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, summary: summary });
             }
             const No_Decoder_handlers = {
-                'detect aad, o365 sign-in from risky countries': Risky_Countries_AlertHandler
+                'detect aad, o365 sign-in from risky countries': Risky_Countries_AlertHandler,
+                'successful azure/o365 login from malware-ip': Risky_Countries_AlertHandler
             };
             const Summary = $('#summary-val').text().trim();
             let No_Decoder_handler = null;
