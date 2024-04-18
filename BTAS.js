@@ -725,10 +725,14 @@ function cortexAlertHandler(...kwargs) {
     function parseLog(rawLog) {
         let alertInfo = [];
         try {
-            const { cortex_xdr } = JSON.parse(rawLog).data;
+            const { timestamp, data } = JSON.parse(rawLog);
+            const { cortex_xdr } = data;
             const { source, alert_id, name, description } = cortex_xdr;
             const isPANNGFW = source === 'PAN NGFW';
-            const alert = { source, alert_id, name, description };
+            let dotIndex = timestamp.lastIndexOf('.');
+
+            dateTimeStr = timestamp.slice(0, dotIndex) + '+0800';
+            const alert = { source, alert_id, name, description, dateTimeStr };
             if (isPANNGFW) {
                 const {
                     action_local_ip,
@@ -908,12 +912,14 @@ function cortexAlertHandler(...kwargs) {
                 alert_link
             } = info;
             if (source === 'PAN NGFW') {
-                const desc = `Observed ${name}\nSrcip: ${action_local_ip}   Srcport: ${action_local_port}\nDstip: ${action_remote_ip}   Dstport: ${action_remote_port}\nAction: ${action_pretty}\n${
+                const desc = `Observed ${name}\ntimestamp: ${dateTimeStr}\nSrcip: ${action_local_ip}   Srcport: ${action_local_port}\nDstip: ${action_remote_ip}   Dstport: ${action_remote_port}\nAction: ${action_pretty}\n${
                     LogSourceDomain === 'cityu' ? 'Cortex Portal: ' + alert_link + '\n' : ''
                 }\n\nPlease help to verify if this activity is legitimate.\n`;
                 alertDescriptions.push(desc);
             } else {
-                const desc = `Observed ${description || name}\nHost: ${host_name}   IP: ${host_ip}\n${
+                const desc = `Observed ${
+                    description || name
+                }\ntimestamp: ${dateTimeStr} \nHost: ${host_name}   IP: ${host_ip}\n${
                     action_local_ip ? 'action_local_ip: ' + action_local_ip + '\n' : ''
                 }username: ${user_name}\ncmd: ${cmd}\nfilename: ${filename}\nfilepath: ${filepath}\naction: ${action_pretty}\n${
                     action_file_macro_sha256 ? 'macro file hash: ' + action_file_macro_sha256 + '\n' : ''
@@ -995,8 +1001,11 @@ function MDEAlertHandler(...kwargs) {
                 const formatJson = log.substring(log.indexOf('{')).trim();
                 const logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
                 const { mde } = logObj;
-                const { title, id, computerDnsName, relatedUser, evidence } = mde;
-                const alert = { title, id, computerDnsName };
+                const { title, id, computerDnsName, relatedUser, evidence, alertCreationTime } = mde;
+                let dotIndex = alertCreationTime.lastIndexOf('.');
+
+                let dateTimeStr = alertCreationTime.slice(0, dotIndex) + 'Z';
+                const alert = { title, id, computerDnsName, dateTimeStr };
                 const userName = relatedUser ? relatedUser.userName : 'N/A';
                 let extrainfo = '';
                 if (evidence) {
@@ -1037,8 +1046,8 @@ function MDEAlertHandler(...kwargs) {
     function generateDescription() {
         const alertDescriptions = [];
         for (const info of alertInfo) {
-            const { title, computerDnsName, userName, extrainfo } = info;
-            const desc = `Observed ${title}\nHost: ${computerDnsName}\nusername: ${userName}\n${extrainfo}\n\nPlease help to verify if it is legitimate.\n`;
+            const { title, computerDnsName, userName, extrainfo, dateTimeStr } = info;
+            const desc = `Observed ${title}\nalertCreationTime: ${dateTimeStr}\nHost: ${computerDnsName}\nusername: ${userName}\n${extrainfo}\n\nPlease help to verify if it is legitimate.\n`;
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
