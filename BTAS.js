@@ -38,12 +38,17 @@ var $ = window.jQuery;
  * @param {string} close - The close of flag, can be one of the following: "auto", "manual", "never"
  */
 function showFlag(type, title, body, close) {
+    function hideAllFlag() {
+        $('.aui-flag').toggle();
+    }
     AJS.flag({
         type: type,
         title: DOMPurify.sanitize(title),
         body: DOMPurify.sanitize(body),
         close: close
     });
+
+    addButton('hide-reminder', 'Hide Reminder', hideAllFlag);
 
     // 为 flag 的内容区域添加滚动条样式
     const flagBody = $('#aui-flag-container > div > div');
@@ -59,10 +64,6 @@ function showFlag(type, title, body, close) {
         'overflow-x': 'hidden', //隐藏水平滚动条
         'max-height': '90%' // 添加最大高度，超出部分将出现滚动条
     });
-}
-
-function hideReminder() {
-    $('.aui-flag').toggle();
 }
 
 /**
@@ -675,14 +676,15 @@ function ticketNotify(pageData) {
 function addButton(id, text, onClick) {
     console.log(`#### Add Button: ${text}  ####`);
     const toolbar = $('.aui-toolbar2-primary');
-    toolbar.append(`
-        <div class="aui-buttons pluggable-ops">
-        <a id="${id}" onclick="${onClick}" class="aui-button toolbar-trigger">
-            <span class="trigger-label">${text}</span>
-        </a>
-        </div>
-    `);
-    $('#' + id).click(onClick);
+    // 重复添加的按钮不会被显示
+    if ($('#' + id).length === 0) {
+        const button = $('<a>')
+            .attr('id', id)
+            .addClass('aui-button toolbar-trigger')
+            .append($('<span>').addClass('trigger-label').text(text))
+            .click(onClick);
+        toolbar.append($('<div>').addClass('aui-buttons pluggable-ops').append(button));
+    }
 }
 
 /**
@@ -2583,11 +2585,6 @@ function Risky_Countries_AlertHandler(...kwargs) {
         // If it pops up once, it will not be reminded again
         if ($('#issue-content').length && !$('#generateTicketNotify').length) {
             ticketNotify(pageData);
-        }
-        // if ticket is belong to MSS project and is not macau ticket, show the hide reminder button
-        const ticketType = $('#key-val').text();
-        if (ticketType.startsWith('MSS') && LogSourceDomain !== 'mdb') {
-            addButton('hide-reminder', 'Hide Reminder', hideReminder);
         }
     }, 1000);
 
