@@ -2465,6 +2465,49 @@ function Risky_Countries_AlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function Agent_Disconnect_AlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    const LogSource = $('#customfield_10204-val').text().trim().split('\n');
+    function parseLog(LogSource) {
+        let search_ = '';
+        const alertInfo = LogSource.reduce((acc, log) => {
+            try {
+                log = log.replace(/\s/g, '');
+                if (log == 'Show' || log == 'Hide' || log.length == 0) {
+                    console.log('ss');
+                } else {
+                    acc.push(log);
+                    console.log(log);
+                }
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    let alertInfo = [...new Set(parseLog(LogSource))];
+    function generateDescription() {
+        const alertDescriptions = [];
+        console.log(alertInfo);
+        for (const info of alertInfo) {
+            const lastindex = summary.lastIndexOf(']');
+            let desc = `Observed ${summary.substr(lastindex + 1)}, kindly please help to check it.\n`;
+            desc += `\nagent name:  ${alertInfo.join(',')}`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+    function openMDE() {
+        let KQL = '';
+        KQL += `name=${alertInfo.join(' or name=')} \n`;
+        showFlag('info', 'KQL:', `${KQL}`, 'manual');
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+    addButton('openKQL', 'KQL', openMDE);
+}
+
 (function () {
     'use strict';
 
@@ -2535,7 +2578,8 @@ function Risky_Countries_AlertHandler(...kwargs) {
             }
             const No_Decoder_handlers = {
                 'detect aad, o365 sign-in from risky countries': Risky_Countries_AlertHandler,
-                'successful azure/o365 login from malware-ip': Risky_Countries_AlertHandler
+                'successful azure/o365 login from malware-ip': Risky_Countries_AlertHandler,
+                'agent disconnected': Agent_Disconnect_AlertHandler
             };
             const Summary = $('#summary-val').text().trim();
             let No_Decoder_handler = null;
