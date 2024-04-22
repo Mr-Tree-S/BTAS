@@ -1283,7 +1283,8 @@ function WineventAlertHandler(...kwargs) {
                 const { win } = JSON.parse(log);
                 const { eventdata, system } = win;
                 const alertHost = system.computer;
-                acc.push({ summary, alertHost, eventdata });
+                const systemTime = system.systemTime;
+                acc.push({ systemTime, summary, alertHost, eventdata });
             } catch (error) {
                 console.error(`Error: ${error.message}`);
             }
@@ -1297,6 +1298,7 @@ function WineventAlertHandler(...kwargs) {
         const alertDescriptions = [];
         for (const info of alertInfo) {
             let desc = `Observed${info.summary}\nHost: ${info.alertHost}\n`;
+            desc += `systemTime: ${info.systemTime.split('.')[0]}Z\n`;
             for (const key in info.eventdata) {
                 if (Object.hasOwnProperty.call(info.eventdata, key)) {
                     const value = info.eventdata[key];
@@ -1343,10 +1345,13 @@ function FortigateAlertHandler(...kwargs) {
     }
 
     const alertInfos = ParseFortigateLog(rawLog);
+    console.log(alertInfos);
 
     function ExtractAlertInfo(alertInfos) {
         const extract_alert_infos = alertInfos.reduce((acc, alertInfo) => {
             const {
+                date,
+                time,
                 srcip,
                 srcport,
                 srccountry,
@@ -1364,6 +1369,7 @@ function FortigateAlertHandler(...kwargs) {
                 forwardedfor
             } = alertInfo;
             const extract_alert_info = {
+                datetime: `${date} ${time}`,
                 srcip: srcip ? `${srcip}:${srcport}[${srccountry}]` : undefined,
                 dstip: dstip ? `${dstip}:${dstport}[${dstcountry}]` : undefined,
                 hostname: hostname,
@@ -1930,6 +1936,7 @@ function paloaltoAlertHandler(...kwargs) {
                 let logType = logArray[3];
                 if (logType == 'TRAFFIC') {
                     acc.push({
+                        'Createtime': logArray[1],
                         'Summary': summary.split(']')[1],
                         'Source IP': logArray[7],
                         'Destination IP': logArray[8],
@@ -1939,6 +1946,7 @@ function paloaltoAlertHandler(...kwargs) {
                 }
                 if (logType == 'THREAT') {
                     acc.push({
+                        'Createtime': logArray[1],
                         'Source IP': logArray[7],
                         'Destination IP': logArray[8],
                         'Destination Port': logArray[25],
