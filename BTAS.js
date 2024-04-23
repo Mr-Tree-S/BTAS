@@ -1017,9 +1017,15 @@ function MDEAlertHandler(...kwargs) {
     const { rawLog } = kwargs[0];
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
+            let logObj = '';
             try {
                 const formatJson = log.substring(log.indexOf('{')).trim();
-                const logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
+                logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
+            } catch (error) {
+                const formatJson = log.substring(log.indexOf('{')).trim() + '"}]}}';
+                logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
+            }
+            try {
                 const { mde } = logObj;
                 const { title, id, computerDnsName, relatedUser, evidence, alertCreationTime } = mde;
                 let dotIndex = alertCreationTime.lastIndexOf('.');
