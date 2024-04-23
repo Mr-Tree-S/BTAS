@@ -1055,7 +1055,7 @@ function MDEAlertHandler(...kwargs) {
         const alertDescriptions = [];
         for (const info of alertInfo) {
             const { title, computerDnsName, userName, extrainfo, dateTimeStr } = info;
-            const desc = `Observed ${title}\nalertCreationTime: ${dateTimeStr}\nHost: ${computerDnsName}\nusername: ${userName}\n${extrainfo}\n\nPlease help to verify if it is legitimate.\n`;
+            const desc = `Observed ${title}\nalertCreationTime(<span style="color: rgb(255, 0, 0);">GMT</span>): ${dateTimeStr}\nHost: ${computerDnsName}\nusername: ${userName}\n${extrainfo}\n\nPlease help to verify if it is legitimate.\n`;
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
@@ -1298,7 +1298,7 @@ function WineventAlertHandler(...kwargs) {
         const alertDescriptions = [];
         for (const info of alertInfo) {
             let desc = `Observed${info.summary}\nHost: ${info.alertHost}\n`;
-            desc += `systemTime: ${info.systemTime.split('.')[0]}Z\n`;
+            desc += `systemTime(<span style="color: rgb(255, 0, 0);">GMT</span>): ${info.systemTime.split('.')[0]}Z\n`;
             for (const key in info.eventdata) {
                 if (Object.hasOwnProperty.call(info.eventdata, key)) {
                     const value = info.eventdata[key];
@@ -1728,7 +1728,11 @@ function Defender365AlertHandler(...kwargs) {
                         }
                     });
                 }
+                let creationTime = alerts.creationTime.split('.')[0] + 'Z';
+
                 acc.push({
+                    creationTime: creationTime,
+
                     summary: jsonLog['incidents'].incidentName,
                     host: alerts?.devices[0]?.deviceDnsName,
                     user: entities.user,
@@ -1762,6 +1766,8 @@ function Defender365AlertHandler(...kwargs) {
                 Observed Logon from a risky country involving one user in [time]
                  
                 Here is information about this login:
+
+                creationTime(<span style="color: rgb(255, 0, 0);">GMT</span>): ${info.creationTime}
                  
                 source IP: ${info.ip[0].ip}
                  
@@ -1818,7 +1824,11 @@ function Defender365AlertHandler(...kwargs) {
                                     key !== 'incidenturi' &&
                                     key !== 'severity'
                                 ) {
-                                    desc += `${key}: ${info[key]}\n`;
+                                    if (key == 'creationTime') {
+                                        desc += `creationTime(<span style="color: rgb(255, 0, 0);">GMT</span>): ${info[key]}\n`;
+                                    } else {
+                                        desc += `${key}: ${info[key]}\n`;
+                                    }
                                 }
                             }
                         }
@@ -2502,13 +2512,11 @@ function Agent_Disconnect_AlertHandler(...kwargs) {
     let alertInfo = [...new Set(parseLog(LogSource))];
     function generateDescription() {
         const alertDescriptions = [];
-        console.log(alertInfo);
-        for (const info of alertInfo) {
-            const lastindex = summary.lastIndexOf(']');
-            let desc = `Observed ${summary.substr(lastindex + 1)}, kindly please help to check it.\n`;
-            desc += `\nagent name:  ${alertInfo.join(',')}`;
-            alertDescriptions.push(desc);
-        }
+
+        const lastindex = summary.lastIndexOf(']');
+        let desc = `Observed ${summary.substr(lastindex + 1)}, kindly please help to check it.\n`;
+        desc += `\nagent name:  ${alertInfo.join(',')}`;
+        alertDescriptions.push(desc);
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
         showDialog(alertMsg);
     }
