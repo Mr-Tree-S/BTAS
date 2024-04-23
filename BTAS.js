@@ -37,6 +37,18 @@ var $ = window.jQuery;
  * @param {string} body - The body of the flag
  * @param {string} close - The close of flag, can be one of the following: "auto", "manual", "never"
  */
+function addCss() {
+    const ss = $(`
+	    <style> 
+	      .red_highlight{
+	        color:red;
+			font-weight: bold;
+	      }
+	    </style>
+	    `);
+    $('head').append(ss);
+}
+
 function showFlag(type, title, body, close) {
     function hideAllFlag() {
         $('.aui-flag').toggle();
@@ -1055,7 +1067,7 @@ function MDEAlertHandler(...kwargs) {
         const alertDescriptions = [];
         for (const info of alertInfo) {
             const { title, computerDnsName, userName, extrainfo, dateTimeStr } = info;
-            const desc = `Observed ${title}\nalertCreationTime(<span style="color: rgb(255, 0, 0);">GMT</span>): ${dateTimeStr}\nHost: ${computerDnsName}\nusername: ${userName}\n${extrainfo}\n\nPlease help to verify if it is legitimate.\n`;
+            const desc = `Observed ${title}\nalertCreationTime(<span class="red_highlight">GMT</span>): ${dateTimeStr}\nHost: ${computerDnsName}\nusername: ${userName}\n${extrainfo}\n\nPlease help to verify if it is legitimate.\n`;
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
@@ -1298,7 +1310,7 @@ function WineventAlertHandler(...kwargs) {
         const alertDescriptions = [];
         for (const info of alertInfo) {
             let desc = `Observed${info.summary}\nHost: ${info.alertHost}\n`;
-            desc += `systemTime(<span style="color: rgb(255, 0, 0);">GMT</span>): ${info.systemTime.split('.')[0]}Z\n`;
+            desc += `systemTime(<span class="red_highlight">GMT</span>): ${info.systemTime.split('.')[0]}Z\n`;
             for (const key in info.eventdata) {
                 if (Object.hasOwnProperty.call(info.eventdata, key)) {
                     const value = info.eventdata[key];
@@ -1767,7 +1779,7 @@ function Defender365AlertHandler(...kwargs) {
                  
                 Here is information about this login:
 
-                creationTime(<span style="color: rgb(255, 0, 0);">GMT</span>): ${info.creationTime}
+                creationTime(<span class="red_highlight"">GMT</span>): ${info.creationTime}
                  
                 source IP: ${info.ip[0].ip}
                  
@@ -1825,7 +1837,7 @@ function Defender365AlertHandler(...kwargs) {
                                     key !== 'severity'
                                 ) {
                                     if (key == 'creationTime') {
-                                        desc += `creationTime(<span style="color: rgb(255, 0, 0);">GMT</span>): ${info[key]}\n`;
+                                        desc += `creationTime(<span class="red_highlight">GMT</span>): ${info[key]}\n`;
                                     } else {
                                         desc += `${key}: ${info[key]}\n`;
                                     }
@@ -2535,6 +2547,7 @@ function Agent_Disconnect_AlertHandler(...kwargs) {
     registerSearchMenu();
     registerExceptionMenu();
     registerCustomQuickReplyMenu();
+    addCss();
 
     // Filter page: audio control registration and regular issues table update
     if (
