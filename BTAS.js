@@ -1525,6 +1525,7 @@ function SophosAlertHandler(...kwargs) {
                 log.replace(/[\[(].*?[\])]/g, '');
                 const { sophos, logsource } = JSON.parse(log);
                 const summary = sophos.name;
+                const createtime = sophos.rt.split('.')[0] + 'Z';
                 const alertHost = sophos.dhost;
                 const alertUser = sophos.suser;
                 const alertID = sophos.id;
@@ -1536,7 +1537,7 @@ function SophosAlertHandler(...kwargs) {
                     'Process': sophos?.data?.process ? sophos.data.process : undefined,
                     'Clean Up Result': sophos?.core_remedy_items?.items[0]?.result
                 };
-                acc.push({ summary, alertHost, alertIP, alertUser, alertID, logsource, alertExtraInfo });
+                acc.push({ summary, createtime, alertHost, alertIP, alertUser, alertID, logsource, alertExtraInfo });
             } catch (error) {
                 console.log(`Error: ${error.message}`);
             }
@@ -1551,7 +1552,7 @@ function SophosAlertHandler(...kwargs) {
         for (const info of alertInfo) {
             let desc = `Observed ${info.summary}\nHost: ${info.alertHost} IP: ${info.alertIP || 'N/A'}\nUser: ${
                 info.alertUser
-            }\n`;
+            }\ncreatetime:(<span class="red_highlight">GMT</span>)${info.createtime}\n`;
             for (const key in info.alertExtraInfo) {
                 if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
                     const value = info.alertExtraInfo[key];
@@ -1650,6 +1651,7 @@ function AwsAlertHandler(...kwargs) {
             try {
                 const { aws } = JSON.parse(log);
                 acc.push({
+                    EventTime: aws?.eventTime,
                     SourceIP: aws?.sourceIPAddress || aws?.internal_ip,
                     ExternalIP: aws?.external_ip,
                     Domain: aws?.domain,
@@ -1676,7 +1678,11 @@ function AwsAlertHandler(...kwargs) {
             let desc = `Observed ${summary.split(']')[1]}\n`;
             Object.entries(info).forEach(([index, value]) => {
                 if (value !== undefined && value !== ' ' && index != 'Summary') {
-                    desc += `${index}: ${value}\n`;
+                    if (index == 'EventTime') {
+                        desc += `EventTime(<span class="red_highlight">GMT</span>): ${value}\n`;
+                    } else {
+                        desc += `${index}: ${value}\n`;
+                    }
                 }
             });
             desc += `\nPlease verify if the activity is legitimate.\n`;
@@ -2036,7 +2042,11 @@ function ImpervaincCEFAlertHandler(...kwargs) {
                             nextFieldIndex++;
                         }
                     }
-                    json[key] = value;
+                    if (value == 'n/a') {
+                        json[key] = undefined;
+                    } else {
+                        json[key] = value;
+                    }
                 }
             }
             return json;
@@ -2048,6 +2058,7 @@ function ImpervaincCEFAlertHandler(...kwargs) {
                 if (Object.keys(log).length !== 0) {
                     // Split CEF log
                     let cef_log = log.split('|');
+                    let createtime = cef_log[0].split('CEF:')[0];
                     // Parsing CEF Header
                     const cef_log_header = cef_log.slice(1, 7);
                     // Parsing CEF Extends
@@ -2056,6 +2067,7 @@ function ImpervaincCEFAlertHandler(...kwargs) {
                     acc.push({
                         summary: cef_log_extends.cs1,
                         // for some like "server error" tickets
+                        createtime: createtime,
                         username: cef_log_extends.duser,
                         srcIP: cef_log_extends.src,
                         dstIP: cef_log_extends.dst,
@@ -2130,7 +2142,9 @@ function AzureGraphAlertHandler(...kwargs) {
                             for (const prop of resource.modifiedProperties) {
                                 properties = { ...properties, [prop['displayName']]: prop['newValue'] };
                             }
+                            const activityDateTime = azure.activityDateTime.split('.')[0] + 'Z';
                             acc.push({
+                                activityDateTime: activityDateTime,
                                 AppDisplayName: azure?.appDisplayName || azure?.initiatedBy?.app?.displayName,
                                 SourceUser: azure?.userPrincipalName || azure?.initiatedBy?.user?.userPrincipalName,
                                 IpAddress: azure?.ipAddress || azure?.initiatedBy?.user?.ipAddress,
@@ -2157,12 +2171,13 @@ function AzureGraphAlertHandler(...kwargs) {
     function generateDescription() {
         const alertDescriptions = [];
         if (summary.toLowerCase().includes('conditional access policy updated')) {
-            console.log('hello jordans');
             for (const info of alertInfo) {
                 console.log(info['alertExtraInfo']['userPrincipalName']);
-                let desc = `Observed  the user "${info['alertExtraInfo']['userPrincipalName']}" was on ${
+                let desc = `Observed  the user "${
+                    info['alertExtraInfo']['userPrincipalName']
+                }" was on (<span class="red_highlight">GMT</span>)${
                     info['alertExtraInfo']['activityDateTime'].split('.')[0]
-                } Updated the conditional access policy "${info['alertExtraInfo']['displayName']}"\n\n`;
+                }ZS Updated the conditional access policy "${info['alertExtraInfo']['displayName']}"\n\n`;
                 for (const key in info.alertExtraInfo) {
                     if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
                         const value = info.alertExtraInfo[key];
@@ -2187,8 +2202,11 @@ function AzureGraphAlertHandler(...kwargs) {
                     if (Object.hasOwnProperty.call(info, key)) {
                         const value = info[key];
                         if (value !== undefined && value !== '' && key != 'summary' && key != 'alerturi') {
-                            console.log(value);
-                            desc += `${key}: ${value}\n`;
+                            if (key == 'activityDateTime') {
+                                desc += `activityDateTime(<span class="red_highlight">GMT</span>): ${value}\n`;
+                            } else {
+                                desc += `${key}: ${value}\n`;
+                            }
                         }
                     }
                 }
