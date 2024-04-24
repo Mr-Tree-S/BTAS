@@ -2393,9 +2393,14 @@ function PulseAlertHandler(...kwargs) {
             try {
                 if (log.includes('PulseSecure')) {
                     var firstIndex = log.indexOf('PulseSecure:');
-                    let time_text = log.toString().substr(firstIndex + 13);
-                    const first_bar = time_text.indexOf(':');
-                    time_text = time_text.toString().substr(0, first_bar + 6);
+                    let time_text = '';
+                    if (summary.toLowerCase().includes('suspicious geolocation ip login success')) {
+                        time_text = log.toString().substr(0, firstIndex);
+                    } else {
+                        time_text = log.toString().substr(firstIndex + 13);
+                        const first_bar = time_text.indexOf(':');
+                        time_text = time_text.toString().substr(0, first_bar + 6);
+                    }
                     const lastIndex = log.toString().lastIndexOf('Vendor)');
                     let alert_text = log
                         .toString()
@@ -2637,7 +2642,8 @@ function Agent_Disconnect_AlertHandler(...kwargs) {
             const No_Decoder_handlers = {
                 'detect aad, o365 sign-in from risky countries': Risky_Countries_AlertHandler,
                 'successful azure/o365 login from malware-ip': Risky_Countries_AlertHandler,
-                'agent disconnected': Agent_Disconnect_AlertHandler
+                'agent disconnected': Agent_Disconnect_AlertHandler,
+                'suspicious geolocation ip login success': PulseAlertHandler
             };
             const Summary = $('#summary-val').text().trim();
             let No_Decoder_handler = null;
