@@ -1018,50 +1018,52 @@ function MDEAlertHandler(...kwargs) {
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             let logObj = '';
-            try {
-                const formatJson = log.substring(log.indexOf('{')).trim();
-                logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
-            } catch (error) {
-                const formatJson = log.substring(log.indexOf('{')).trim() + '"}]}}';
-                logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
-            }
-            try {
-                const { mde } = logObj;
-                const { title, id, computerDnsName, relatedUser, evidence, alertCreationTime } = mde;
-                let dotIndex = alertCreationTime.lastIndexOf('.');
-
-                let dateTimeStr = alertCreationTime.slice(0, dotIndex) + 'Z';
-                const alert = { title, id, computerDnsName, dateTimeStr };
-                const userName = relatedUser ? relatedUser.userName : 'N/A';
-                let extrainfo = '';
-                if (evidence) {
-                    const tmp = [];
-                    for (const evidenceItem of evidence) {
-                        let description = '';
-                        if (evidenceItem.entityType === 'File') {
-                            description = `filename: ${evidenceItem.fileName}\nfilePath: ${evidenceItem.filePath}\nsha1: ${evidenceItem.sha1}`;
-                            tmp.push(description);
-                        }
-                        if (evidenceItem.entityType === 'Process') {
-                            description = `cmd: ${evidenceItem.processCommandLine}\naccount: ${evidenceItem.accountName}\nsha1: ${evidenceItem.sha1}`;
-                            tmp.push(description);
-                        }
-                        if (evidenceItem.entityType === 'Url') {
-                            description += `Url: ${evidenceItem.url}`;
-                            tmp.push(description);
-                        }
-                        if (evidenceItem.entityType === 'Ip') {
-                            description += `IP: ${evidenceItem.ipAddress}`;
-                            tmp.push(description);
-                        }
-                        //tmp.push(description);
-                    }
-                    const uniqueDescriptions = Array.from(new Set(tmp));
-                    extrainfo = uniqueDescriptions.join('\n');
+            if (log != '') {
+                try {
+                    const formatJson = log.substring(log.indexOf('{')).trim();
+                    logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
+                } catch (error) {
+                    const formatJson = log.substring(log.indexOf('{')).trim() + '"}]}}';
+                    logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
                 }
-                acc.push({ ...alert, userName, extrainfo });
-            } catch (error) {
-                console.error(`Error: ${error.message}`);
+                try {
+                    const { mde } = logObj;
+                    const { title, id, computerDnsName, relatedUser, evidence, alertCreationTime } = mde;
+                    let dotIndex = alertCreationTime.lastIndexOf('.');
+
+                    let dateTimeStr = alertCreationTime.slice(0, dotIndex) + 'Z';
+                    const alert = { title, id, computerDnsName, dateTimeStr };
+                    const userName = relatedUser ? relatedUser.userName : 'N/A';
+                    let extrainfo = '';
+                    if (evidence) {
+                        const tmp = [];
+                        for (const evidenceItem of evidence) {
+                            let description = '';
+                            if (evidenceItem.entityType === 'File') {
+                                description = `filename: ${evidenceItem.fileName}\nfilePath: ${evidenceItem.filePath}\nsha1: ${evidenceItem.sha1}`;
+                                tmp.push(description);
+                            }
+                            if (evidenceItem.entityType === 'Process') {
+                                description = `cmd: ${evidenceItem.processCommandLine}\naccount: ${evidenceItem.accountName}\nsha1: ${evidenceItem.sha1}`;
+                                tmp.push(description);
+                            }
+                            if (evidenceItem.entityType === 'Url') {
+                                description += `Url: ${evidenceItem.url}`;
+                                tmp.push(description);
+                            }
+                            if (evidenceItem.entityType === 'Ip') {
+                                description += `IP: ${evidenceItem.ipAddress}`;
+                                tmp.push(description);
+                            }
+                            //tmp.push(description);
+                        }
+                        const uniqueDescriptions = Array.from(new Set(tmp));
+                        extrainfo = uniqueDescriptions.join('\n');
+                    }
+                    acc.push({ ...alert, userName, extrainfo });
+                } catch (error) {
+                    console.error(`Error: ${error.message}`);
+                }
             }
             return acc;
         }, []);
