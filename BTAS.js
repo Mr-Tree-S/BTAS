@@ -1755,10 +1755,13 @@ function Defender365AlertHandler(...kwargs) {
                     });
                 }
                 let creationTime = alerts.creationTime.split('.')[0] + 'Z';
-
+                let title = alerts?.title;
+                if (summary.toLowerCase().includes(title.toLowerCase())) {
+                    title = undefined;
+                }
                 acc.push({
                     creationTime: creationTime,
-
+                    Title: title,
                     summary: jsonLog['incidents'].incidentName,
                     host: alerts?.devices[0]?.deviceDnsName,
                     user: entities.user,
