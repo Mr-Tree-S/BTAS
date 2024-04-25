@@ -1647,23 +1647,60 @@ function SpemAlertHandler(...kwargs) {
 
 function AwsAlertHandler(...kwargs) {
     const { rawLog, summary } = kwargs[0];
-
+    var raw_alert = 0;
+    const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
                 const { aws } = JSON.parse(log);
-                acc.push({
-                    EventTime: aws?.eventTime,
-                    SourceIP: aws?.sourceIPAddress || aws?.internal_ip,
-                    ExternalIP: aws?.external_ip,
-                    Domain: aws?.domain,
-                    User: aws?.userIdentity?.arn,
-                    UserAgent: aws?.userAgent,
-                    PrincipalId: aws?.userIdentity?.principalId,
-                    Result: aws?.errorCode,
-                    QueryType: aws?.query_type,
-                    Action: aws?.action
-                });
+                let EventTime = aws.service.eventFirstSeen.split('.')[0] + 'Z';
+                if (DecoderName == 'aws-guardduty') {
+                    const actionType = aws.service.action.actionType;
+                    if (actionType == 'AWS_API_CALL') {
+                        acc.push({
+                            EventTime: EventTime,
+                            actionType: actionType,
+                            Api_Name: aws?.service?.action?.awsApiCallAction?.api,
+                            userName: aws?.resource?.accessKeyDetails?.userName,
+                            RemoteIP: aws?.service?.action?.awsApiCallAction?.remoteIpDetails?.ipAddressV4,
+                            RemoteIP_country:
+                                aws?.service?.action?.awsApiCallAction?.remoteIpDetails?.country.countryName
+                        });
+                    } else if (actionType == 'KUBERNETES_API_CALL') {
+                        acc.push({
+                            EventTime: EventTime,
+                            actionType: actionType,
+                            userName: aws?.resource?.accessKeyDetails?.userName,
+                            sourceIPs: aws?.service?.action?.kubernetesApiCallAction?.sourceIPs,
+                            requestUri: aws?.service?.action?.kubernetesApiCallAction?.requestUri
+                        });
+                    } else if (actionType == 'PORT_PROBE') {
+                        acc.push({
+                            EventTime: EventTime,
+                            actionType: actionType,
+                            localPort: aws?.service?.action?.portProbeAction?.portProbeDetails.localPortDetails.port,
+                            RemoteIP:
+                                aws?.service?.action?.portProbeAction?.portProbeDetails.remoteIpDetails.ipAddressV4,
+                            RemoteIP_country:
+                                aws?.service?.action?.portProbeAction?.portProbeDetails.remoteIpDetails.country
+                                    .countryName
+                        });
+                    }
+                } else {
+                    acc.push({
+                        EventTime: aws?.eventTime,
+                        SourceIP: aws?.sourceIPAddress || aws?.internal_ip,
+                        ExternalIP: aws?.external_ip,
+                        Domain: aws?.domain,
+                        User: aws?.userIdentity?.arn,
+                        UserAgent: aws?.userAgent,
+                        PrincipalId: aws?.userIdentity?.principalId,
+                        Result: aws?.errorCode,
+                        QueryType: aws?.query_type,
+                        Action: aws?.action
+                    });
+                }
+                raw_alert += 1;
             } catch (error) {
                 console.log(`Error: ${error}`);
             }
@@ -1673,7 +1710,7 @@ function AwsAlertHandler(...kwargs) {
     }
 
     const alertInfo = parseLog(rawLog);
-
+    const num_alert = $('#customfield_10300-val').text().trim();
     function generateDescription() {
         const alertDescriptions = [];
         for (const info of alertInfo) {
@@ -1689,6 +1726,10 @@ function AwsAlertHandler(...kwargs) {
             });
             desc += `\nPlease verify if the activity is legitimate.\n`;
             alertDescriptions.push(desc);
+        }
+        if (raw_alert < num_alert) {
+            let extra_message = `\n\n<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>`;
+            alertDescriptions.push(extra_message);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
         showDialog(alertMsg);
@@ -2220,7 +2261,7 @@ function AzureGraphAlertHandler(...kwargs) {
             }
         }
         if (raw_alert < num_alert) {
-            let extra_message = `\n\nNumber Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.`;
+            let extra_message = `\n\n<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>`;
             alertDescriptions.push(extra_message);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
@@ -2317,7 +2358,7 @@ function ProofpointAlertHandler(...kwargs) {
             alertDescriptions.push(desc);
         }
         if (raw_alert < num_alert) {
-            let extra_message = `\n\nNumber Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.`;
+            let extra_message = `\n\n<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>`;
             alertDescriptions.push(extra_message);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
@@ -2378,7 +2419,7 @@ function ZscalerAlertHandler(...kwargs) {
             alertDescriptions.push(desc);
         }
         if (raw_alert < num_alert) {
-            let extra_message = `\n\nNumber Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.`;
+            let extra_message = `\n\n<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>`;
             alertDescriptions.push(extra_message);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n'); //Can achieve automatic deduplication
@@ -2438,7 +2479,7 @@ function PulseAlertHandler(...kwargs) {
         desc += `\n\nPlease verify if the login is legitimate.\n`;
         alertDescriptions.push(desc);
         if (raw_alert < num_alert) {
-            let extra_message = `\n\nNumber Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.`;
+            let extra_message = `\n\n<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>`;
             alertDescriptions.push(extra_message);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n'); //Can achieve automatic deduplication
@@ -2637,7 +2678,8 @@ function Agent_Disconnect_AlertHandler(...kwargs) {
                 'impervainc_cef': ImpervaincCEFAlertHandler,
                 'proofpoint_tap': ProofpointAlertHandler,
                 'zscaler-zpa-json': ZscalerAlertHandler,
-                'pulse-secure': PulseAlertHandler
+                'pulse-secure': PulseAlertHandler,
+                'aws-guardduty': AwsAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
