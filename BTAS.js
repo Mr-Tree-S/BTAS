@@ -1685,8 +1685,8 @@ function AwsAlertHandler(...kwargs) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
                 const { aws } = JSON.parse(log);
-                let EventTime = aws.service.eventFirstSeen.split('.')[0] + 'Z';
                 if (DecoderName == 'aws-guardduty') {
+                    let EventTime = aws.service.eventFirstSeen.split('.')[0] + 'Z';
                     const actionType = aws.service.action.actionType;
                     if (actionType == 'AWS_API_CALL') {
                         acc.push({
