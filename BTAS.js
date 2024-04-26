@@ -586,7 +586,7 @@ function ticketNotify(pageData) {
             headers: {
                 'api-key': 'Tnznjha3yhJgA7YG'
             },
-            timeout: 2000, // 超过2秒未获取到文件则使用缓存文件
+            timeout: 4000, // 超过4秒未获取到文件则使用缓存文件
             onload: function (response) {
                 if (response.status === 200) {
                     const data = JSON.parse(response.responseText);
@@ -638,6 +638,31 @@ function ticketNotify(pageData) {
             Resolve: '#action_id_761',
             None: ''
         };
+        const searchStrings = [];
+
+        // 查找并高亮指定字符串的函数
+        function highlightTextInElement(selector, searchStrings) {
+            const element = $(selector);
+            if (element.length === 0) {
+                console.error('未找到指定的元素');
+                return;
+            }
+
+            // 获取元素文本内容
+            let text = element.text().trim();
+
+            // 对每个字符串进行高亮处理
+            searchStrings.forEach((searchString) => {
+                // 在文本中查找并替换匹配的字符串
+                text = text.replace(
+                    new RegExp(searchString, 'g'),
+                    `<span style="background-color: yellow;">${searchString}</span>`
+                );
+            });
+
+            // 将替换后的文本重新设置为元素的 HTML 内容
+            element.html(text);
+        }
 
         function checkProperties(properties, pageData, ticketname) {
             const condition = (property) => {
@@ -645,7 +670,11 @@ function ticketNotify(pageData) {
                 for (const val of propertyArray) {
                     try {
                         if (pageData[property.propertiesKey].includes(val)) {
-                            return true;
+                            if (property.propertiesKey == 'RawLog') {
+                                searchStrings.push(val);
+                            }
+                        } else {
+                            return false; // 如果任何一个属性不满足条件，直接返回 false
                         }
                     } catch (error) {
                         if (
@@ -656,6 +685,7 @@ function ticketNotify(pageData) {
                         }
                     }
                 }
+                return true; // 如果所有属性都满足条件，则返回 true
             };
 
             return properties.reduce((acc, property) => {
@@ -683,6 +713,8 @@ function ticketNotify(pageData) {
                 }
             }
         }
+
+        highlightTextInElement('#field-customfield_10219 > div:first-child > div:nth-child(2)', searchStrings);
     }
 }
 /**
