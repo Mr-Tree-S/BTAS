@@ -2235,6 +2235,20 @@ function AzureGraphAlertHandler(...kwargs) {
                             });
                         }
                     }
+                } else {
+                    const activityDateTime = azure.createdDateTime;
+                    acc.push({
+                        activityDateTime: activityDateTime,
+                        AppDisplayName: azure?.appDisplayName || azure?.initiatedBy?.app?.displayName,
+                        SourceUser: azure?.userPrincipalName || azure?.initiatedBy?.user?.userPrincipalName,
+                        IpAddress: azure?.ipAddress || azure?.initiatedBy?.user?.ipAddress,
+                        Location:
+                            azure?.location?.countryOrRegion && azure?.location?.state && azure?.location?.city
+                                ? `${azure?.location?.countryOrRegion}\\${azure?.location?.state}\\${azure?.location?.city}`
+                                : undefined,
+                        ...properties,
+                        failureReason: azure?.status?.failureReason || azure.result
+                    });
                 }
             } catch (error) {
                 console.log(`Error: ${error}`);
