@@ -248,6 +248,7 @@ function QuickReply() {
         <aui-item-radio interactive>Compromised Accounts</aui-item-radio>
         <aui-item-radio interactive>Agent recover</aui-item-radio>
 		<aui-item-radio interactive>Log resume</aui-item-radio>
+        <aui-item-radio interactive>关闭工单</aui-item-radio>
     </aui-section>
     </aui-dropdown-menu>`;
     const commentBar = $($('.aui-toolbar2-primary')[1]);
@@ -276,7 +277,8 @@ function QuickReply() {
         'Log resume':
             'Dear Customer,<br>Thanks for your reply, <br>Log resumed, we will close this ticket.<br>Best Regards.',
         'Agent recover':
-            'Dear Customer,<br>Thanks for your reply,<br>The agent is now active and we will close this case<br>Best Regards.'
+            'Dear Customer,<br>Thanks for your reply,<br>The agent is now active and we will close this case<br>Best Regards.',
+        '关闭工单': '尊敬的客户，<br>感谢您的回复，我们将关闭此工单。 <br>祝您生活愉快。<br>'
     };
 
     // Check local storage at initialization time
