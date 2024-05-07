@@ -2068,7 +2068,7 @@ function paloaltoAlertHandler(...kwargs) {
                         'Destination IP': logArray[8],
                         'Destination Port': logArray[25],
                         'Destination Location': logArray[42] != 0 ? logArray[42] : logArray[39],
-                        'IoC': logArray[31],
+                        'URL/filename': logArray[31],
                         'Summary': summary.split(']')[1]
                     });
                 }
