@@ -1723,6 +1723,7 @@ function AwsAlertHandler(...kwargs) {
                 } else {
                     acc.push({
                         EventTime: aws?.eventTime,
+                        EventName: aws?.eventName,
                         SourceIP: aws?.sourceIPAddress || aws?.internal_ip,
                         ExternalIP: aws?.external_ip,
                         Domain: aws?.domain,
@@ -1731,7 +1732,9 @@ function AwsAlertHandler(...kwargs) {
                         PrincipalId: aws?.userIdentity?.principalId,
                         Result: aws?.errorCode,
                         QueryType: aws?.query_type,
-                        Action: aws?.action
+                        Action: aws?.action,
+                        requestParameters: JSON.stringify(aws?.requestParameters),
+                        responseElements: JSON.stringify(aws?.responseElements)
                     });
                 }
                 raw_alert += 1;
