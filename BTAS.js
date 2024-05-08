@@ -1420,7 +1420,10 @@ function FortigateAlertHandler(...kwargs) {
                 user,
                 cfgattr,
                 msg,
-                forwardedfor
+                forwardedfor,
+                analyticscksum,
+                from,
+                to
             } = alertInfo;
             const extract_alert_info = {
                 datetime: `${date} ${time}`,
@@ -1434,7 +1437,10 @@ function FortigateAlertHandler(...kwargs) {
                 cfgattr: cfgattr,
                 msg: msg,
                 referralurl: referralurl,
-                forwardedfor: forwardedfor || undefined
+                forwardedfor: forwardedfor || undefined,
+                analyticscksum: analyticscksum,
+                from: from,
+                to
             };
             acc.push(extract_alert_info);
             return acc;
