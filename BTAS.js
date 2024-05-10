@@ -2258,6 +2258,7 @@ function AzureGraphAlertHandler(...kwargs) {
                                 ? `${azure?.location?.countryOrRegion}\\${azure?.location?.state}\\${azure?.location?.city}`
                                 : undefined,
                         ...properties,
+                        DeviceName: azure.deviceDetail.displayName || 'N/A',
                         failureReason: azure?.status?.failureReason || azure.result
                     });
                 }
@@ -2571,7 +2572,7 @@ function Risky_Countries_AlertHandler(...kwargs) {
                         appDisplayName: appDisplayName ? appDisplayName : undefined,
                         ipAddress: ipAddress ? ipAddress : undefined,
                         operatingSystem: operatingSystem ? operatingSystem : undefined,
-                        displayName: displayName ? displayName : undefined,
+                        DeviceName: displayName ? displayName : 'N/A',
                         failureReason: failureReason ? failureReason : undefined,
                         additionalDetails: additionalDetails ? additionalDetails : undefined
                     };
@@ -2586,8 +2587,16 @@ function Risky_Countries_AlertHandler(...kwargs) {
                         UserId,
                         ResultStatusDetail,
                         UserAgent,
-                        ActorIpAddress
+                        ActorIpAddress,
+                        DeviceProperties
                     } = json_alert['office_365'];
+                    let devicename = '';
+                    DeviceProperties.forEach((item) => {
+                        if (item.Name === 'DisplayName') {
+                            devicename = item.Value;
+                            console.log(item.Value);
+                        }
+                    });
                     const alertExtraInfo = {
                         CreationEventTime: CreationTime ? CreationTime : undefined,
                         Operation: Operation ? Operation : undefined,
@@ -2596,6 +2605,7 @@ function Risky_Countries_AlertHandler(...kwargs) {
                         ClientIP: ClientIP ? ClientIP : undefined,
                         ActorIpAddress: ActorIpAddress ? ActorIpAddress : undefined,
                         UserAgent: UserAgent ? UserAgent : undefined,
+                        DeviceName: devicename ? devicename : 'N/A',
                         ResultStatusDetail: ResultStatusDetail ? ResultStatusDetail : undefined
                     };
                     acc.push({ alertExtraInfo });
@@ -2746,6 +2756,7 @@ function Agent_Disconnect_AlertHandler(...kwargs) {
             const No_Decoder_handlers = {
                 'detect aad, o365 sign-in from risky countries': Risky_Countries_AlertHandler,
                 'successful azure/o365 login from malware-ip': Risky_Countries_AlertHandler,
+                'rarely country signin from o365': Risky_Countries_AlertHandler,
                 'agent disconnected': Agent_Disconnect_AlertHandler,
                 'suspicious geolocation ip login success': PulseAlertHandler
             };
