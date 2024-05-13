@@ -2767,6 +2767,74 @@ function MdbAlertHandler(...kwargs) {
 
     addButton('generateDescription', 'Description', generateDescription);
 }
+
+function AlicloudAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    var raw_alert = 0;
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const BraceIndex = log.toString().indexOf('{');
+                const lastBraceIndex = log.toString().lastIndexOf('}');
+                if (BraceIndex !== -1) {
+                    raw_alert += 1;
+                    console.log(`${raw_alert} iteration 'is being processed`);
+                    // Intercepts a substring from the beginning of the brace to the end of the string
+                    json_text = log.toString().substr(BraceIndex, lastBraceIndex);
+                    let time_1 = log.toString().substr(0, BraceIndex).split(' ');
+                    let time = time_1.slice(time_1.length - 4, time_1.length - 2).join(' ');
+                    time = time_1[0] + ' ' + time;
+                    console.log(time);
+                    try {
+                        const json_alert = JSON.parse(json_text);
+                        const { eventId, eventName, resourceName, sourceIpAddress, userIdentity } =
+                            json_alert['alicloud'];
+                        const alertExtraInfo = {
+                            createTime: time,
+                            eventId: eventId ? eventId : undefined,
+                            eventName: eventName ? eventName : undefined,
+                            InstanceId: resourceName ? resourceName : undefined,
+                            sourceIpAddress: sourceIpAddress ? sourceIpAddress : undefined,
+                            userName: userIdentity?.userName ? userIdentity?.userName : undefined
+                        };
+                        console.log(alertExtraInfo);
+                        acc.push({ alertExtraInfo });
+                    } catch (error) {
+                        console.log('Unable to parse JSON data, handling exception: ' + error);
+                    }
+                }
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLog(rawLog);
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            const lastindex = summary.lastIndexOf(']');
+            let desc = `Observed ${summary.substr(lastindex + 1)}\n`;
+            for (const key in info.alertExtraInfo) {
+                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                    const value = info.alertExtraInfo[key];
+                    if (value !== undefined) {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -2830,7 +2898,8 @@ function MdbAlertHandler(...kwargs) {
                 'proofpoint_tap': ProofpointAlertHandler,
                 'zscaler-zpa-json': ZscalerAlertHandler,
                 'pulse-secure': PulseAlertHandler,
-                'aws-guardduty': AwsAlertHandler
+                'aws-guardduty': AwsAlertHandler,
+                'alicloud-json': AlicloudAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
