@@ -44,6 +44,10 @@ function addCss() {
 	        color:red;
 			font-weight: bold;
 	      }
+           .black_highlight{
+		    color:black;
+            font-weight: bold;
+		  }
 	    </style>
 	    `);
     $('head').append(ss);
@@ -2683,6 +2687,87 @@ function Agent_Disconnect_AlertHandler(...kwargs) {
     addButton('openKQL', 'KQL', openMDE);
 }
 
+function MdbAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    if (rawLog.length == 0 || rawLog.length == 1) {
+        rawLog = $('#customfield_10219-val').text().trim().split('\n');
+    }
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                if (log.length == 0) {
+                    return acc;
+                }
+                if (summary.toLowerCase().includes('syslog: user missed the password more than one time')) {
+                    let log_ = log.split(';')[1].split(' ');
+                    let time_host = log.split(' sshd')[0].split(' ');
+                    let user = '';
+                    if (log_.length > 7) {
+                        user = log_[8].split('=')[1];
+                    }
+                    let description = `Observed user<span class='black_highlight'> ${user}</span> multiple ssh login failed from ${
+                        log_[6].split('=')[1]
+                    }\nCreateTime: ${time_host
+                        .slice(0, time_host.length - 1)
+                        .join(' ')}\nHostname: <span class='black_highlight'> ${
+                        time_host[time_host.length - 1]
+                    }</span>\n`;
+
+                    acc.push(description);
+                }
+                if (summary.toLowerCase().includes('sshd: insecure connection attempt')) {
+                    let log_ = log.split(' ');
+                    console.log('log', log_);
+                    let description = `Observed insecure connection attempt from ${
+                        log_[log_.length - 3]
+                    }\nCreateTime: ${log_.slice(0, log_.length - 11).join(' ')}\n`;
+                    acc.push(description);
+                }
+                if (
+                    summary
+                        .toLowerCase()
+                        .includes('pwc anomaly: suspected lateral movement - linux containing session opened')
+                ) {
+                    let log_ = log.split('>')[1] + '\n';
+                    console.log('log', log_);
+                    acc.push(log_);
+                }
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    function generateDescription() {
+        const alertDescriptions = [];
+        if (
+            summary.toLowerCase().includes('pwc anomaly: suspected lateral movement - linux containing session opened')
+        ) {
+            const Log_source = $('#customfield_10204-val').text().trim();
+            alertDescriptions.push(`Observed  session opened on <span class='black_highlight'>${Log_source}</span>\n`);
+        }
+        for (const info of alertInfo) {
+            alertDescriptions.push(info);
+        }
+        if (summary.toLowerCase().includes('sshd: insecure connection attempt')) {
+            alertDescriptions.push('Kindly help to verify if the connection is legitimate\n');
+        }
+        if (summary.toLowerCase().includes('syslog: user missed the password more than one time')) {
+            alertDescriptions.push('Kindly help to verify if the login is legitimate\n');
+        }
+        if (
+            summary.toLowerCase().includes('pwc anomaly: suspected lateral movement - linux containing session opened')
+        ) {
+            alertDescriptions.push('Kindly help to verify if the session is legitimate\n');
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
 (function () {
     'use strict';
 
@@ -2767,9 +2852,15 @@ function Agent_Disconnect_AlertHandler(...kwargs) {
                     No_Decoder_handler = No_Decoder_handlers[key];
                 }
             });
-
             if (No_Decoder_handler !== null) {
                 No_Decoder_handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, summary: Summary });
+            }
+            const Log_Domain_handlers = {
+                mdb: MdbAlertHandler //这里面有点工单为decoder name:sshd
+            };
+            const Log_Domain_handler = Log_Domain_handlers[LogSourceDomain];
+            if (Log_Domain_handler) {
+                Log_Domain_handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, summary: summary });
             }
         }
     }, 1000);
