@@ -661,8 +661,8 @@ function ticketNotify(pageData) {
             searchStrings.forEach((searchString) => {
                 // 在文本中查找并替换匹配的字符串
                 text = text.replace(
-                    new RegExp(searchString, 'g'),
-                    `<span style="background-color: yellow;">${searchString}</span>`
+                    new RegExp(searchString, 'gi'),
+                    (match) => `<span style="background-color: yellow;">${match}</span>`
                 );
             });
 
@@ -675,12 +675,11 @@ function ticketNotify(pageData) {
                 const propertyArray = property.propertiesVal.split(',');
                 for (const val of propertyArray) {
                     try {
-                        if (pageData[property.propertiesKey].includes(val)) {
+                        if (pageData[property.propertiesKey].toLowerCase().includes(val.toLowerCase())) {
                             if (property.propertiesKey == 'RawLog') {
                                 searchStrings.push(val);
                             }
-                        } else {
-                            return false; // 如果任何一个属性不满足条件，直接返回 false
+                            return true; // 如果任何一个属性满足条件，直接返回 true
                         }
                     } catch (error) {
                         if (
@@ -691,7 +690,7 @@ function ticketNotify(pageData) {
                         }
                     }
                 }
-                return true; // 如果所有属性都满足条件，则返回 true
+                return false; // 如果所有属性都不满足条件，则返回 false
             };
 
             return properties.reduce((acc, property) => {
