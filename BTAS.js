@@ -37,6 +37,83 @@ var $ = window.jQuery;
  * @param {string} body - The body of the flag
  * @param {string} close - The close of flag, can be one of the following: "auto", "manual", "never"
  */
+function security_microsoft() {
+    var queryString = window.location.search;
+    var urlParams = new URLSearchParams(queryString);
+    var current_domain = urlParams.get('current');
+
+    var customers = {
+        'lsh-tw': 'cmibenzcorp',
+        'kerrypropshk': 'kerryproperties',
+        'spac-motors': 'taikoomotors',
+        'je-pilot': 'jehl',
+        'spac-resources-hk': 'swireresources',
+        'fung': 'lfshare',
+        'spac-sugar-hk': 'taikoosugarltd',
+        'lsh-kr-smc': 'mbstarcokr',
+        'lsh-hk': 'leishinghong',
+        'lsh-vn': 'vietnamstar-auto'
+    };
+    var customer = customers[current_domain];
+    if (customer) {
+        console.log('account11', customer);
+    } else {
+        customer = current_domain;
+    }
+    setTimeout(() => {
+        document.getElementById('O365_MainLink_Me').click();
+        console.log('account1');
+    }, 6600);
+    setTimeout(() => {
+        var account = document.getElementById('mectrl_currentAccount_secondary').textContent;
+        console.log(account, customer);
+        if (current_domain == 'none') {
+            let urls = localStorage.getItem('urls').toString().split(',');
+            console.log('urls', urls);
+            for (var i = 0; i < urls.length; i++) {
+                GM_openInTab(urls[i], {
+                    active: false, // 设置为 false，以在后台打开，不激活新标签页
+                    insert: true // 设置为 true，将新标签页插入到当前标签页之后
+                });
+            }
+            localStorage.removeItem('urls');
+        }
+        if (
+            !account.includes(customer) &&
+            !customer.includes(account.split('@')[1].split('.')[0]) &&
+            current_domain != 'none'
+        ) {
+            let urls = [];
+            urlParams.forEach(function (value, key) {
+                if (key.includes('url')) {
+                    urls.push(value);
+                }
+            });
+            localStorage.setItem('urls', urls);
+            document.getElementById('mectrl_body_signOut').click();
+        } else {
+            urlParams.forEach(function (value, key) {
+                if (key.includes('url')) {
+                    GM_openInTab(value, {
+                        active: false, // 设置为 false，以在后台打开，不激活新标签页
+                        insert: true // 设置为 true，将新标签页插入到当前标签页之后
+                    });
+                }
+            });
+            window.close();
+        }
+    }, 6900);
+}
+
+function switch_user_microsoft() {
+    if ($('#login_workload_logo_text').text().trim() == '您已注销帐户') {
+        GM_openInTab('https://security.microsoft.com/homepage?&current=none', {
+            active: false, // 设置为 false，以在后台打开，不激活新标签页
+            insert: true // 设置为 true，将新标签页插入到当前标签页之后
+        });
+    }
+    document.getElementById('otherTileText').click();
+}
 function addCss() {
     const ss = $(`
 	    <style> 
@@ -252,7 +329,7 @@ function QuickReply() {
     const replyButton = `<button class="aui-button aui-dropdown2-trigger" aria-controls="is-radio-checked">Quick Reply</button>
     <aui-dropdown-menu id="is-radio-checked">
     <aui-section id="reply" label="reply">
-    	 <div class="dropdown-column">
+    	<div class="dropdown-column">
         <aui-item-radio interactive>Close ticket</aui-item-radio>
         <aui-item-radio interactive>Monitor ticket</aui-item-radio>
         <aui-item-radio interactive>Waiting ticket</aui-item-radio>
@@ -260,12 +337,12 @@ function QuickReply() {
         <aui-item-radio interactive>Ask for Whitelist</aui-item-radio>
         <aui-item-radio interactive>Whitelist Done</aui-item-radio>
 		<aui-item-radio interactive>Agent recover</aui-item-radio>
-        		 </div> <div class="dropdown-column"> 
-     <aui-item-radio interactive>Leaked Credentials</aui-item-radio>
-		 <aui-item-radio interactive>Compromised Accounts</aui-item-radio>
-		 <aui-item-radio interactive>Log resume</aui-item-radio>
-		 <aui-item-radio interactive>关闭工单</aui-item-radio> 
-		 <aui-item-radio interactive>Haeco high severity</aui-item-radio>
+        </div> <div class="dropdown-column"> 
+        <aui-item-radio interactive>Leaked Credentials</aui-item-radio>
+		<aui-item-radio interactive>Compromised Accounts</aui-item-radio>
+		<aui-item-radio interactive>Log resume</aui-item-radio>
+		<aui-item-radio interactive>关闭工单</aui-item-radio> 
+		<aui-item-radio interactive>Haeco high severity</aui-item-radio>
         <aui-item-radio interactive>Haeco medium severity</aui-item-radio>
         <aui-item-radio interactive>Haeco low severity</aui-item-radio></div>
     </aui-section>
@@ -1134,14 +1211,25 @@ function MDEAlertHandler(...kwargs) {
         showDialog(alertMsg);
     }
     function openMDE() {
-        let MDEURL = '';
+        let MDEURL = [];
         for (const info of alertInfo) {
             const { id } = info;
             if (id) {
-                MDEURL += `https://security.microsoft.com/alerts/${id}\n`;
+                MDEURL.push(`https://security.microsoft.com/alerts/${id}\n`);
             }
         }
         showFlag('info', 'MDE URL:', `${MDEURL}`, 'manual');
+        let url = 'https://security.microsoft.com/homepage?&current=';
+        url += LogSourceDomain;
+        for (let i = 0; i < MDEURL.length; i++) {
+            let mde_url = `&url${i}=${MDEURL[i]}`;
+            url += mde_url;
+            console.log(MDEURL[i]);
+        }
+        GM_openInTab(url, {
+            active: false, // 设置为 false，以在后台打开，不激活新标签页
+            insert: true // 设置为 true，将新标签页插入到当前标签页之后
+        });
     }
     addButton('generateDescription', 'Description', generateDescription);
     addButton('openMDE', 'MDE', openMDE);
@@ -1977,17 +2065,29 @@ function Defender365AlertHandler(...kwargs) {
     }
 
     function openMDE() {
-        let MDEURL = '';
+        let MDEURL = [];
         for (const info of alertInfo) {
             const { alertid, incidenturi } = info;
+            console.log(info);
             if (alertid && !MDEURL.includes(alertid)) {
-                MDEURL += `https://security.microsoft.com/alerts/${alertid}<br><br>`;
+                MDEURL.push(`https://security.microsoft.com/alerts/${alertid}`);
             }
             if (!alertid && incidenturi) {
-                MDEURL += incidenturi.replace('hXXps[:]', 'https:') + '<br><br>';
+                MDEURL.push(incidenturi.replace('hXXps[:]', 'https:'));
             }
         }
         showFlag('info', 'MDE URL:', `${MDEURL}`, 'manual');
+        let url = 'https://security.microsoft.com/homepage?&current=';
+        url += LogSourceDomain;
+        for (let i = 0; i < MDEURL.length; i++) {
+            let mde_url = `&url${i}=${MDEURL[i]}`;
+            url += mde_url;
+            console.log(MDEURL[i]);
+        }
+        GM_openInTab(url, {
+            active: false, // 设置为 false，以在后台打开，不激活新标签页
+            insert: true // 设置为 true，将新标签页插入到当前标签页之后
+        });
     }
 
     addButton('generateDescription', 'Description', generateDescription);
@@ -2882,7 +2982,16 @@ function AlicloudAlertHandler(...kwargs) {
             }
         }, 180000);
     }
-
+    if (window.location.href.includes('login.microsoftonline.com')) {
+        setTimeout(() => {
+            switch_user_microsoft();
+        }, 3000);
+    }
+    if (window.location.href.includes('security.microsoft.com/homepage?&current=')) {
+        setTimeout(() => {
+            security_microsoft();
+        }, 3000);
+    }
     // Issue page: Alert Handler
     setInterval(() => {
         const LogSourceDomain = $('#customfield_10223-val').text().trim();
