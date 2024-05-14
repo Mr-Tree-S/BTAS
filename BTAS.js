@@ -48,6 +48,19 @@ function addCss() {
 		    color:black;
             font-weight: bold;
 		  }
+           .dropdown-content {
+		    z-index: 1;
+		  }
+		  .aui-dropdown2 .aui-dropdown2-heading {
+			  padding: 1px 9px !important;
+		  }
+		  .dropdown-column {
+		    float: left;
+		    padding: 12px;
+		  }
+		  .aui-dropdown2{
+			  max-width: 450px !important;
+		  }
 	    </style>
 	    `);
     $('head').append(ss);
@@ -239,20 +252,22 @@ function QuickReply() {
     const replyButton = `<button class="aui-button aui-dropdown2-trigger" aria-controls="is-radio-checked">Quick Reply</button>
     <aui-dropdown-menu id="is-radio-checked">
     <aui-section id="reply" label="reply">
+    	 <div class="dropdown-column">
         <aui-item-radio interactive>Close ticket</aui-item-radio>
         <aui-item-radio interactive>Monitor ticket</aui-item-radio>
         <aui-item-radio interactive>Waiting ticket</aui-item-radio>
         <aui-item-radio interactive>Waiting Full Scan</aui-item-radio>
         <aui-item-radio interactive>Ask for Whitelist</aui-item-radio>
         <aui-item-radio interactive>Whitelist Done</aui-item-radio>
-        <aui-item-radio interactive>Haeco high severity</aui-item-radio>
+		<aui-item-radio interactive>Agent recover</aui-item-radio>
+        		 </div> <div class="dropdown-column"> 
+     <aui-item-radio interactive>Leaked Credentials</aui-item-radio>
+		 <aui-item-radio interactive>Compromised Accounts</aui-item-radio>
+		 <aui-item-radio interactive>Log resume</aui-item-radio>
+		 <aui-item-radio interactive>关闭工单</aui-item-radio> 
+		 <aui-item-radio interactive>Haeco high severity</aui-item-radio>
         <aui-item-radio interactive>Haeco medium severity</aui-item-radio>
-        <aui-item-radio interactive>Haeco low severity</aui-item-radio>
-        <aui-item-radio interactive>Leaked Credentials</aui-item-radio>
-        <aui-item-radio interactive>Compromised Accounts</aui-item-radio>
-        <aui-item-radio interactive>Agent recover</aui-item-radio>
-		<aui-item-radio interactive>Log resume</aui-item-radio>
-        <aui-item-radio interactive>关闭工单</aui-item-radio>
+        <aui-item-radio interactive>Haeco low severity</aui-item-radio></div>
     </aui-section>
     </aui-dropdown-menu>`;
     const commentBar = $($('.aui-toolbar2-primary')[1]);
