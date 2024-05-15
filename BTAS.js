@@ -9,6 +9,8 @@
 // @updateURL    https://greasyfork.org/scripts/463908-btas/code/BTAS.user.js
 // @downloadURL  https://greasyfork.org/scripts/463908-btas/code/BTAS.user.js
 // @match        https://caas.pwchk.com/*
+// @match        https://login.microsoftonline.com/*
+// @match        https://security.microsoft.com/*
 // @icon         https://www.google.com/s2/favicons?domain=pwchk.com
 // @require      https://code.jquery.com/jquery-3.6.4.min.js
 // @require      https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js
@@ -69,12 +71,15 @@ function security_microsoft() {
         console.log(account, customer);
         if (current_domain == 'none') {
             let urls = localStorage.getItem('urls').toString().split(',');
-            console.log('urls', urls);
             for (var i = 0; i < urls.length; i++) {
-                GM_openInTab(urls[i], {
-                    active: false, // 设置为 false，以在后台打开，不激活新标签页
-                    insert: true // 设置为 true，将新标签页插入到当前标签页之后
-                });
+                if (i == 0) {
+                    window.location.href = urls[i];
+                } else {
+                    GM_openInTab(urls[i], {
+                        active: false, // 设置为 false，以在后台打开，不激活新标签页
+                        insert: true // 设置为 true，将新标签页插入到当前标签页之后
+                    });
+                }
             }
             localStorage.removeItem('urls');
         }
@@ -107,10 +112,7 @@ function security_microsoft() {
 
 function switch_user_microsoft() {
     if ($('#login_workload_logo_text').text().trim() == '您已注销帐户') {
-        GM_openInTab('https://security.microsoft.com/homepage?&current=none', {
-            active: false, // 设置为 false，以在后台打开，不激活新标签页
-            insert: true // 设置为 true，将新标签页插入到当前标签页之后
-        });
+        window.location.href = 'https://security.microsoft.com/homepage?&current=none';
     }
     document.getElementById('otherTileText').click();
 }
@@ -1143,7 +1145,7 @@ function cortexAlertHandler(...kwargs) {
  */
 function MDEAlertHandler(...kwargs) {
     console.log('#### Code MDEAlertHandler run ####');
-    const { rawLog } = kwargs[0];
+    const { rawLog, LogSourceDomain } = kwargs[0];
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             let logObj = '';
@@ -1215,7 +1217,7 @@ function MDEAlertHandler(...kwargs) {
         for (const info of alertInfo) {
             const { id } = info;
             if (id) {
-                MDEURL.push(`https://security.microsoft.com/alerts/${id}\n`);
+                MDEURL.push(`https://security.microsoft.com/alerts/${id}`);
             }
         }
         showFlag('info', 'MDE URL:', `${MDEURL}`, 'manual');
@@ -1888,7 +1890,7 @@ function AwsAlertHandler(...kwargs) {
 }
 
 function Defender365AlertHandler(...kwargs) {
-    const { rawLog, summary } = kwargs[0];
+    const { rawLog, summary, LogSourceDomain } = kwargs[0];
 
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
