@@ -11,6 +11,7 @@
 // @match        https://caas.pwchk.com/*
 // @match        https://login.microsoftonline.com/*
 // @match        https://security.microsoft.com/*
+// @match        https://mss.pwcmacaumss.com/*
 // @icon         https://www.google.com/s2/favicons?domain=pwchk.com
 // @require      https://code.jquery.com/jquery-3.6.4.min.js
 // @require      https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js
@@ -2952,6 +2953,47 @@ function AlicloudAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function DstAlertHandler(...kwargs) {
+    var rawLog = $('#field-customfield_10904').text().trim().split('\n');
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const json_alert = JSON.parse(log);
+                const { system, eventdata } = json_alert['win'];
+                const alertExtraInfo = {
+                    computer: system?.computer ? system?.computer : undefined,
+                    commandLine: eventdata?.commandLine ? eventdata?.commandLine : undefined
+                };
+                acc.push({ alertExtraInfo });
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            let desc = ``;
+            for (const key in info.alertExtraInfo) {
+                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                    const value = info.alertExtraInfo[key];
+                    if (value !== undefined) {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -2996,7 +3038,7 @@ function AlicloudAlertHandler(...kwargs) {
     }
     // Issue page: Alert Handler
     setInterval(() => {
-        const LogSourceDomain = $('#customfield_10223-val').text().trim();
+        var LogSourceDomain = $('#customfield_10223-val').text().trim();
         const rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
         const summary = $('#summary-val').text().trim();
         if ($('#issue-content').length && !$('#generateDescription').length) {
@@ -3049,8 +3091,12 @@ function AlicloudAlertHandler(...kwargs) {
             if (No_Decoder_handler !== null) {
                 No_Decoder_handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, summary: Summary });
             }
+            if (LogSourceDomain == '') {
+                LogSourceDomain = $('#customfield_10846-val').text().trim();
+            }
             const Log_Domain_handlers = {
-                mdb: MdbAlertHandler //这里面有点工单为decoder name:sshd
+                mdb: MdbAlertHandler, //这里面有点工单为decoder name:sshd
+                dst: DstAlertHandler
             };
             const Log_Domain_handler = Log_Domain_handlers[LogSourceDomain];
             if (Log_Domain_handler) {
