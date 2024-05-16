@@ -66,7 +66,8 @@ function security_microsoft() {
     setTimeout(() => {
         document.getElementById('O365_MainLink_Me').click();
         console.log('account1');
-    }, 6600);
+    }, 9000);
+
     setTimeout(() => {
         var account = document.getElementById('mectrl_currentAccount_secondary').textContent;
         console.log(account, customer);
@@ -99,24 +100,48 @@ function security_microsoft() {
             document.getElementById('mectrl_body_signOut').click();
         } else {
             urlParams.forEach(function (value, key) {
-                if (key.includes('url')) {
+                if (key == 'url0') {
+                    window.location.href = value;
+                }
+                if (key.includes('url') && key != 'url0') {
                     GM_openInTab(value, {
                         active: false, // 设置为 false，以在后台打开，不激活新标签页
                         insert: true // 设置为 true，将新标签页插入到当前标签页之后
                     });
                 }
             });
-            window.close();
         }
-    }, 6900);
+    }, 9900);
 }
 
 function switch_user_microsoft() {
-    if ($('#login_workload_logo_text').text().trim() == '您已注销帐户') {
-        window.location.href = 'https://security.microsoft.com/homepage?&current=none';
+    console.log('login.microsoft', $('#idDiv_SAOTCC_Title').text().trim());
+    if (document.title == '登录到您的帐户' && $('#idDiv_SAOTCC_Title').text().trim() != '输入验证码') {
+        if ($('#login_workload_logo_text').text().trim() == '您已注销帐户') {
+            window.location.href = 'https://security.microsoft.com/homepage?&current=none';
+        }
+        document.getElementById('otherTileText').click();
+        setTimeout(() => {
+            var inputElement = document.querySelectorAll('.form-control')[0];
+            inputElement.addEventListener('input', function (event) {
+                $('#idSIButton9').click();
+                setTimeout(() => {
+                    $('#idSIButton9').click();
+                }, 1200);
+            });
+        }, 1600);
+    } else {
+        setTimeout(() => {
+            var inputElement = document.querySelectorAll('.form-control')[0];
+            inputElement.addEventListener('keyup', function (event) {
+                if (inputValue.length == 6) {
+                    $('#idSubmit_SAOTCC_Continue').click();
+                }
+            });
+        }, 800);
     }
-    document.getElementById('otherTileText').click();
 }
+
 function addCss() {
     const ss = $(`
 	    <style> 
@@ -3029,7 +3054,7 @@ function DstAlertHandler(...kwargs) {
     if (window.location.href.includes('login.microsoftonline.com')) {
         setTimeout(() => {
             switch_user_microsoft();
-        }, 3000);
+        }, 2000);
     }
     if (window.location.href.includes('security.microsoft.com/homepage?&current=')) {
         setTimeout(() => {
