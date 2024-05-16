@@ -44,7 +44,6 @@ function security_microsoft() {
     var queryString = window.location.search;
     var urlParams = new URLSearchParams(queryString);
     var current_domain = urlParams.get('current');
-
     var customers = {
         'lsh-tw': 'cmibenzcorp',
         'kerrypropshk': 'kerryproperties',
@@ -63,27 +62,27 @@ function security_microsoft() {
     } else {
         customer = current_domain;
     }
+    if (current_domain == 'none') {
+        let urls = localStorage.getItem('urls').toString().split(',');
+        for (var i = 0; i < urls.length; i++) {
+            if (i == 0) {
+                window.location.href = urls[i];
+            } else {
+                GM_openInTab(urls[i], {
+                    active: false, // 设置为 false，以在后台打开，不激活新标签页
+                    insert: true // 设置为 true，将新标签页插入到当前标签页之后
+                });
+            }
+        }
+        localStorage.removeItem('urls');
+    }
     setTimeout(() => {
         document.getElementById('O365_MainLink_Me').click();
         console.log('account1');
-    }, 6600);
+    }, 9000);
     setTimeout(() => {
         var account = document.getElementById('mectrl_currentAccount_secondary').textContent;
         console.log(account, customer);
-        if (current_domain == 'none') {
-            let urls = localStorage.getItem('urls').toString().split(',');
-            for (var i = 0; i < urls.length; i++) {
-                if (i == 0) {
-                    window.location.href = urls[i];
-                } else {
-                    GM_openInTab(urls[i], {
-                        active: false, // 设置为 false，以在后台打开，不激活新标签页
-                        insert: true // 设置为 true，将新标签页插入到当前标签页之后
-                    });
-                }
-            }
-            localStorage.removeItem('urls');
-        }
         if (
             !account.includes(customer) &&
             !customer.includes(account.split('@')[1].split('.')[0]) &&
@@ -108,15 +107,39 @@ function security_microsoft() {
             });
             window.close();
         }
-    }, 6900);
+    }, 9900);
 }
 
 function switch_user_microsoft() {
+    console.log('login.microsoft', $('#idDiv_SAOTCC_Title').text().trim());
     if ($('#login_workload_logo_text').text().trim() == '您已注销帐户') {
         window.location.href = 'https://security.microsoft.com/homepage?&current=none';
     }
-    document.getElementById('otherTileText').click();
+    if (document.title == '登录到您的帐户' && $('#idDiv_SAOTCC_Title').text().trim() != '输入验证码') {
+        document.getElementById('otherTileText').click();
+        setTimeout(() => {
+            var inputElement = document.querySelectorAll('.form-control')[0];
+            inputElement.addEventListener('input', function (event) {
+                $('#idSIButton9').click();
+                setTimeout(() => {
+                    $('#idSIButton9').click();
+                }, 1500);
+            });
+        }, 1600);
+    } else {
+        setTimeout(() => {
+            var inputElement = document.querySelectorAll('.form-control')[0];
+            inputElement.addEventListener('keyup', function (event) {
+                var inputValue = inputElement.value;
+                console.log(inputValue); // 打印当输入框的内容在元素失去焦点时的值
+                if (inputValue.length == 6) {
+                    $('#idSubmit_SAOTCC_Continue').click();
+                }
+            });
+        }, 800);
+    }
 }
+
 function addCss() {
     const ss = $(`
 	    <style> 
@@ -3029,7 +3052,7 @@ function DstAlertHandler(...kwargs) {
     if (window.location.href.includes('login.microsoftonline.com')) {
         setTimeout(() => {
             switch_user_microsoft();
-        }, 3000);
+        }, 2000);
     }
     if (window.location.href.includes('security.microsoft.com/homepage?&current=')) {
         setTimeout(() => {
