@@ -791,13 +791,16 @@ function ticketNotify(pageData) {
         function checkProperties(properties, pageData, ticketname) {
             const condition = (property) => {
                 const propertyArray = property.propertiesVal.split(',');
+                let isAllConditionsMet = false;
                 for (const val of propertyArray) {
                     try {
-                        if (pageData[property.propertiesKey].toLowerCase().includes(val.toLowerCase())) {
+                        if (pageData[property.propertiesKey].toLowerCase().includes(val.trim().toLowerCase())) {
                             if (property.propertiesKey == 'RawLog') {
-                                searchStrings.push(val);
+                                searchStrings.push(val.trim());
                             }
-                            return true; // 如果任何一个属性满足条件，直接返回 true
+                            if (isAllConditionsMet == false) {
+                                isAllConditionsMet = true; // 如果任何一个属性满足条件，返回 true
+                            }
                         }
                     } catch (error) {
                         if (
@@ -808,7 +811,7 @@ function ticketNotify(pageData) {
                         }
                     }
                 }
-                return false; // 如果所有属性都不满足条件，则返回 false
+                return isAllConditionsMet; // 如果所有属性都不满足条件，则返回 false
             };
 
             return properties.reduce((acc, property) => {
@@ -834,10 +837,9 @@ function ticketNotify(pageData) {
                         showFlag('warning', `${ticketname}`, `${message.replace(/\r?\n/g, '<br>')}`, 'manual');
                     });
                 }
+                highlightTextInElement('#field-customfield_10219 > div:first-child > div:nth-child(2)', searchStrings);
             }
         }
-
-        highlightTextInElement('#field-customfield_10219 > div:first-child > div:nth-child(2)', searchStrings);
     }
 }
 /**
