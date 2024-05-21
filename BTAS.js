@@ -143,27 +143,24 @@ function switch_user_microsoft() {
 function addCss() {
     const ss = $(`
 	    <style> 
-	      .red_highlight{
-	        color:red;
-			font-weight: bold;
-	      }
-           .black_highlight{
-		    color:black;
-            font-weight: bold;
-		  }
-           .dropdown-content {
-		    z-index: 1;
-		  }
-		  .aui-dropdown2 .aui-dropdown2-heading {
-			  padding: 1px 9px !important;
-		  }
-		  .dropdown-column {
-		    float: left;
-		    padding: 12px;
-		  }
-		  .aui-dropdown2{
-			  max-width: 450px !important;
-		  }
+            .red_highlight{
+                color:red;
+                font-weight: bold;
+            }
+            .black_highlight{
+                color:black;
+                font-weight: bold;
+            }
+            .aui-dropdown2{
+                max-width: 550px !important;
+            }
+            .aui-dropdown2 .aui-dropdown2-checkbox, .aui-dropdown2 .aui-dropdown2-radio, .aui-dropdown2 .aui-icon-container {
+                padding-top: 10px;
+                padding-left: 35px;
+            }
+            #reply{
+                column-count: 2;
+            }
 	    </style>
 	    `);
     $('head').append(ss);
@@ -354,23 +351,21 @@ function registerCustomQuickReplyMenu() {
 function QuickReply() {
     const replyButton = `<button class="aui-button aui-dropdown2-trigger" aria-controls="is-radio-checked">Quick Reply</button>
     <aui-dropdown-menu id="is-radio-checked">
-    <aui-section id="reply" label="reply">
-    	<div class="dropdown-column">
-        <aui-item-radio interactive>Close ticket</aui-item-radio>
+    <aui-section id="reply">
+       <aui-item-radio interactive>Close ticket</aui-item-radio>
         <aui-item-radio interactive>Monitor ticket</aui-item-radio>
         <aui-item-radio interactive>Waiting ticket</aui-item-radio>
         <aui-item-radio interactive>Waiting Full Scan</aui-item-radio>
         <aui-item-radio interactive>Ask for Whitelist</aui-item-radio>
         <aui-item-radio interactive>Whitelist Done</aui-item-radio>
 		<aui-item-radio interactive>Agent recover</aui-item-radio>
-        </div> <div class="dropdown-column"> 
         <aui-item-radio interactive>Leaked Credentials</aui-item-radio>
 		<aui-item-radio interactive>Compromised Accounts</aui-item-radio>
 		<aui-item-radio interactive>Log resume</aui-item-radio>
 		<aui-item-radio interactive>关闭工单</aui-item-radio> 
 		<aui-item-radio interactive>Haeco high severity</aui-item-radio>
         <aui-item-radio interactive>Haeco medium severity</aui-item-radio>
-        <aui-item-radio interactive>Haeco low severity</aui-item-radio></div>
+        <aui-item-radio interactive>Haeco low severity</aui-item-radio>
     </aui-section>
     </aui-dropdown-menu>`;
     const commentBar = $($('.aui-toolbar2-primary')[1]);
@@ -1246,6 +1241,7 @@ function MDEAlertHandler(...kwargs) {
                 MDEURL.push(`https://security.microsoft.com/alerts/${id}`);
             }
         }
+        MDEURL = [...new Set(MDEURL)];
         showFlag('info', 'MDE URL:', `${MDEURL}`, 'manual');
         let url = 'https://security.microsoft.com/homepage?&current=';
         url += LogSourceDomain;
@@ -2104,6 +2100,7 @@ function Defender365AlertHandler(...kwargs) {
                 MDEURL.push(incidenturi.replace('hXXps[:]', 'https:'));
             }
         }
+        MDEURL = [...new Set(MDEURL)];
         showFlag('info', 'MDE URL:', `${MDEURL}`, 'manual');
         let url = 'https://security.microsoft.com/homepage?&current=';
         url += LogSourceDomain;
