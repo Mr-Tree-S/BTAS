@@ -3016,6 +3016,75 @@ function DstAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function ThreatMatrixAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const json_alert = JSON.parse(log);
+                console.log(json_alert['threatmatrix']);
+                const {
+                    account_telephone,
+                    account_login,
+                    application_name,
+                    customer_event_type,
+                    input_ip_address,
+                    event_datetime,
+                    input_ip_city,
+                    input_ip_geo,
+                    input_ip_isp,
+                    input_ip_organization,
+                    policy,
+                    tmx_risk_rating,
+                    request_result
+                } = json_alert['threatmatrix'];
+                const alertExtraInfo = {
+                    account_telephone: account_telephone ? account_telephone : undefined,
+                    account_login: account_login ? account_login : undefined,
+                    application_name: application_name ? application_name : undefined,
+                    customer_event_type: customer_event_type ? customer_event_type : undefined,
+                    input_ip_address: input_ip_address ? input_ip_address : undefined,
+                    input_ip_city: input_ip_city ? input_ip_city : undefined,
+                    input_ip_geo: input_ip_geo ? input_ip_geo : undefined,
+                    input_ip_isp: input_ip_isp ? input_ip_isp : undefined,
+                    input_ip_organization: input_ip_organization ? input_ip_organization : undefined,
+                    policy: policy ? policy : undefined,
+                    tmx_risk_rating: tmx_risk_rating ? tmx_risk_rating : undefined,
+                    request_result: request_result ? request_result : undefined,
+                    event_datetime: event_datetime ? event_datetime.split('.')[0] : undefined
+                };
+                acc.push({ alertExtraInfo });
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            const lastindex = summary.lastIndexOf(']');
+            let desc = `Observed ${summary.substr(lastindex + 1)}\n`;
+            for (const key in info.alertExtraInfo) {
+                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                    const value = info.alertExtraInfo[key];
+                    if (value !== undefined) {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            desc += `\nPlease verify if the login is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -3101,7 +3170,8 @@ function DstAlertHandler(...kwargs) {
                 'successful azure/o365 login from malware-ip': Risky_Countries_AlertHandler,
                 'rarely country signin from o365': Risky_Countries_AlertHandler,
                 'agent disconnected': Agent_Disconnect_AlertHandler,
-                'suspicious geolocation ip login success': PulseAlertHandler
+                'suspicious geolocation ip login success': PulseAlertHandler,
+                'login success from malware ip(s)': ThreatMatrixAlertHandler
             };
             const Summary = $('#summary-val').text().trim();
             let No_Decoder_handler = null;
