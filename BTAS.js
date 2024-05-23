@@ -285,15 +285,15 @@ function registerSearchMenu() {
             return '';
         }
     };
+    let url = `https://caas.pwchk.com/issues/?jql=text ~ "%s" AND "Log Source Domain" ~ "%D" ${Host()} ORDER BY created DESC`;
+    if (window.location.href.includes('mss.pwcmacaumss.com')) {
+        url = `https://mss.pwcmacaumss.com/issues/?jql=text ~ "%s" ORDER BY created DESC`;
+    }
 
     const searchEngines = [
         {
             name: 'Jira',
-            url:
-                'https://caas.pwchk.com/issues/?jql=text%20~%20%22%s%22%20AND%20' +
-                '%22Log%20Source%20Domain%22%20~%20%22%D%22%20' +
-                `${Host()}` +
-                '%20ORDER%20BY%20created%20DESC'
+            url: url
         },
         { name: 'VT', url: 'https://www.virustotal.com/gui/search/%s' },
         { name: 'AbuseIPDB', url: 'https://www.abuseipdb.com/check/%s' },
