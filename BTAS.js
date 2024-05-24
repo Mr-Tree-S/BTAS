@@ -1172,13 +1172,13 @@ function MDEAlertHandler(...kwargs) {
             let logObj = '';
             if (log != '') {
                 try {
-                    const formatJson = log.substring(log.indexOf('{')).trim();
-                    logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
-                } catch (error) {
-                    const formatJson = log.substring(log.indexOf('{')).trim() + '"}]}}';
-                    logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
-                }
-                try {
+                    if (log.charAt(log.length - 1) == '}') {
+                        const formatJson = log.substring(log.indexOf('{')).trim();
+                        logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
+                    } else {
+                        const formatJson = log.substring(log.indexOf('{')).trim() + '"}]}}';
+                        logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
+                    }
                     const { mde } = logObj;
                     const { title, id, computerDnsName, relatedUser, evidence, alertCreationTime } = mde;
                     let dotIndex = alertCreationTime.lastIndexOf('.');
