@@ -2211,15 +2211,48 @@ function paloaltoAlertHandler(...kwargs) {
                     });
                 }
                 if (logType == 'THREAT') {
-                    acc.push({
-                        'Createtime': logArray[1],
-                        'Source IP': logArray[7],
-                        'Destination IP': logArray[8],
-                        'Destination Port': logArray[25],
-                        'Destination Location': logArray[42] != 0 ? logArray[42] : logArray[39],
-                        'URL/filename': logArray[31],
-                        'Summary': summary.split(']')[1]
-                    });
+                    let really = false,
+                        malware_potential = [];
+                    for (let i = 0; i < logArray.length; i++) {
+                        if (logArray[i].includes('"') && i > 100) {
+                            if (really) {
+                                malware_potential.push(logArray[i]);
+                            }
+                            really = !really;
+                        }
+                        if (really) {
+                            malware_potential.push(logArray[i]);
+                        }
+                    }
+                    let description = `</br>Timestamp: ${logArray[0].split(' ').slice(0, 3).join(' ')}</br>
+                                            Device: ${logArray[0].split(' ').slice(3, 5).join(' ')}</br>
+                                            Log Details:
+                                                <ul><li>Event Time: ${logArray[1]}</li>
+                                                <li>Log ID: ${logArray[2]}</li>
+                                                <li>Type: ${logArray[3]}(${logArray[4]})</li>
+                                                <li>Severity: ${logArray[34]}</li>
+                                                <li>Rule Triggered: ${logArray[11]}</li>
+                                                <li>Vulnerability: ${logArray[32]}</li>
+                                                <li>Threat ID: ${logArray[34]}</li></ul>
+                                            Network Information:
+                                                <ul><li>Source IP: ${logArray[7]}</li>
+                                                <li>Destination IP: ${logArray[8]}</li>
+                                                <li>Source Zone: ${logArray[16]}</li>
+                                                <li>Destination Zone: ${logArray[17]}</li>
+                                                <li>Ingress Interface: ${logArray[18]}</li>
+                                                <li>Egress Interface: ${logArray[19]}</li></ul>
+                                            Traffic Details:
+                                                <ul><li>Protocol: ${logArray[29]}</li>
+                                                <li>Application: ${logArray[14]}</li>
+                                                <li>Direction: ${logArray[35]}</li>
+                                                <li>Session ID: ${logArray[36]}</li></ul>
+                                            Vulnerability Information:</br>
+                                                <ul><li>Exploit Type: ${logArray[69]}</li>
+                                                <li>Attack Vector: ${logArray[111]}</li>
+                                                <li>Affected Technology: ${logArray[112]},${logArray[113]}</li>
+                                                <li>Malware Potential:${malware_potential}</li>
+                                                    </ul>`;
+                    acc.push(description);
                 }
             } catch (error) {
                 console.error(`Error:${error}`);
@@ -2234,16 +2267,10 @@ function paloaltoAlertHandler(...kwargs) {
     function generateDescription() {
         const alertDescriptions = [];
         for (const info of alertInfo) {
-            if (info.Summary == undefined) {
-                continue;
-            }
-            let desc = `Observed ${info.Summary}\n`;
-            Object.entries(info).forEach(([index, value]) => {
-                if (value !== undefined && value !== '' && index !== 'Summary') {
-                    desc += `${index}: ${value}\n`;
-                }
-            });
-            desc += `\nPlease verify if the activity is legitimate.\n`;
+            let arr = summary.split(']');
+            let desc = `Observed ${arr[arr.length - 1]}\n`;
+            desc += info;
+            desc += `\nPlease verify if the activity is legitimate.\n</br>`;
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
