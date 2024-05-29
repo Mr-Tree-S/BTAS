@@ -2237,6 +2237,7 @@ function paloaltoAlertHandler(...kwargs) {
                                             Network Information:
                                                 <ul><li>Source IP: ${logArray[7]}</li>
                                                 <li>Destination IP: ${logArray[8]}</li>
+                                                <li>URL/filename : ${logArray[31]}</li>
                                                 <li>Source Zone: ${logArray[16]}</li>
                                                 <li>Destination Zone: ${logArray[17]}</li>
                                                 <li>Ingress Interface: ${logArray[18]}</li>
