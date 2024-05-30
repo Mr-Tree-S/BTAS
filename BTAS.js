@@ -3113,6 +3113,135 @@ function ThreatMatrixAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function DarktraceAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    var raw_alert = 0;
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const BraceIndex = log.toString().indexOf('{');
+                const lastBraceIndex = log.toString().lastIndexOf('}');
+                if (BraceIndex !== -1) {
+                    raw_alert += 1;
+                    // Intercepts a substring from the beginning of the brace to the end of the string
+                    json_text = log.toString().substr(BraceIndex, lastBraceIndex);
+                    const json_alert = JSON.parse(json_text);
+                    let alertExtraInfo = {},
+                        Resource_paths = [];
+                    if (json_alert.hasOwnProperty('model')) {
+                        const { device, triggeredComponents, model } = json_alert;
+                        let User_agent = '',
+                            Message;
+                        alertExtraInfo = {
+                            hostname: device?.hostname ? device?.hostname : undefined,
+                            ip: device?.ip ? device?.ip : undefined,
+                            credentials: device?.credentials ? device?.credentials : undefined,
+                            subnetlabel: device?.ips ? device?.ips[0].subnetlabel : undefined,
+                            typename: device?.typename ? device?.typename : undefined,
+                            User_agent: User_agent ? User_agent : undefined,
+                            saas_info: device?.customFields?.saasinfo
+                                ? device.customFields.saasinfo.saas_info
+                                : undefined,
+                            Message: Message ? Message : undefined,
+                            description: model?.description ? model?.description.replace(/\\\n/g, ' ') : undefined
+                        };
+                        triggeredComponents[0]['triggeredFilters'].forEach((item) => {
+                            if (item['filterType'] == 'User agent' && item['id'] == 'O') {
+                                User_agent = item['arguments']['value'];
+                                console.log('value', item['arguments']['value']);
+                            } else if (item['id'] == 'C') {
+                                Message = item['trigger']['value'];
+                            } else if (
+                                item['filterType'].includes('IP') ||
+                                item['filterType'] == 'Resource Location' ||
+                                item['filterType'] == 'Event' ||
+                                item['filterType'] == 'Connection hostname'
+                            ) {
+                                alertExtraInfo[item['filterType']] = item['trigger']['value'];
+                            }
+                        });
+                    } else {
+                        const { summary, breachDevices, details } = json_alert;
+                        let values;
+                        alertExtraInfo = {
+                            hostname: breachDevices[0]?.hostname ? breachDevices[0]?.hostname : undefined,
+                            host_ip: breachDevices[0]?.ip ? breachDevices[0]?.ip : undefined,
+                            summary: summary ? summary : undefined
+                        };
+                        details.forEach((item) => {
+                            if (item[0].header == 'Endpoint Details') {
+                                values = item[0].contents[0].values;
+                                item[0].contents.forEach((i) => {
+                                    if (i.key == 'IP addresses associated with hostnames') {
+                                        console.log(i);
+                                        alertExtraInfo[i.type] = JSON.stringify(i.values);
+                                    }
+                                });
+                            }
+                            item.forEach((ii) => {
+                                if (
+                                    ii.header == 'Activity Details' ||
+                                    ii.header == 'Details of Accessing Users' ||
+                                    ii.header == 'Resource Access Details'
+                                ) {
+                                    ii.contents.forEach((i) => {
+                                        if (i['key'] == 'Resource paths include' || i['key'] == 'Resource path') {
+                                            i['values'].forEach((iii) => {
+                                                Resource_paths.push(iii);
+                                            });
+                                        } else if (
+                                            i['key'].includes('Source IPs') ||
+                                            i['key'].includes('Actors include')
+                                        ) {
+                                            alertExtraInfo[i.key] = JSON.stringify(i.values);
+                                        }
+                                    });
+                                }
+                            });
+                        });
+                        Resource_paths = [...new Set(Resource_paths)].join('\n');
+                        alertExtraInfo['Resource_paths'] = Resource_paths ? Resource_paths : undefined;
+                        alertExtraInfo['Endpoint Details'] = values ? values : undefined;
+                    }
+                    acc.push({ alertExtraInfo });
+                }
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    const num_alert = $('#customfield_10300-val').text().trim();
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            const lastindex = summary.lastIndexOf(']');
+            let ss = summary.substr(lastindex + 1).split('::');
+            let desc = `Observed ${ss[ss.length - 1]}\n\n`;
+            for (const key in info.alertExtraInfo) {
+                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                    const value = info.alertExtraInfo[key];
+                    if (value !== undefined) {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            desc += `\nPlease help to verify if this activity is legitimate.\n`;
+            if (raw_alert < num_alert) {
+                let extra_message = `\n\n<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>`;
+                alertDescriptions.push(extra_message);
+            }
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -3186,7 +3315,8 @@ function ThreatMatrixAlertHandler(...kwargs) {
                 'zscaler-zpa-json': ZscalerAlertHandler,
                 'pulse-secure': PulseAlertHandler,
                 'aws-guardduty': AwsAlertHandler,
-                'alicloud-json': AlicloudAlertHandler
+                'alicloud-json': AlicloudAlertHandler,
+                'darktrace-json': DarktraceAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
