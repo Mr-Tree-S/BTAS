@@ -248,7 +248,7 @@ function showDialog(body) {
 
     // Copy description text
     AJS.$('#dialog-copy-button').on('click', function () {
-        const textToCopy = customDialogContent.find('p').text().trim();
+        const textToCopy = customDialogContent.find('#dialog-show-button--description').text().trim();
 
         // Create Clipboard instance
         const clipboard = new ClipboardJS('#dialog-copy-button', {
@@ -2225,33 +2225,33 @@ function paloaltoAlertHandler(...kwargs) {
                         }
                     }
                     let description = `</br>Timestamp: ${logArray[0].split(' ').slice(0, 3).join(' ')}</br>
-                                            Device: ${logArray[0].split(' ').slice(3, 5).join(' ')}</br>
-                                            Log Details:
-                                                <ul><li>Event Time: ${logArray[1]}</li>
-                                                <li>Log ID: ${logArray[2]}</li>
-                                                <li>Type: ${logArray[3]}(${logArray[4]})</li>
-                                                <li>Severity: ${logArray[34]}</li>
-                                                <li>Rule Triggered: ${logArray[11]}</li>
-                                                <li>Vulnerability: ${logArray[32]}</li>
-                                                <li>Threat ID: ${logArray[34]}</li></ul>
-                                            Network Information:
-                                                <ul><li>Source IP: ${logArray[7]}</li>
-                                                <li>Destination IP: ${logArray[8]}</li>
-                                                <li>URL/filename : ${logArray[31]}</li>
-                                                <li>Source Zone: ${logArray[16]}</li>
-                                                <li>Destination Zone: ${logArray[17]}</li>
-                                                <li>Ingress Interface: ${logArray[18]}</li>
-                                                <li>Egress Interface: ${logArray[19]}</li></ul>
-                                            Traffic Details:
-                                                <ul><li>Protocol: ${logArray[29]}</li>
-                                                <li>Application: ${logArray[14]}</li>
-                                                <li>Direction: ${logArray[35]}</li>
-                                                <li>Session ID: ${logArray[36]}</li></ul>
-                                            Vulnerability Information:</br>
-                                                <ul><li>Exploit Type: ${logArray[69]}</li>
-                                                <li>Attack Vector: ${logArray[111]}</li>
-                                                <li>Affected Technology: ${logArray[112]},${logArray[113]}</li>
-                                                <li>Malware Potential:${malware_potential}</li>
+Device: ${logArray[0].split(' ').slice(3, 5).join(' ')}</br>
+Log Details:
+    <ul><li>Event Time: ${logArray[1]}</li>
+    <li>Log ID: ${logArray[2]}</li>
+    <li>Type: ${logArray[3]}(${logArray[4]})</li>
+    <li>Severity: ${logArray[34]}</li>
+    <li>Rule Triggered: ${logArray[11]}</li>
+    <li>Vulnerability: ${logArray[32]}</li>
+    <li>Threat ID: ${logArray[34]}</li></ul>
+Network Information:
+    <ul><li>Source IP: ${logArray[7]}</li>
+    <li>Destination IP: ${logArray[8]}</li>
+    <li>URL/filename : ${logArray[31]}</li>
+    <li>Source Zone: ${logArray[16]}</li>
+    <li>Destination Zone: ${logArray[17]}</li>
+    <li>Ingress Interface: ${logArray[18]}</li>
+    <li>Egress Interface: ${logArray[19]}</li></ul>
+Traffic Details:
+    <ul><li>Protocol: ${logArray[29]}</li>
+    <li>Application: ${logArray[14]}</li>
+    <li>Direction: ${logArray[35]}</li>
+    <li>Session ID: ${logArray[36]}</li></ul>
+Vulnerability Information:</br>
+    <ul><li>Exploit Type: ${logArray[69]}</li>
+    <li>Attack Vector: ${logArray[111]}</li>
+    <li>Affected Technology: ${logArray[112]},${logArray[113]}</li>
+    <li>Malware Potential:${malware_potential}</li>
                                                     </ul>`;
                     acc.push(description);
                 }
