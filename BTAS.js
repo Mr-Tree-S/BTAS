@@ -2270,7 +2270,15 @@ Vulnerability Information:</br>
         for (const info of alertInfo) {
             let arr = summary.split(']');
             let desc = `Observed ${arr[arr.length - 1]}\n`;
-            desc += info;
+            if (typeof info == 'string') {
+                desc += info;
+            } else {
+                Object.entries(info).forEach(([index, value]) => {
+                    if (value !== undefined && value !== '' && index !== 'Summary') {
+                        desc += `${index}: ${value}\n`;
+                    }
+                });
+            }
             desc += `\nPlease verify if the activity is legitimate.\n</br>`;
             alertDescriptions.push(desc);
         }
