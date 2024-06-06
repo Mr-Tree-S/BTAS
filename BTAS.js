@@ -2,7 +2,7 @@
 // @name         BTAS
 // @namespace    https://github.com/Mr-Tree-S/BTAS
 // @homepageURL  https://github.com/Mr-Tree-S/BTAS
-// @version      2.9.0 
+// @version      2.9.0
 // @description  Blue Team Assistance Script
 // @author       Barry, Jack, Xingyu, Mike
 // @license      Apache-2.0
@@ -3250,6 +3250,64 @@ function DarktraceAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function SangforAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                if (log.length == 0) {
+                    return acc;
+                }
+                const regex = /(\b\w+=)([^=]+?)(?=\s+\w+=|$)/g;
+                let match;
+                const matches = {};
+                while ((match = regex.exec(log)) !== null) {
+                    console.log(match);
+                    let item = match[0].split('=');
+                    matches[item[0]] = item[1];
+                }
+                let logArray = log.split(' ').filter((item) => item !== ''); //Remove extra whitespace from the string
+                acc.push({
+                    'Event time': logArray.slice(0, 3).join(' '),
+                    'event_desc': matches.event_desc ? matches.event_desc : undefined,
+                    'dev_name': matches.dev_name ? matches.dev_name : undefined,
+                    'suffer_ip': matches.suffer_ip ? matches.suffer_ip : undefined,
+                    'attack_ip': matches.attack_ip ? matches.attack_ip : undefined,
+                    'event_evidence': matches.event_evidence ? matches.event_evidence : undefined,
+                    'url': matches.url ? matches.url : undefined,
+                    'suggest': matches.suggest ? matches.suggest : undefined
+                });
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            const lastindex = summary.lastIndexOf(']');
+            let desc = `Observed ${summary.substr(lastindex + 1).split('-')[1]}\n`;
+            for (const key in info) {
+                if (Object.hasOwnProperty.call(info, key)) {
+                    const value = info[key];
+                    if (value !== undefined) {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -3324,7 +3382,8 @@ function DarktraceAlertHandler(...kwargs) {
                 'pulse-secure': PulseAlertHandler,
                 'aws-guardduty': AwsAlertHandler,
                 'alicloud-json': AlicloudAlertHandler,
-                'darktrace-json': DarktraceAlertHandler
+                'darktrace-json': DarktraceAlertHandler,
+                'sangfor_cef': SangforAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
