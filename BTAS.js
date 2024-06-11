@@ -3259,25 +3259,41 @@ function SangforAlertHandler(...kwargs) {
                 if (log.length == 0) {
                     return acc;
                 }
-                const regex = /(\b\w+=)([^=]+?)(?=\s+\w+=|$)/g;
+                const regex = /(\b\w+=)([^=\s].*?)(?=\s+\w+=|$)/g;
                 let match;
                 const matches = {};
                 while ((match = regex.exec(log)) !== null) {
-                    console.log(match);
                     let item = match[0].split('=');
-                    matches[item[0]] = item[1];
+                    matches[item[0]] = item.slice(1, item.length).join('=');
+                    console.log(item);
                 }
                 let logArray = log.split(' ').filter((item) => item !== ''); //Remove extra whitespace from the string
-                acc.push({
-                    'Event time': logArray.slice(0, 3).join(' '),
-                    'event_desc': matches.event_desc ? matches.event_desc : undefined,
-                    'dev_name': matches.dev_name ? matches.dev_name : undefined,
-                    'suffer_ip': matches.suffer_ip ? matches.suffer_ip : undefined,
-                    'attack_ip': matches.attack_ip ? matches.attack_ip : undefined,
-                    'event_evidence': matches.event_evidence ? matches.event_evidence : undefined,
-                    'url': matches.url ? matches.url : undefined,
-                    'suggest': matches.suggest ? matches.suggest : undefined
-                });
+                const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
+                if (DecoderName == 'cyberark_cef') {
+                    let data_json = {
+                        'Event time': logArray.slice(0, 3).join(' '),
+                        'event_desc': matches.event_desc ? matches.event_desc : undefined,
+                        'dhost': matches.dhost ? matches.dhost : undefined,
+                        'dst': matches.dst ? matches.dst : undefined,
+                        'duser': matches.duser ? matches.duser : undefined,
+                        'shost': matches.shost ? matches.shost : undefined,
+                        'src': matches.src ? matches.src : undefined,
+                        'suser': matches.suser ? matches.suser : undefined
+                    };
+                    data_json[matches.cs3Label] = matches.cs3 ? matches.cs3 : undefined;
+                    acc.push(data_json);
+                } else {
+                    acc.push({
+                        'Event time': logArray.slice(0, 3).join(' '),
+                        'event_desc': matches.event_desc ? matches.event_desc : undefined,
+                        'dev_name': matches.dev_name ? matches.dev_name : undefined,
+                        'suffer_ip': matches.suffer_ip ? matches.suffer_ip : undefined,
+                        'attack_ip': matches.attack_ip ? matches.attack_ip : undefined,
+                        'event_evidence': matches.event_evidence ? matches.event_evidence : undefined,
+                        'url': matches.url ? matches.url : undefined,
+                        'suggest': matches.suggest ? matches.suggest : undefined
+                    });
+                }
             } catch (error) {
                 console.log(`Error: ${error.message}`);
             }
@@ -3290,7 +3306,12 @@ function SangforAlertHandler(...kwargs) {
         const alertDescriptions = [];
         for (const info of alertInfo) {
             const lastindex = summary.lastIndexOf(']');
-            let desc = `Observed ${summary.substr(lastindex + 1).split('-')[1]}\n`;
+            let desc;
+            if (summary.includes('-')) {
+                desc = `Observed ${summary.substr(lastindex + 1).split('-')[1]}\n`;
+            } else {
+                desc = `Observed ${summary.substr(lastindex + 1)}\n`;
+            }
             for (const key in info) {
                 if (Object.hasOwnProperty.call(info, key)) {
                     const value = info[key];
@@ -3383,7 +3404,8 @@ function SangforAlertHandler(...kwargs) {
                 'aws-guardduty': AwsAlertHandler,
                 'alicloud-json': AlicloudAlertHandler,
                 'darktrace-json': DarktraceAlertHandler,
-                'sangfor_cef': SangforAlertHandler
+                'sangfor_cef': SangforAlertHandler,
+                'cyberark_cef': SangforAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
