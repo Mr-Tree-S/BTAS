@@ -3471,6 +3471,7 @@ function SangforAlertHandler(...kwargs) {
             $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim() ||
             $('#field-customfield_10232 > div.twixi-wrap.verbose > div > div > div > pre').text();
         const Summary = $('#summary-val').text().trim();
+        const AgentName = $('#customfield_10805-val').text().trim();
         const pageData = {
             LogSourceDomain,
             Labels,
@@ -3479,7 +3480,8 @@ function SangforAlertHandler(...kwargs) {
             TicketAutoEscalate,
             Status,
             RawLog,
-            Summary
+            Summary,
+            AgentName
         };
         // If it pops up once, it will not be reminded again
         const is_HKhost = window.location.host == 'caas.pwchk.com';
