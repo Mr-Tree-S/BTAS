@@ -3339,7 +3339,9 @@ function SangforAlertHandler(...kwargs) {
 
     // Filter page: audio control registration and regular issues table update
     if (
-        (window.location.href.includes('filter=15200') || window.location.href.includes('filter=26405')) &&
+        (window.location.href.includes('filter=15200') ||
+            window.location.href.includes('filter=26405') ||
+            window.location.href.includes('filter=13300')) &&
         !window.location.href.includes('MSS')
     ) {
         console.log('#### Code includes filter run ####');
@@ -3358,6 +3360,10 @@ function SangforAlertHandler(...kwargs) {
             if (window.location.href.includes('filter=26405')) {
                 notifyKey = [];
                 window.location.href = 'https://caas.pwchk.com/issues/?filter=26405';
+            }
+            if (window.location.href.includes('filter=13300')) {
+                notifyKey = [];
+                window.location.href = 'https://mss.pwcmacaumss.com/issues/?filter=13300';
             }
         }, 180000);
     }
