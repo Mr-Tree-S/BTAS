@@ -3482,7 +3482,8 @@ function SangforAlertHandler(...kwargs) {
             Summary
         };
         // If it pops up once, it will not be reminded again
-        if ($('#issue-content').length && !$('#generateTicketNotify').length) {
+        const is_HKhost = window.location.host == 'caas.pwchk.com';
+        if ($('#issue-content').length && !$('#generateTicketNotify').length && is_HKhost) {
             ticketNotify(pageData);
         }
     }, 1000);
