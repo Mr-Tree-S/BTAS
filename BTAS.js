@@ -3329,6 +3329,76 @@ function SangforAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function RadwareAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const json_alert = JSON.parse(log);
+                const {
+                    device_ip,
+                    device_name,
+                    device_abbr,
+                    detected_by,
+                    asset_name,
+                    asset_type,
+                    asset_ip,
+                    account_uid,
+                    account_name,
+                    acc_site_name,
+                    end_time,
+                    start_time
+                } = json_alert['radware'];
+
+                alertExtraInfo = {
+                    start_time: start_time._date_time ? start_time._date_time : undefined,
+                    end_time: end_time._date_time ? end_time._date_time : undefined,
+                    device_ip: device_ip ? device_ip : undefined,
+                    device_name: device_name ? device_name : undefined,
+                    device_abbr: device_abbr ? device_abbr : undefined,
+                    detected_by: detected_by ? detected_by : undefined,
+                    asset_name: asset_name ? asset_name : undefined,
+                    asset_type: asset_type ? asset_type : undefined,
+                    asset_ip: asset_ip ? asset_ip : undefined,
+                    account_uid: account_uid ? account_uid : undefined,
+                    account_name: account_name ? account_name : undefined,
+                    acc_site_name: acc_site_name ? acc_site_name : undefined
+                };
+                acc.push({ alertExtraInfo });
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            const lastindex = summary.lastIndexOf(']');
+            let desc = `Observed ${summary.substr(lastindex + 1)}\n`;
+            for (const key in info.alertExtraInfo) {
+                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                    const value = info.alertExtraInfo[key];
+                    if (value !== undefined) {
+                        if (key == 'start_time' || key == 'end_time') {
+                            desc += `${key}(<span class="red_highlight">GMT</span>): ${value.split('.')[0]}\n`;
+                        } else {
+                            desc += `${key}: ${value}\n`;
+                        }
+                    }
+                }
+            }
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -3411,7 +3481,8 @@ function SangforAlertHandler(...kwargs) {
                 'alicloud-json': AlicloudAlertHandler,
                 'darktrace-json': DarktraceAlertHandler,
                 'sangfor_cef': SangforAlertHandler,
-                'cyberark_cef': SangforAlertHandler
+                'cyberark_cef': SangforAlertHandler,
+                'radware-json': RadwareAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
