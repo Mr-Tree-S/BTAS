@@ -897,14 +897,15 @@ function cortexAlertHandler(...kwargs) {
     function parseLog(rawLog) {
         let alertInfo = [];
         try {
-            const { timestamp, data } = JSON.parse(rawLog);
+            const { timestamp, data, rule } = JSON.parse(rawLog);
+            let rule_description = rule['description'].split(':')[-1];
             const { cortex_xdr } = data;
             const { source, alert_id, name, description } = cortex_xdr;
             const isPANNGFW = source === 'PAN NGFW';
             let dotIndex = timestamp.lastIndexOf('.');
 
             dateTimeStr = timestamp.slice(0, dotIndex) + '+0800';
-            const alert = { source, alert_id, name, description, dateTimeStr };
+            const alert = { source, alert_id, name, description, dateTimeStr, rule_description };
             if (isPANNGFW) {
                 const {
                     action_local_ip,
@@ -1064,7 +1065,7 @@ function cortexAlertHandler(...kwargs) {
     function generateDescription() {
         const alertDescriptions = [];
         for (const info of alertInfo) {
-            const {
+            let {
                 source,
                 name,
                 action_local_ip,
@@ -1081,8 +1082,13 @@ function cortexAlertHandler(...kwargs) {
                 sha256,
                 description,
                 action_file_macro_sha256,
-                alert_link
+                alert_link,
+                rule_description
             } = info;
+            if (description && description.includes('xdr_data')) {
+                console.log(rule_description);
+                description = rule_description;
+            }
             if (source === 'PAN NGFW') {
                 const desc = `Observed ${name}\ntimestamp: ${dateTimeStr}\nSrcip: ${action_local_ip}   Srcport: ${action_local_port}\nDstip: ${action_remote_ip}   Dstport: ${action_remote_port}\nAction: ${action_pretty}\n${
                     LogSourceDomain === 'cityu' ? 'Cortex Portal: ' + alert_link + '\n' : ''
