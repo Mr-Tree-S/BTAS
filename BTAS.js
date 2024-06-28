@@ -3405,6 +3405,101 @@ function RadwareAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function CarbonAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const BraceIndex = log.toString().indexOf('{');
+                const lastBraceIndex = log.toString().lastIndexOf('}');
+                if (BraceIndex !== -1) {
+                    json_text = log.toString().substr(BraceIndex, lastBraceIndex);
+                    const json_alert = JSON.parse(json_text);
+                    const {
+                        reason,
+                        device_os_version,
+                        device_username,
+                        device_location,
+                        device_external_ip,
+                        device_internal_ip,
+                        device_name,
+                        process_pid,
+                        process_name,
+                        process_sha256,
+                        process_guid,
+                        process_cmdline,
+                        process_username,
+                        netconn_remote_ip,
+                        netconn_remote_port,
+                        parent_guid,
+                        parent_pid,
+                        parent_name,
+                        parent_sha256,
+                        parent_username,
+                        netconn_local_ip,
+                        netconn_local_port,
+                        first_event_timestamp
+                    } = json_alert;
+                    alertExtraInfo = {
+                        EventTime: first_event_timestamp.split('.')[0],
+                        device_name: device_name ? device_name : undefined,
+                        device_os_version: device_os_version ? device_os_version : undefined,
+                        device_username: device_username ? device_username : undefined,
+                        device_location: device_location ? device_location : undefined,
+                        device_external_ip: device_external_ip ? device_external_ip : undefined,
+                        device_internal_ip: device_internal_ip ? device_internal_ip : undefined,
+                        process_guid: process_guid ? process_guid : undefined,
+                        process_pid: process_pid ? process_pid : undefined,
+                        process_name: process_name ? process_name : undefined,
+                        process_sha256: process_sha256 ? process_sha256 : undefined,
+                        process_cmdline: process_cmdline ? process_cmdline : undefined,
+                        process_username: process_username ? process_username : undefined,
+                        parent_guid: parent_guid ? parent_guid : undefined,
+                        parent_pid: parent_pid ? parent_pid : undefined,
+                        parent_name: parent_name ? parent_name : undefined,
+                        parent_sha256: parent_sha256 ? parent_sha256 : undefined,
+                        parent_username: parent_username ? parent_username : undefined,
+                        netconn_remote_ip: netconn_remote_ip ? netconn_remote_ip : undefined,
+                        netconn_remote_port: netconn_remote_port ? netconn_remote_port : undefined,
+                        netconn_local_ip: netconn_local_ip ? netconn_local_ip : undefined,
+                        netconn_local_port: netconn_local_port ? netconn_local_port : undefined,
+                        reason: reason ? reason : undefined
+                    };
+                    acc.push({ alertExtraInfo });
+                }
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            const lastindex = summary.lastIndexOf(']');
+            let desc = `Observed ${summary.substr(lastindex + 1)}\n`;
+            for (const key in info.alertExtraInfo) {
+                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                    const value = info.alertExtraInfo[key];
+                    if (key == 'EventTime') {
+                        desc += `EventTime(<span class="red_highlight">GMT</span>): ${value}\n`;
+                    } else if (value !== undefined) {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 (function () {
     'use strict';
 
@@ -3488,7 +3583,8 @@ function RadwareAlertHandler(...kwargs) {
                 'darktrace-json': DarktraceAlertHandler,
                 'sangfor_cef': SangforAlertHandler,
                 'cyberark_cef': SangforAlertHandler,
-                'radware-json': RadwareAlertHandler
+                'radware-json': RadwareAlertHandler,
+                'carbonblack_cloud': CarbonAlertHandler
             };
             const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             const handler = handlers[DecoderName];
