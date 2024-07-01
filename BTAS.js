@@ -120,10 +120,12 @@ function switch_user_microsoft() {
         setTimeout(() => {
             var inputElement = document.querySelectorAll('.form-control')[0];
             inputElement.addEventListener('input', function (event) {
-                $('#idSIButton9').click();
-                setTimeout(() => {
+                if (inputValue.includes('@')) {
                     $('#idSIButton9').click();
-                }, 1500);
+                    setTimeout(() => {
+                        $('#idSIButton9').click();
+                    }, 1500);
+                }
             });
         }, 1600);
     } else {
@@ -342,6 +344,14 @@ function registerCustomQuickReplyMenu() {
             }
         }
         showFlag('success', 'Cleared All Custom Replies', '', 'auto');
+    });
+    GM_registerMenuCommand('MDE Assist', () => {
+        let MDE_Assist_ = localStorage.getItem('MDE_Assist');
+        const MDE_Assist = prompt(
+            'Whether MDE Assist is enabled(Example:enable  1, disable   0)',
+            MDE_Assist_
+        ).toString();
+        localStorage.setItem('MDE_Assist', MDE_Assist);
     });
 }
 
@@ -1254,12 +1264,14 @@ function MDEAlertHandler(...kwargs) {
         for (let i = 0; i < MDEURL.length; i++) {
             let mde_url = `&url${i}=${MDEURL[i]}`;
             url += mde_url;
-            console.log(MDEURL[i]);
         }
-        GM_openInTab(url, {
-            active: false, // 设置为 false，以在后台打开，不激活新标签页
-            insert: true // 设置为 true，将新标签页插入到当前标签页之后
-        });
+        let MDE_Assist_ = localStorage.getItem('MDE_Assist');
+        if (MDE_Assist_ != 0) {
+            GM_openInTab(url, {
+                active: false, // Set to false to open in the background without activating the new TAB
+                insert: true // Set to true to insert the new TAB after the current TAB
+            });
+        }
     }
     addButton('generateDescription', 'Description', generateDescription);
     addButton('openMDE', 'MDE', openMDE);
@@ -2113,12 +2125,14 @@ function Defender365AlertHandler(...kwargs) {
         for (let i = 0; i < MDEURL.length; i++) {
             let mde_url = `&url${i}=${MDEURL[i]}`;
             url += mde_url;
-            console.log(MDEURL[i]);
         }
-        GM_openInTab(url, {
-            active: false, // 设置为 false，以在后台打开，不激活新标签页
-            insert: true // 设置为 true，将新标签页插入到当前标签页之后
-        });
+        let MDE_Assist_ = localStorage.getItem('MDE_Assist');
+        if (MDE_Assist_ != 0) {
+            GM_openInTab(url, {
+                active: false, // Set to false to open in the background without activating the new TAB
+                insert: true // Set to true to insert the new TAB after the current TAB
+            });
+        }
     }
 
     addButton('generateDescription', 'Description', generateDescription);
