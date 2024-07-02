@@ -825,12 +825,13 @@ function ticketNotify(pageData) {
         }
 
         for (const notify of Notifydict) {
-            const { ticketname, starttime, endtime, message, properties, button, status } = notify;
+            const { ticketname, starttime, endtime, message, properties, button, status, project } = notify;
             const isInTimeRange =
                 (!starttime || new Date() >= new Date(starttime)) && (!endtime || new Date() <= new Date(endtime));
             const clickButton = buttonMap[button];
+            const projectMap = { 'caas.pwchk.com': 'HK', 'mss.pwcmacaumss.com': 'MO' };
 
-            if (status == 'Disable' || !isInTimeRange) {
+            if (status == 'Disable' || !isInTimeRange || projectMap[window.location.host] !== project) {
                 continue;
             }
 
@@ -842,7 +843,14 @@ function ticketNotify(pageData) {
                         showFlag('warning', `${ticketname}`, `${message.replace(/\r?\n/g, '<br>')}`, 'manual');
                     });
                 }
-                highlightTextInElement('#field-customfield_10219 > div:first-child > div:nth-child(2)', searchStrings);
+
+                let selector;
+                if (project == 'HK') {
+                    selector = '#field-customfield_10219 > div:first-child > div:nth-child(2)';
+                } else if (project == 'MO') {
+                    selector = '#field-customfield_10904 > div.twixi-wrap.verbose > div';
+                }
+                highlightTextInElement(selector, searchStrings);
             }
         }
     }
@@ -3671,17 +3679,32 @@ function CarbonAlertHandler(...kwargs) {
 
     // Issue page: Edit Notify
     setTimeout(() => {
-        const LogSourceDomain = $('#customfield_10223-val').text().trim();
-        const Labels = $('.labels-wrap .labels li a span').text();
-        const LogSource = $('#customfield_10204-val').text().trim();
-        const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
-        const TicketAutoEscalate = $('#customfield_12202-val').text().trim();
-        const Status = $('#status-val > span').text().trim();
-        const RawLog =
-            $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim() ||
-            $('#field-customfield_10232 > div.twixi-wrap.verbose > div > div > div > pre').text();
-        const Summary = $('#summary-val').text().trim();
-        const AgentName = $('#customfield_10805-val').text().trim();
+        let LogSourceDomain, Labels, LogSource, DecoderName, TicketAutoEscalate, Status, RawLog, Summary, AgentName;
+
+        if (window.location.host === 'caas.pwchk.com') {
+            // for HK
+            LogSourceDomain = $('#customfield_10223-val').text().trim();
+            Labels = $('.labels-wrap .labels li a span').text();
+            LogSource = $('#customfield_10204-val').text().trim();
+            DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
+            TicketAutoEscalate = $('#customfield_12202-val').text().trim();
+            Status = $('#status-val > span').text().trim();
+            RawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim();
+            Summary = $('#summary-val').text().trim();
+            AgentName = $('#customfield_10805-val').text().trim();
+        } else if (window.location.host === 'mss.pwcmacaumss.com') {
+            // for MO
+            LogSourceDomain = $('#customfield_10846-val').text().trim();
+            Labels = $('#labels-212244-value').text().trim();
+            LogSource = $('#customfield_10854-val').text().trim();
+            DecoderName = $('#customfield_10906-val').text().trim();
+            TicketAutoEscalate = $('#customfield_10893-val').text().trim();
+            Status = $('#status-value > span').text().trim();
+            RawLog = $('#field-customfield_10904 > div.twixi-wrap.verbose > div').text().trim();
+            Summary = $('#summary-val').text().trim();
+            AgentName = $('#customfield_10802-val').text().trim();
+        }
+
         const pageData = {
             LogSourceDomain,
             Labels,
@@ -3693,9 +3716,9 @@ function CarbonAlertHandler(...kwargs) {
             Summary,
             AgentName
         };
+
         // If it pops up once, it will not be reminded again
-        const is_HKhost = window.location.host == 'caas.pwchk.com';
-        if ($('#issue-content').length && !$('#generateTicketNotify').length && is_HKhost) {
+        if ($('#issue-content').length && !$('#generateTicketNotify').length) {
             ticketNotify(pageData);
         }
     }, 1000);
