@@ -1111,7 +1111,9 @@ function cortexAlertHandler(...kwargs) {
                     action_local_ip ? 'action_local_ip: ' + action_local_ip + '\n' : ''
                 }username: ${user_name}\ncmd: ${cmd}\nfilename: ${filename}\nfilepath: ${filepath}\naction: ${action_pretty}\n${
                     action_file_macro_sha256 ? 'macro file hash: ' + action_file_macro_sha256 + '\n' : ''
-                }https://www.virustotal.com/gui/file/${action_file_macro_sha256 || sha256}\n${
+                }<a href="https://www.virustotal.com/gui/file/${
+                    action_file_macro_sha256 || sha256
+                }">https://www.virustotal.com/gui/file/${action_file_macro_sha256 || sha256}<\a>\n${
                     LogSourceDomain === 'cityu' ? 'Cortex Portal: ' + alert_link + '\n' : ''
                 }\n\nPlease help to verify if this activity is legitimate.\n`;
                 alertDescriptions.push(desc);
@@ -1573,6 +1575,24 @@ function FortigateAlertHandler(...kwargs) {
                 from,
                 to
             } = alertInfo;
+            let arr = [];
+            if (summary.toLowerCase().includes('infected file detected in fortigate')) {
+                let vt_url;
+                if (url) {
+                    vt_url = 'https://www.virustotal.com/gui/domain/' + url.split('/')[2];
+                } else {
+                    vt_url = 'https://www.virustotal.com/gui/ip-address/' + srcip;
+                }
+                let sum = 'https://www.virustotal.com/gui/search/' + analyticscksum;
+                arr.push(`<a href="${vt_url}">${vt_url}</a>`);
+                arr.push(`<a href="${sum}">${sum}</a>`);
+            } else if (summary.toLowerCase().includes('connection attempt')) {
+                let vt_url = 'https://www.virustotal.com/gui/ip-address/' + dstip;
+                arr.push(`<a href="${vt_url}">${vt_url}</a>`);
+            } else if (summary.toLowerCase().includes('connection to newly registered domain')) {
+                let vt_url = 'https://www.virustotal.com/gui/domain/' + hostname;
+                arr.push(`<a href="${vt_url}">${vt_url}</a>`);
+            }
             const extract_alert_info = {
                 datetime: `${date} ${time}`,
                 srcip: srcip ? `${srcip}:${srcport}[${srccountry}]` : undefined,
@@ -1588,7 +1608,8 @@ function FortigateAlertHandler(...kwargs) {
                 forwardedfor: forwardedfor || undefined,
                 analyticscksum: analyticscksum,
                 from: from,
-                to
+                to,
+                VT: arr
             };
             acc.push(extract_alert_info);
             return acc;
@@ -2244,6 +2265,7 @@ function paloaltoAlertHandler(...kwargs) {
                             malware_potential.push(logArray[i]);
                         }
                     }
+                    let vt_url = 'https://www.virustotal.com/gui/search/' + logArray[31].replace('"', '').split('/')[0];
                     let description = `</br>Timestamp: ${logArray[0].split(' ').slice(0, 3).join(' ')}</br>
 Device: ${logArray[0].split(' ').slice(3, 5).join(' ')}</br>
 Log Details:
@@ -2258,6 +2280,7 @@ Network Information:
     <ul><li>Source IP: ${logArray[7]}</li>
     <li>Destination IP: ${logArray[8]}</li>
     <li>URL/filename : ${logArray[31]}</li>
+    <li>VT : <a href="${vt_url}">${vt_url}</a></li>
     <li>Source Zone: ${logArray[16]}</li>
     <li>Destination Zone: ${logArray[17]}</li>
     <li>Ingress Interface: ${logArray[18]}</li>
