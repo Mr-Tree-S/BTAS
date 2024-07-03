@@ -2818,7 +2818,8 @@ function Risky_Countries_AlertHandler(...kwargs) {
                         ResultStatusDetail,
                         UserAgent,
                         ActorIpAddress,
-                        DeviceProperties
+                        DeviceProperties,
+                        UserKey
                     } = json_alert['office_365'];
                     let devicename = '';
                     DeviceProperties.forEach((item) => {
@@ -2836,6 +2837,7 @@ function Risky_Countries_AlertHandler(...kwargs) {
                         ActorIpAddress: ActorIpAddress ? ActorIpAddress : undefined,
                         UserAgent: UserAgent ? UserAgent : undefined,
                         DeviceName: devicename ? devicename : 'N/A',
+                        UserKey: UserKey ? UserKey : undefined,
                         ResultStatusDetail: ResultStatusDetail ? ResultStatusDetail : undefined
                     };
                     acc.push({ alertExtraInfo });
