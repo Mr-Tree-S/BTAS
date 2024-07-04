@@ -3691,7 +3691,9 @@ function CarbonAlertHandler(...kwargs) {
             DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             TicketAutoEscalate = $('#customfield_12202-val').text().trim();
             Status = $('#status-val > span').text().trim();
-            RawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim();
+            RawLog =
+                $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim() ||
+                $('#field-customfield_10232 > div.twixi-wrap.verbose > div > div > div > pre').text();
             Summary = $('#summary-val').text().trim();
             AgentName = $('#customfield_10805-val').text().trim();
         } else if (window.location.host === 'mss.pwcmacaumss.com') {
