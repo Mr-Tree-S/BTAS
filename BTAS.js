@@ -799,7 +799,13 @@ function ticketNotify(pageData) {
                 let isAllConditionsMet = false;
                 for (const val of propertyArray) {
                     try {
-                        if (pageData[property.propertiesKey].toLowerCase().includes(val.trim().toLowerCase())) {
+                        let isTrue = pageData[property.propertiesKey]
+                            .toLowerCase()
+                            .includes(val.trim().toLowerCase().replace('!', ''));
+                        if (val.trim().toLowerCase().includes('!')) {
+                            isTrue = !isTrue;
+                        }
+                        if (isTrue) {
                             if (property.propertiesKey == 'RawLog') {
                                 searchStrings.push(val.trim());
                             }
