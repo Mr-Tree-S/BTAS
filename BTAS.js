@@ -120,6 +120,7 @@ function switch_user_microsoft() {
         setTimeout(() => {
             var inputElement = document.querySelectorAll('.form-control')[0];
             inputElement.addEventListener('input', function (event) {
+                var inputValue = inputElement.value;
                 if (inputValue.includes('@')) {
                     $('#idSIButton9').click();
                     setTimeout(() => {
@@ -2762,12 +2763,10 @@ function PulseAlertHandler(...kwargs) {
         }, []);
         return alertInfo;
     }
-
     const alertInfo = parseLog(rawLog);
     const num_alert = $('#customfield_10300-val').text().trim();
     function generateDescription() {
         const alertDescriptions = [];
-        console.log('alertInfo', alertInfo);
         let desc = `Observed ${summary.split(']')[1]}\n`;
         desc += alertInfo;
         desc += `\n\nPlease verify if the login is legitimate.\n`;
@@ -3442,7 +3441,7 @@ function RadwareAlertHandler(...kwargs) {
                     const value = info.alertExtraInfo[key];
                     if (value !== undefined) {
                         if (key == 'start_time' || key == 'end_time') {
-                            desc += `${key}(<span class="red_highlight">GMT</span>): ${value.split('.')[0]}\n`;
+                            desc += `${key}(<span class="red_highlight">GMT</span>): ${value.split('.')[0] + 'Z'}\n`;
                         } else {
                             desc += `${key}: ${value}\n`;
                         }
@@ -3537,7 +3536,7 @@ function CarbonAlertHandler(...kwargs) {
                 if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
                     const value = info.alertExtraInfo[key];
                     if (key == 'EventTime') {
-                        desc += `EventTime(<span class="red_highlight">GMT</span>): ${value}\n`;
+                        desc += `EventTime(<span class="red_highlight">GMT</span>): ${value + 'Z'}\n`;
                     } else if (value !== undefined) {
                         desc += `${key}: ${value}\n`;
                     }
@@ -3550,6 +3549,73 @@ function CarbonAlertHandler(...kwargs) {
         showDialog(alertMsg);
     }
 
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
+function MultipleAccountAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const json_alert = JSON.parse(log)['win'];
+                const { targetUserName, targetDomainName, subjectUserName, subjectDomainName, subjectLogonId } =
+                    json_alert['eventdata'];
+                const { systemTime, computer, message } = json_alert['system'];
+                alertExtraInfo = {
+                    Eventtime: systemTime ? systemTime : undefined,
+                    computer: computer ? computer : undefined,
+                    targetUserName: targetUserName ? targetUserName : undefined,
+                    targetDomainName: targetDomainName ? targetDomainName : undefined,
+                    subjectUserName: subjectUserName ? subjectUserName : undefined,
+                    subjectDomainName: subjectDomainName ? subjectDomainName : undefined,
+                    message: message ? message.split('\r\n\r\n')[0] : undefined
+                };
+                acc.push({ alertExtraInfo });
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    function generateDescription() {
+        const alertDescriptions = [];
+        const single = [];
+        const lastindex = summary.lastIndexOf(']');
+        let desc = `Observed ${summary.substr(lastindex + 1)}\n`;
+        for (const info of alertInfo) {
+            let desc_ = '',
+                single_ = '';
+            for (const key in info.alertExtraInfo) {
+                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                    const value = info.alertExtraInfo[key];
+                    if (value !== undefined) {
+                        if (key == 'Eventtime') {
+                            desc_ += `${key}(<span class="red_highlight">GMT</span>): ${value.split('.')[0] + 'Z'}\n`;
+                        } else if (
+                            key == 'subjectUserName' ||
+                            key == 'subjectDomainName' ||
+                            key == 'computer' ||
+                            key == 'message' ||
+                            key == 'targetDomainName'
+                        ) {
+                            single_ += `${key}: ${value}\n`;
+                        } else {
+                            desc_ += `${key}: ${value}\n`;
+                        }
+                    }
+                }
+            }
+            alertDescriptions.push(desc_);
+            single.push(single_);
+        }
+        desc += [...new Set(single)].join('\n');
+        desc += '\n';
+        desc += [...new Set(alertDescriptions)].join('\n');
+        desc += `Please verify if the activity is legitimate.\n`;
+        showDialog(desc);
+    }
     addButton('generateDescription', 'Description', generateDescription);
 }
 
@@ -3650,7 +3716,8 @@ function CarbonAlertHandler(...kwargs) {
                 'rarely country signin from o365': Risky_Countries_AlertHandler,
                 'agent disconnected': Agent_Disconnect_AlertHandler,
                 'suspicious geolocation ip login success': PulseAlertHandler,
-                'login success from malware ip(s)': ThreatMatrixAlertHandler
+                'login success from malware ip(s)': ThreatMatrixAlertHandler,
+                'multiple account being disabled or deleted in short period of time': MultipleAccountAlertHandler
             };
             const Summary = $('#summary-val').text().trim();
             let No_Decoder_handler = null;
