@@ -1976,6 +1976,9 @@ function Defender365AlertHandler(...kwargs) {
                 let entities = {};
                 if (alerts !== undefined) {
                     alerts['entities'].forEach(function (entity) {
+                        if (entity['entityType'] == 'Mailbox') {
+                            entities['userPrincipalName'] = entity['userPrincipalName'];
+                        }
                         if (entity['entityType'] == 'User') {
                             entities['user'] = `${entity['domainName']}\\\\${entity['accountName']}`;
                             entities['userPrincipalName'] = entity['userPrincipalName'];
