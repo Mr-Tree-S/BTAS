@@ -552,7 +552,7 @@ function createNotifyControls() {
             currentDate.getHours() >= 9 && currentDate.getHours() < 21
                 ? 'https://gitee.com/aspirepig/aspirepig/raw/master/12221.wav'
                 : 'https://gitee.com/aspirepig/aspirepig/raw/master/alerts.wav';
-        audioControl.html(`<audio src="${audioURL}" type="audio/mpeg" controls></audio>`);
+        audioControl.html(`<audio id="myAudio" src="${audioURL}" type="audio/mpeg" controls></audio>`);
         parentNode.prepend(audioControl);
     }
 
@@ -880,6 +880,19 @@ function addButton(id, text, onClick) {
             .click(onClick);
         toolbar.append($('<div>').addClass('aui-buttons pluggable-ops').append(button));
     }
+}
+
+function monitorList() {
+    var summaryElements = document.querySelectorAll('.summary');
+    summaryElements.forEach(function (element) {
+        if (
+            element.textContent.includes('WebAvailability') ||
+            element.textContent.includes('SWIFT login activity and select activity detected')
+        ) {
+            var audio = document.getElementById('myAudio');
+            audio.play();
+        }
+    });
 }
 
 /**
@@ -1976,6 +1989,9 @@ function Defender365AlertHandler(...kwargs) {
                 let entities = {};
                 if (alerts !== undefined) {
                     alerts['entities'].forEach(function (entity) {
+                        if (entity['entityType'] == 'MailMessage') {
+                            entities['sender'] = entity['sender'];
+                        }
                         if (entity['entityType'] == 'Mailbox') {
                             entities['userPrincipalName'] = entity['userPrincipalName'];
                         }
@@ -2043,7 +2059,8 @@ function Defender365AlertHandler(...kwargs) {
                     url: entities.url,
                     alertid: alerts?.alertId,
                     incidenturi: jsonLog['incidents'].incidentUri,
-                    severity: jsonLog['incidents'].severity
+                    severity: jsonLog['incidents'].severity,
+                    sender: entities.sender
                 });
             } catch (error) {
                 console.log(`Error: ${error}`);
@@ -3639,12 +3656,14 @@ function MultipleAccountAlertHandler(...kwargs) {
     ) {
         console.log('#### Code includes filter run ####');
         const NotifyControls = createNotifyControls();
-        setInterval(() => {
-            $('.aui-button.aui-button-primary.search-button').click();
-            setTimeout(() => {
-                checkupdate(NotifyControls);
-            }, 10000);
-        }, 180000);
+        if (window.location.href.includes('filter=15200') || window.location.href.includes('filter=26405')) {
+            setInterval(() => {
+                $('.aui-button.aui-button-primary.search-button').click();
+                setTimeout(() => {
+                    checkupdate(NotifyControls);
+                }, 10000);
+            }, 180000);
+        }
         setInterval(() => {
             if (window.location.href.includes('filter=15200')) {
                 notifyKey = [];
@@ -3659,6 +3678,11 @@ function MultipleAccountAlertHandler(...kwargs) {
                 window.location.href = 'https://mss.pwcmacaumss.com/issues/?filter=13300';
             }
         }, 180000);
+        if (window.location.href.includes('filter=13300')) {
+            setInterval(() => {
+                monitorList();
+            }, 7000);
+        }
     }
     if (window.location.href.includes('login.microsoftonline.com')) {
         setTimeout(() => {
