@@ -923,7 +923,8 @@ function cortexAlertHandler(...kwargs) {
         'goldpeak': 'https://gpbi-poc.xdr.sg.paloaltonetworks.com/',
         'hkbn': 'https://elite.xdr.sg.paloaltonetworks.com/',
         'cityu': 'https://cityu.xdr.us.paloaltonetworks.com/',
-        'hthk': 'https://hthk.xdr.sg.paloaltonetworks.com/'
+        'hthk': 'https://hthk.xdr.sg.paloaltonetworks.com/',
+        'hendersonland': 'https://hld.xdr.sg.paloaltonetworks.com'
     };
     const orgNavigator = orgDict[LogSourceDomain];
 
