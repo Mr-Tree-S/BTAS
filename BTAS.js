@@ -3659,30 +3659,21 @@ function MultipleAccountAlertHandler(...kwargs) {
         const NotifyControls = createNotifyControls();
         if (window.location.href.includes('filter=15200') || window.location.href.includes('filter=26405')) {
             setInterval(() => {
+                notifyKey = [];
                 $('.aui-button.aui-button-primary.search-button').click();
                 setTimeout(() => {
                     checkupdate(NotifyControls);
                 }, 10000);
             }, 180000);
         }
-        setInterval(() => {
-            if (window.location.href.includes('filter=15200')) {
-                notifyKey = [];
-                window.location.href = 'https://caas.pwchk.com/issues/?filter=15200';
-            }
-            if (window.location.href.includes('filter=26405')) {
-                notifyKey = [];
-                window.location.href = 'https://caas.pwchk.com/issues/?filter=26405';
-            }
-            if (window.location.href.includes('filter=13300')) {
-                notifyKey = [];
-                window.location.href = 'https://mss.pwcmacaumss.com/issues/?filter=13300';
-            }
-        }, 180000);
         if (window.location.href.includes('filter=13300')) {
             setInterval(() => {
-                monitorList();
-            }, 7000);
+                notifyKey = [];
+                $('.aui-button.aui-button-primary.search-button').click();
+                setTimeout(() => {
+                    monitorList();
+                }, 10000);
+            }, 60000);
         }
     }
     if (window.location.href.includes('login.microsoftonline.com')) {
