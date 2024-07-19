@@ -1704,6 +1704,7 @@ function CSAlertHandler(...kwargs) {
                     const cef_log_extends = cefToJson(cef_log[7]);
 
                     acc.push({
+                        CreateTime: cef_log[0].split(' localhost ')[0],
                         Summary: cef_log_header[4],
                         // for some like "server error" tickets
                         HostName: cef_log_extends.dhost ? cef_log_extends.dhost : cef_log_extends.dvchost,
