@@ -830,7 +830,7 @@ function ticketNotify(pageData) {
                                 }
                                 break;
                             case 'not equal':
-                                if (pageData[property.propertiesKey].toLowerCase() != val.trim().toLowerCase()) {
+                                if (pageData[property.propertiesKey].toLowerCase() == val.trim().toLowerCase()) {
                                     isAllConditionsMet = false;
                                 } else {
                                     isAllConditionsMet = true;
