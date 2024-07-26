@@ -116,7 +116,6 @@ function switch_user_microsoft() {
         window.location.href = 'https://security.microsoft.com/homepage?&current=none';
     }
     if (document.title == '登录到您的帐户' && $('#idDiv_SAOTCC_Title').text().trim() != '输入验证码') {
-        document.getElementById('otherTileText').click();
         setTimeout(() => {
             var inputElement = document.querySelectorAll('.form-control')[0];
             inputElement.addEventListener('input', function (event) {
@@ -810,9 +809,35 @@ function ticketNotify(pageData) {
                             if (property.propertiesKey == 'RawLog') {
                                 searchStrings.push(val.trim());
                             }
-                            if (isAllConditionsMet == false) {
-                                isAllConditionsMet = true; // 如果任何一个属性满足条件，返回 true
-                            }
+                            isAllConditionsMet = true; // 如果任何一个属性满足条件，返回 true
+                        }
+                        switch (property.conditionOptions) {
+                            case 'contain':
+                                if (pageData[property.propertiesKey].toLowerCase().includes(val.trim().toLowerCase())) {
+                                    isAllConditionsMet = true;
+                                }
+                                break;
+                            case 'not contain':
+                                if (pageData[property.propertiesKey].toLowerCase().includes(val.trim().toLowerCase())) {
+                                    isAllConditionsMet = false;
+                                } else {
+                                    isAllConditionsMet = true;
+                                }
+                                break;
+                            case 'equal':
+                                if (pageData[property.propertiesKey].toLowerCase() == val.trim().toLowerCase()) {
+                                    isAllConditionsMet = true;
+                                }
+                                break;
+                            case 'not equal':
+                                if (pageData[property.propertiesKey].toLowerCase() != val.trim().toLowerCase()) {
+                                    isAllConditionsMet = false;
+                                } else {
+                                    isAllConditionsMet = true;
+                                }
+                                break;
+                            default:
+                                console.log('Unknown.');
                         }
                     } catch (error) {
                         if (
