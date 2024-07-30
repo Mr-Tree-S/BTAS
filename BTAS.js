@@ -1232,107 +1232,6 @@ function cortexAlertHandler(...kwargs) {
     addButton('openTimeline', 'Timeline', openTimeline);
 }
 
-/**
- * Create Description and Open MDE button
- * @param  {...any} kwargs - Include LogSourceDomain, Labels, LogSource, TicketAutoEscalate, Status, RawLog, Summary fields
- */
-function MDEAlertHandler(...kwargs) {
-    console.log('#### Code MDEAlertHandler run ####');
-    const { rawLog, LogSourceDomain } = kwargs[0];
-    function parseLog(rawLog) {
-        const alertInfo = rawLog.reduce((acc, log) => {
-            let logObj = '';
-            if (log != '') {
-                try {
-                    if (log.charAt(log.length - 1) == '}') {
-                        const formatJson = log.substring(log.indexOf('{')).trim();
-                        logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
-                    } else {
-                        const formatJson = log.substring(log.indexOf('{')).trim() + '"}]}}';
-                        logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
-                    }
-                    const { mde } = logObj;
-                    const { title, id, computerDnsName, relatedUser, evidence, alertCreationTime } = mde;
-                    let dotIndex = alertCreationTime.lastIndexOf('.');
-
-                    let dateTimeStr = alertCreationTime.slice(0, dotIndex) + 'Z';
-                    const alert = { title, id, computerDnsName, dateTimeStr };
-                    const userName = relatedUser ? relatedUser.userName : 'N/A';
-                    let extrainfo = '';
-                    if (evidence) {
-                        const tmp = [];
-                        for (const evidenceItem of evidence) {
-                            let description = '';
-                            if (evidenceItem.entityType === 'File') {
-                                description = `filename: ${evidenceItem.fileName}\nfilePath: ${evidenceItem.filePath}\nsha1: ${evidenceItem.sha1}`;
-                                tmp.push(description);
-                            }
-                            if (evidenceItem.entityType === 'Process') {
-                                description = `cmd: ${evidenceItem.processCommandLine}\naccount: ${evidenceItem.accountName}\nsha1: ${evidenceItem.sha1}`;
-                                tmp.push(description);
-                            }
-                            if (evidenceItem.entityType === 'Url') {
-                                description += `Url: ${evidenceItem.url}`;
-                                tmp.push(description);
-                            }
-                            if (evidenceItem.entityType === 'Ip') {
-                                description += `IP: ${evidenceItem.ipAddress}`;
-                                tmp.push(description);
-                            }
-                            //tmp.push(description);
-                        }
-                        const uniqueDescriptions = Array.from(new Set(tmp));
-                        extrainfo = uniqueDescriptions.join('\n');
-                    }
-                    acc.push({ ...alert, userName, extrainfo });
-                } catch (error) {
-                    console.error(`Error: ${error.message}`);
-                }
-            }
-            return acc;
-        }, []);
-        return alertInfo;
-    }
-    const alertInfo = parseLog(rawLog);
-
-    function generateDescription() {
-        const alertDescriptions = [];
-        for (const info of alertInfo) {
-            const { title, computerDnsName, userName, extrainfo, dateTimeStr } = info;
-            const desc = `Observed ${title}\nalertCreationTime(<span class="red_highlight">GMT</span>): ${dateTimeStr}\nHost: ${computerDnsName}\nusername: ${userName}\n${extrainfo}\n\nPlease help to verify if it is legitimate.\n`;
-            alertDescriptions.push(desc);
-        }
-        const alertMsg = [...new Set(alertDescriptions)].join('\n');
-        showDialog(alertMsg);
-    }
-    function openMDE() {
-        let MDEURL = [];
-        for (const info of alertInfo) {
-            const { id } = info;
-            if (id) {
-                MDEURL.push(`https://security.microsoft.com/alerts/${id}`);
-            }
-        }
-        MDEURL = [...new Set(MDEURL)];
-        showFlag('info', 'MDE URL:', `${MDEURL}`, 'manual');
-        let url = 'https://security.microsoft.com/homepage?&current=';
-        url += LogSourceDomain;
-        for (let i = 0; i < MDEURL.length; i++) {
-            let mde_url = `&url${i}=${MDEURL[i]}`;
-            url += mde_url;
-        }
-        let MDE_Assist_ = localStorage.getItem('MDE_Assist');
-        if (MDE_Assist_ != 0) {
-            GM_openInTab(url, {
-                active: false, // Set to false to open in the background without activating the new TAB
-                insert: true // Set to true to insert the new TAB after the current TAB
-            });
-        }
-    }
-    addButton('generateDescription', 'Description', generateDescription);
-    addButton('openMDE', 'MDE', openMDE);
-}
-
 function HTSCAlertHandler(...kwargs) {
     console.log('#### Code HTSCAlertHandler run ####');
     const { rawLog } = kwargs[0];
@@ -2003,223 +1902,6 @@ function AwsAlertHandler(...kwargs) {
     }
 
     addButton('generateDescription', 'Description', generateDescription);
-}
-
-function Defender365AlertHandler(...kwargs) {
-    const { rawLog, summary, LogSourceDomain } = kwargs[0];
-
-    function parseLog(rawLog) {
-        const alertInfo = rawLog.reduce((acc, log) => {
-            try {
-                let jsonLog = JSON.parse(log);
-                const alerts = jsonLog['incidents']['alerts'][0];
-                let entities = {};
-                if (alerts !== undefined) {
-                    alerts['entities'].forEach(function (entity) {
-                        if (entity['entityType'] == 'MailMessage') {
-                            entities['sender'] = entity['sender'];
-                        }
-                        if (entity['entityType'] == 'Mailbox') {
-                            entities['userPrincipalName'] = entity['userPrincipalName'];
-                        }
-                        if (entity['entityType'] == 'User') {
-                            entities['user'] = `${entity['domainName']}\\\\${entity['accountName']}`;
-                            entities['userPrincipalName'] = entity['userPrincipalName'];
-                        }
-
-                        if (entity['entityType'] == 'Process') {
-                            if (!entities['process']) {
-                                entities['process'] = [];
-                            }
-                            entities['process'].push({
-                                filename: entity['fileName'],
-                                filePath: entity['filePath'],
-                                cmd: entity['processCommandLine'],
-                                sha256: entity['sha256']
-                            });
-                        }
-
-                        if (entity['entityType'] == 'File') {
-                            if (!entities['file']) {
-                                entities['file'] = [];
-                            }
-                            entities['file'].push({
-                                filename: entity['fileName'],
-                                filePath: entity['filePath'],
-                                sha256: entity['sha256']
-                            });
-                        }
-
-                        if (entity['entityType'] == 'Ip') {
-                            if (!entities['ip']) {
-                                entities['ip'] = [];
-                            }
-                            entities['ip'].push({
-                                ip: entity['ipAddress']
-                            });
-                        }
-                        if (entity['entityType'] == 'Url') {
-                            if (!entities['url']) {
-                                entities['url'] = [];
-                            }
-                            entities['url'].push({
-                                url: entity['url']
-                            });
-                        }
-                    });
-                }
-                let creationTime = alerts.creationTime.split('.')[0] + 'Z';
-                let title = alerts?.title;
-                if (summary.toLowerCase().includes(title.toLowerCase())) {
-                    title = undefined;
-                }
-                acc.push({
-                    creationTime: creationTime,
-                    Title: title,
-                    summary: jsonLog['incidents'].incidentName,
-                    host: alerts?.devices[0]?.deviceDnsName,
-                    user: entities.user,
-                    userPrincipalName: entities.userPrincipalName,
-                    process: entities.process,
-                    file: entities.file,
-                    ip: entities.ip,
-                    url: entities.url,
-                    alertid: alerts?.alertId,
-                    incidenturi: jsonLog['incidents'].incidentUri,
-                    severity: jsonLog['incidents'].severity,
-                    sender: entities.sender
-                });
-            } catch (error) {
-                console.log(`Error: ${error}`);
-            }
-            return acc;
-        }, []);
-        return alertInfo;
-    }
-    const alertInfo = parseLog(rawLog);
-
-    function generateDescription() {
-        const alertDescriptions = [];
-        if (summary.includes('M365 Defender High Severity Alerts: Logon from a risky country involving one user')) {
-            const ticketnumber = $('#key-val').text();
-            for (const info of alertInfo) {
-                let desc = `Dear Customer,
- 
-                Reasons for escalating:
-                 
-                Observed Logon from a risky country involving one user in [time]
-                 
-                Here is information about this login:
-
-                creationTime(<span class="red_highlight"">GMT</span>): ${info.creationTime}
-                 
-                source IP: ${info.ip[0].ip}
-                 
-                user: ${info.user}
-                 
-                active: Microsoft 365
-                 
-                userPrincipalName: ${info.userPrincipalName}
-                 
-                Device type:
-                 
-                UserAgent:
-                 
-                location:
-                 
-                logging status:
-                 
-                LoginStatus:
-                 
-                MfaRequired:
-                 
-                the user suddenly logged in from [Location1] but the user used to be logged in from [Location2], aberdeen. Please confirm whether the login behavior of the user is normal.if not, could block the ip.
-                 
-                 
-                Suggestion: We suggest to confirm whether the behavior of this customer logging in at ${info.ip[0].ip}: is normal or not, if not, we suggest to block the IP and change the user's password and perform a full scan on the user's commonly used PCs, thank you!
-                 
-                Severity: ${info.severity}
-                 
-                Correlation ticket: ${ticketnumber}
-                
-                `;
-                alertDescriptions.push(desc);
-            }
-        } else {
-            for (const info of alertInfo) {
-                let desc = `Observed ${info.summary}\n`;
-                try {
-                    for (let key in info) {
-                        if (info.hasOwnProperty(key)) {
-                            if (Array.isArray(info[key])) {
-                                info[key].forEach((item) => {
-                                    for (let subKey in item) {
-                                        if (item.hasOwnProperty(subKey) && item[subKey] !== '') {
-                                            desc += `${subKey}: ${item[subKey]}\n`;
-                                        }
-                                    }
-                                });
-                            } else {
-                                if (
-                                    info[key] !== undefined &&
-                                    info[key] !== ' ' &&
-                                    key !== 'summary' &&
-                                    key !== 'alertid' &&
-                                    key !== 'incidenturi' &&
-                                    key !== 'severity'
-                                ) {
-                                    if (key == 'creationTime') {
-                                        desc += `creationTime(<span class="red_highlight">GMT</span>): ${info[key]}\n`;
-                                    } else {
-                                        desc += `${key}: ${info[key]}\n`;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.error(`Error: ${error}`);
-                }
-
-                desc += `\nPlease verify if the activity is legitimate.\n`;
-                alertDescriptions.push(desc);
-            }
-        }
-        const alertMsg = [...new Set(alertDescriptions)].join('\n');
-        showDialog(alertMsg);
-    }
-
-    function openMDE() {
-        let MDEURL = [];
-        for (const info of alertInfo) {
-            const { alertid, incidenturi } = info;
-            console.log(info);
-            if (alertid && !MDEURL.includes(alertid)) {
-                MDEURL.push(`https://security.microsoft.com/alerts/${alertid}`);
-            }
-            if (!alertid && incidenturi) {
-                MDEURL.push(incidenturi.replace('hXXps[:]', 'https:'));
-            }
-        }
-        MDEURL = [...new Set(MDEURL)];
-        showFlag('info', 'MDE URL:', `${MDEURL}`, 'manual');
-        let url = 'https://security.microsoft.com/homepage?&current=';
-        url += LogSourceDomain;
-        for (let i = 0; i < MDEURL.length; i++) {
-            let mde_url = `&url${i}=${MDEURL[i]}`;
-            url += mde_url;
-        }
-        let MDE_Assist_ = localStorage.getItem('MDE_Assist');
-        if (MDE_Assist_ != 0) {
-            GM_openInTab(url, {
-                active: false, // Set to false to open in the background without activating the new TAB
-                insert: true // Set to true to insert the new TAB after the current TAB
-            });
-        }
-    }
-
-    addButton('generateDescription', 'Description', generateDescription);
-    addButton('openMDE', 'MDE', openMDE);
 }
 
 function AzureAlertHandler(...kwargs) {
@@ -3666,6 +3348,288 @@ function MultipleAccountAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+/**
+ * Create Description and Open MDE and MDE365 button
+ * @param  {...any} kwargs - Include LogSourceDomain, Labels, LogSource, TicketAutoEscalate, Status, RawLog, Summary fields
+ */
+function MDE365AlertHandler(...kwargs) {
+    console.log('#### Code MDE365lertHandler run ####');
+    const { rawLog, LogSourceDomain, summary } = kwargs[0];
+    let alertInfo_MDE = [],
+        alertInfo_365 = [];
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            let logObj = '';
+            console.log(log);
+            if (log != '') {
+                try {
+                    if (log.charAt(log.length - 1) == '}') {
+                        const formatJson = log.substring(log.indexOf('{')).trim();
+                        logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
+                    } else {
+                        const formatJson = log.substring(log.indexOf('{')).trim() + '"}]}}';
+                        logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
+                    }
+                    if (logObj['integration'] == 'Wazuh-MDE') {
+                        const { mde } = logObj;
+                        const { title, id, computerDnsName, relatedUser, evidence, alertCreationTime } = mde;
+                        let dotIndex = alertCreationTime.lastIndexOf('.');
+
+                        let dateTimeStr = alertCreationTime.slice(0, dotIndex) + 'Z';
+                        const alert = { title, id, computerDnsName, dateTimeStr };
+                        const userName = relatedUser ? relatedUser.userName : 'N/A';
+                        let extrainfo = '';
+                        if (evidence) {
+                            const tmp = [];
+                            for (const evidenceItem of evidence) {
+                                let description = '';
+                                if (evidenceItem.entityType === 'File') {
+                                    description = `filename: ${evidenceItem.fileName}\nfilePath: ${evidenceItem.filePath}\nsha1: ${evidenceItem.sha1}`;
+                                    tmp.push(description);
+                                }
+                                if (evidenceItem.entityType === 'Process') {
+                                    description = `cmd: ${evidenceItem.processCommandLine}\naccount: ${evidenceItem.accountName}\nsha1: ${evidenceItem.sha1}`;
+                                    tmp.push(description);
+                                }
+                                if (evidenceItem.entityType === 'Url') {
+                                    description += `Url: ${evidenceItem.url}`;
+                                    tmp.push(description);
+                                }
+                                if (evidenceItem.entityType === 'Ip') {
+                                    description += `IP: ${evidenceItem.ipAddress}`;
+                                    tmp.push(description);
+                                }
+                            }
+                            const uniqueDescriptions = Array.from(new Set(tmp));
+                            extrainfo = uniqueDescriptions.join('\n');
+                        }
+                        alertInfo_MDE.push({ ...alert, userName, extrainfo });
+                    } else {
+                        const alerts = logObj['incidents']['alerts'][0];
+                        console.log(alerts);
+                        let entities = {};
+                        if (alerts !== undefined) {
+                            alerts['entities'].forEach(function (entity) {
+                                // if (entity['entityType'] == 'Mailbox') {
+                                //     entities['userPrincipalName'] = entity['userPrincipalName'];
+                                // }
+                                if (entity['entityType'] == 'User' || entity['entityType'] == 'Mailbox') {
+                                    entities['user'] = `${entity['domainName']}\\\\${entity['accountName']}`;
+                                    entities['userPrincipalName'] = entity['userPrincipalName'];
+                                }
+
+                                if (entity['entityType'] == 'Process') {
+                                    if (!entities['process']) {
+                                        entities['process'] = [];
+                                    }
+                                    entities['process'].push({
+                                        filename: entity['fileName'],
+                                        filePath: entity['filePath'],
+                                        cmd: entity['processCommandLine'],
+                                        sha256: entity['sha256']
+                                    });
+                                }
+
+                                if (entity['entityType'] == 'File') {
+                                    if (!entities['file']) {
+                                        entities['file'] = [];
+                                    }
+                                    entities['file'].push({
+                                        filename: entity['fileName'],
+                                        filePath: entity['filePath'],
+                                        sha256: entity['sha256']
+                                    });
+                                }
+
+                                if (entity['entityType'] == 'Ip') {
+                                    if (!entities['ip']) {
+                                        entities['ip'] = [];
+                                    }
+                                    entities['ip'].push({
+                                        ip: entity['ipAddress']
+                                    });
+                                }
+                                if (entity['entityType'] == 'Url') {
+                                    if (!entities['url']) {
+                                        entities['url'] = [];
+                                    }
+                                    entities['url'].push({
+                                        url: entity['url']
+                                    });
+                                }
+                            });
+                        }
+                        let creationTime = alerts.creationTime.split('.')[0] + 'Z';
+                        let title = alerts?.title;
+                        if (summary.toLowerCase().includes(title.toLowerCase())) {
+                            title = undefined;
+                        }
+                        alertInfo_365.push({
+                            creationTime: creationTime,
+                            Title: title,
+                            summary: logObj['incidents'].incidentName,
+                            host: alerts?.devices[0]?.deviceDnsName,
+                            user: entities.user,
+                            userPrincipalName: entities.userPrincipalName,
+                            process: entities.process,
+                            file: entities.file,
+                            ip: entities.ip,
+                            url: entities.url,
+                            alertid: alerts?.alertId,
+                            incidenturi: logObj['incidents'].incidentUri,
+                            severity: logObj['incidents'].severity
+                        });
+                    }
+                } catch (error) {
+                    console.error(`Error: ${error.message}`);
+                }
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertDescriptions = [];
+    parseLog(rawLog);
+
+    function generateDescription_MDE() {
+        for (const info of alertInfo_MDE) {
+            const { title, computerDnsName, userName, extrainfo, dateTimeStr } = info;
+            const desc = `Observed ${title}\nalertCreationTime(<span class="red_highlight">GMT</span>): ${dateTimeStr}\nHost: ${computerDnsName}\nusername: ${userName}\n${extrainfo}\n\nPlease help to verify if it is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+    }
+    function generateDescription_365() {
+        if (summary.includes('M365 Defender High Severity Alerts: Logon from a risky country involving one user')) {
+            const ticketnumber = $('#key-val').text();
+            for (const info of alertInfo) {
+                let desc = `Dear Customer,
+	 
+	            Reasons for escalating:
+	             
+	            Observed Logon from a risky country involving one user in [time]
+	             
+	            Here is information about this login:
+	
+	            creationTime(<span class="red_highlight"">GMT</span>): ${info.creationTime}
+	             
+	            source IP: ${info.ip[0].ip}
+	             
+	            user: ${info.user}
+	             
+	            active: Microsoft 365
+	             
+	            userPrincipalName: ${info.userPrincipalName}
+	             
+	            Device type:
+	             
+	            UserAgent:
+	             
+	            location:
+	             
+	            logging status:
+	             
+	            LoginStatus:
+	             
+	            MfaRequired:
+	             
+	            the user suddenly logged in from [Location1] but the user used to be logged in from [Location2], aberdeen. Please confirm whether the login behavior of the user is normal.if not, could block the ip.
+	             
+	             
+	            Suggestion: We suggest to confirm whether the behavior of this customer logging in at ${info.ip[0].ip}: is normal or not, if not, we suggest to block the IP and change the user's password and perform a full scan on the user's commonly used PCs, thank you!
+	             
+	            Severity: ${info.severity}
+	             
+	            Correlation ticket: ${ticketnumber}
+	            
+	            `;
+                alertDescriptions.push(desc);
+            }
+        } else {
+            for (const info of alertInfo_365) {
+                let desc = `Observed ${info.summary}\n`;
+                try {
+                    for (let key in info) {
+                        if (info.hasOwnProperty(key)) {
+                            if (Array.isArray(info[key])) {
+                                info[key].forEach((item) => {
+                                    for (let subKey in item) {
+                                        if (item.hasOwnProperty(subKey) && item[subKey] !== '') {
+                                            desc += `${subKey}: ${item[subKey]}\n`;
+                                        }
+                                    }
+                                });
+                            } else {
+                                if (
+                                    info[key] !== undefined &&
+                                    info[key] !== ' ' &&
+                                    key !== 'summary' &&
+                                    key !== 'alertid' &&
+                                    key !== 'incidenturi' &&
+                                    key !== 'severity'
+                                ) {
+                                    if (key == 'creationTime') {
+                                        desc += `creationTime(<span class="red_highlight">GMT</span>): ${info[key]}\n`;
+                                    } else {
+                                        desc += `${key}: ${info[key]}\n`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error(`Error: ${error}`);
+                }
+
+                desc += `\nPlease verify if the activity is legitimate.\n`;
+                alertDescriptions.push(desc);
+            }
+        }
+    }
+    function generateDescription() {
+        generateDescription_MDE();
+        generateDescription_365();
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+    function openMDE() {
+        let MDEURL = [];
+        for (const info of alertInfo_MDE) {
+            const { id } = info;
+            if (id) {
+                MDEURL.push(`https://security.microsoft.com/alerts/${id}`);
+            }
+        }
+        for (const info of alertInfo_365) {
+            const { alertid, incidenturi } = info;
+            console.log(info);
+            if (alertid && !MDEURL.includes(alertid)) {
+                MDEURL.push(`https://security.microsoft.com/alerts/${alertid}`);
+            }
+            if (!alertid && incidenturi) {
+                MDEURL.push(incidenturi.replace('hXXps[:]', 'https:'));
+            }
+        }
+        MDEURL = [...new Set(MDEURL)];
+        showFlag('info', 'MDE URL:', `${MDEURL}`, 'manual');
+        let url = 'https://security.microsoft.com/homepage?&current=';
+        url += LogSourceDomain;
+        for (let i = 0; i < MDEURL.length; i++) {
+            let mde_url = `&url${i}=${MDEURL[i]}`;
+            url += mde_url;
+            console.log(MDEURL[i]);
+        }
+        let MDE_Assist_ = localStorage.getItem('MDE_Assist');
+        if (MDE_Assist_ != 0) {
+            GM_openInTab(url, {
+                active: false, // 设置为 false，以在后台打开，不激活新标签页
+                insert: true // 设置为 true，将新标签页插入到当前标签页之后
+            });
+        }
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+    addButton('openMDE', 'MDE', openMDE);
+}
+
 (function () {
     'use strict';
 
@@ -3721,7 +3685,7 @@ function MultipleAccountAlertHandler(...kwargs) {
             console.log('#### Code Issue page: Alert Handler ####');
             const handlers = {
                 'cortex-xdr-json': cortexAlertHandler,
-                'mde-api-json': MDEAlertHandler,
+                'mde-api-json': MDE365AlertHandler,
                 'sangfor-ccom-json': HTSCAlertHandler,
                 'carbonblack': CBAlertHandler,
                 'carbonblack_cef': VMCEFAlertHandler,
@@ -3734,7 +3698,7 @@ function MultipleAccountAlertHandler(...kwargs) {
                 'vmwarecarbonblack_cef': VMCEFAlertHandler,
                 'aws-cloudtrail': AwsAlertHandler,
                 'aws-cisco-umbrella': AwsAlertHandler,
-                'm365-defender-json': Defender365AlertHandler,
+                'm365-defender-json': MDE365AlertHandler,
                 'azureeventhub': AzureAlertHandler,
                 'azuregraphapi-json': AzureGraphAlertHandler,
                 'paloalto-firewall': paloaltoAlertHandler,
@@ -3750,7 +3714,17 @@ function MultipleAccountAlertHandler(...kwargs) {
                 'radware-json': RadwareAlertHandler,
                 'carbonblack_cloud': CarbonAlertHandler
             };
-            const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
+            let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
+            // console.log(DecoderName.split(' '))
+            let decoder_name = [];
+            DecoderName.split(' ').forEach((element, index) => {
+                if (element != 'hide\n' && element != '' && element != 'show\n' && element != '\n') {
+                    decoder_name.push(element);
+                }
+            });
+            if (decoder_name[0].includes('m365-defender-json\n')) {
+                DecoderName = 'm365-defender-json';
+            }
             const handler = handlers[DecoderName];
             if (handler) {
                 handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, summary: summary });
