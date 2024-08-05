@@ -1433,11 +1433,14 @@ function CBAlertHandler(...kwargs) {
 function WineventAlertHandler(...kwargs) {
     console.log('#### Code WineventAlertHandler run ####');
     let { rawLog, summary } = kwargs[0];
+    var raw_alert = 0;
+    const num_alert = $('#customfield_10300-val').text().trim();
     summary = summary.replace(/[\[(].*?[\])]/g, '');
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
                 const { win } = JSON.parse(log);
+                raw_alert += 1;
                 const { eventdata, system } = win;
                 const alertHost = system.computer;
                 const systemTime = system.systemTime;
@@ -1453,6 +1456,10 @@ function WineventAlertHandler(...kwargs) {
 
     function generateDescription() {
         const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         for (const info of alertInfo) {
             let desc = `Observed${info.summary}\nHost: ${info.alertHost}\n`;
             desc += `systemTime(<span class="red_highlight">GMT</span>): ${info.systemTime.split('.')[0]}Z\n`;
@@ -1476,6 +1483,8 @@ function WineventAlertHandler(...kwargs) {
 
 function FortigateAlertHandler(...kwargs) {
     let { rawLog, summary } = kwargs[0];
+    var raw_alert = 0;
+    const num_alert = $('#customfield_10300-val').text().trim();
     summary = summary.split(']')[1].trim();
     function ParseFortigateLog(rawLog) {
         const alertInfos = rawLog.reduce((acc, log) => {
@@ -1485,6 +1494,7 @@ function FortigateAlertHandler(...kwargs) {
             let jsonData = {};
             const regex = /(\w+)=(["'].*?["']|\S+)/g;
             let matchresult;
+            raw_alert += 1;
             while ((matchresult = regex.exec(log)) !== null) {
                 let key = matchresult[1];
                 let value = matchresult[2];
@@ -1573,6 +1583,10 @@ function FortigateAlertHandler(...kwargs) {
 
     function generateDescription() {
         const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         for (const info of extract_alert_infos) {
             let desc = `Observed ${summary}\n`;
             Object.entries(info).forEach(([index, value]) => {
@@ -1592,6 +1606,8 @@ function FortigateAlertHandler(...kwargs) {
 
 function CSAlertHandler(...kwargs) {
     let { rawLog } = kwargs[0];
+    var raw_alert = 0;
+    const num_alert = $('#customfield_10300-val').text().trim();
     function parseCefLog(rawLog) {
         function cefToJson(cefLog) {
             let json = {};
@@ -1626,7 +1642,7 @@ function CSAlertHandler(...kwargs) {
                     const cef_log_header = cef_log.slice(1, 7);
                     // Parsing CEF Extends
                     const cef_log_extends = cefToJson(cef_log[7]);
-
+                    raw_alert += 1;
                     acc.push({
                         CreateTime: cef_log[0].split(' localhost ')[0],
                         Summary: cef_log_header[4],
@@ -1654,6 +1670,10 @@ function CSAlertHandler(...kwargs) {
 
     function generateDescription() {
         const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         for (const info of alertInfo) {
             const { Summary } = info;
             let desc = `Observed ${Summary}\n`;
@@ -1684,11 +1704,14 @@ function CSAlertHandler(...kwargs) {
 
 function SophosAlertHandler(...kwargs) {
     let { rawLog } = kwargs[0];
+    var raw_alert = 0;
+    const num_alert = $('#customfield_10300-val').text().trim();
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
                 log.replace(/[\[(].*?[\])]/g, '');
                 const { sophos, logsource } = JSON.parse(log);
+                raw_alert += 1;
                 const summary = sophos.name;
                 const createtime = sophos.rt.split('.')[0] + 'Z';
                 const alertHost = sophos.dhost;
@@ -1714,6 +1737,10 @@ function SophosAlertHandler(...kwargs) {
 
     function generateDescription() {
         const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         for (const info of alertInfo) {
             let desc = `Observed ${info.summary}\nHost: ${info.alertHost} IP: ${info.alertIP || 'N/A'}\nUser: ${
                 info.alertUser
@@ -1879,6 +1906,10 @@ function AwsAlertHandler(...kwargs) {
     const num_alert = $('#customfield_10300-val').text().trim();
     function generateDescription() {
         const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         for (const info of alertInfo) {
             let desc = `Observed ${summary.split(']')[1]}\n`;
             Object.entries(info).forEach(([index, value]) => {
@@ -1892,10 +1923,6 @@ function AwsAlertHandler(...kwargs) {
             });
             desc += `\nPlease verify if the activity is legitimate.\n`;
             alertDescriptions.push(desc);
-        }
-        if (raw_alert < num_alert) {
-            let extra_message = `\n\n<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>`;
-            alertDescriptions.push(extra_message);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
         showDialog(alertMsg);
@@ -1979,7 +2006,8 @@ function AzureAlertHandler(...kwargs) {
 
 function paloaltoAlertHandler(...kwargs) {
     const { rawLog, summary } = kwargs[0];
-
+    var raw_alert = 0;
+    const num_alert = $('#customfield_10300-val').text().trim();
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
@@ -2040,6 +2068,7 @@ Vulnerability Information:</br>
     <li>Affected Technology: ${logArray[112]},${logArray[113]}</li>
     <li>Malware Potential:${malware_potential}</li>
                                                     </ul>`;
+                    raw_alert += 1;
                     acc.push(description);
                 }
             } catch (error) {
@@ -2054,6 +2083,10 @@ Vulnerability Information:</br>
 
     function generateDescription() {
         const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         for (const info of alertInfo) {
             let arr = summary.split(']');
             let desc = `Observed ${arr[arr.length - 1]}\n`;
@@ -2240,6 +2273,10 @@ function AzureGraphAlertHandler(...kwargs) {
     const num_alert = $('#customfield_10300-val').text().trim();
     function generateDescription() {
         const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         if (summary.toLowerCase().includes('conditional access policy updated')) {
             for (const info of alertInfo) {
                 console.log(info['alertExtraInfo']['userPrincipalName']);
@@ -2283,10 +2320,6 @@ function AzureGraphAlertHandler(...kwargs) {
                 desc += `\nPlease verify if the activity is legitimate.\n`;
                 alertDescriptions.push(desc);
             }
-        }
-        if (raw_alert < num_alert) {
-            let extra_message = `\n\n<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>`;
-            alertDescriptions.push(extra_message);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
         showDialog(alertMsg);
@@ -2367,7 +2400,10 @@ function ProofpointAlertHandler(...kwargs) {
     console.log('reduce the methods iterated altogether' + num_alert + ' times');
     function generateDescription() {
         const alertDescriptions = [];
-        console.log(alertInfo);
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         for (const info of alertInfo) {
             let desc = `Observed ${summary.split(']')[1]}\n`;
             for (const key in info.alertExtraInfo) {
@@ -2380,10 +2416,6 @@ function ProofpointAlertHandler(...kwargs) {
             }
             desc += `\nPlease verify if the activity is legitimate.\n`;
             alertDescriptions.push(desc);
-        }
-        if (raw_alert < num_alert) {
-            let extra_message = `\n\n<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>`;
-            alertDescriptions.push(extra_message);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
         showDialog(alertMsg);
@@ -2429,6 +2461,10 @@ function ZscalerAlertHandler(...kwargs) {
     const num_alert = $('#customfield_10300-val').text().trim();
     function generateDescription() {
         const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         for (const info of alertInfo) {
             let desc = `Observed ${summary.split(']')[1]}\n`;
             for (const key in info.alertExtraInfo) {
@@ -2441,10 +2477,6 @@ function ZscalerAlertHandler(...kwargs) {
             }
             desc += `\nPlease verify if the ip is legitimate.\n`;
             alertDescriptions.push(desc);
-        }
-        if (raw_alert < num_alert) {
-            let extra_message = `\n\n<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>`;
-            alertDescriptions.push(extra_message);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n'); //Can achieve automatic deduplication
         showDialog(alertMsg);
@@ -2496,14 +2528,14 @@ function PulseAlertHandler(...kwargs) {
     const num_alert = $('#customfield_10300-val').text().trim();
     function generateDescription() {
         const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         let desc = `Observed ${summary.split(']')[1]}\n`;
         desc += alertInfo;
         desc += `\n\nPlease verify if the login is legitimate.\n`;
         alertDescriptions.push(desc);
-        if (raw_alert < num_alert) {
-            let extra_message = `\n\n<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>`;
-            alertDescriptions.push(extra_message);
-        }
         const alertMsg = [...new Set(alertDescriptions)].join('\n'); //Can achieve automatic deduplication
         showDialog(alertMsg);
     }
@@ -3011,6 +3043,10 @@ function DarktraceAlertHandler(...kwargs) {
     const num_alert = $('#customfield_10300-val').text().trim();
     function generateDescription() {
         const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         for (const info of alertInfo) {
             const lastindex = summary.lastIndexOf(']');
             let ss = summary.substr(lastindex + 1).split('::');
@@ -3024,10 +3060,6 @@ function DarktraceAlertHandler(...kwargs) {
                 }
             }
             desc += `\nPlease help to verify if this activity is legitimate.\n`;
-            if (raw_alert < num_alert) {
-                let extra_message = `\n\n<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>`;
-                alertDescriptions.push(extra_message);
-            }
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
@@ -3188,6 +3220,8 @@ function RadwareAlertHandler(...kwargs) {
 
 function CarbonAlertHandler(...kwargs) {
     var { summary, rawLog } = kwargs[0];
+    var raw_alert = 0;
+    const num_alert = $('#customfield_10300-val').text().trim();
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
@@ -3246,6 +3280,7 @@ function CarbonAlertHandler(...kwargs) {
                         netconn_local_port: netconn_local_port ? netconn_local_port : undefined,
                         reason: reason ? reason : undefined
                     };
+                    raw_alert += 1;
                     acc.push({ alertExtraInfo });
                 }
             } catch (error) {
@@ -3258,6 +3293,10 @@ function CarbonAlertHandler(...kwargs) {
     const alertInfo = parseLog(rawLog);
     function generateDescription() {
         const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         for (const info of alertInfo) {
             const lastindex = summary.lastIndexOf(']');
             let desc = `Observed ${summary.substr(lastindex + 1)}\n`;
@@ -3355,12 +3394,13 @@ function MultipleAccountAlertHandler(...kwargs) {
 function MDE365AlertHandler(...kwargs) {
     console.log('#### Code MDE365lertHandler run ####');
     const { rawLog, LogSourceDomain, summary } = kwargs[0];
+    var raw_alert = 0;
+    const num_alert = $('#customfield_10300-val').text().trim();
     let alertInfo_MDE = [],
         alertInfo_365 = [];
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             let logObj = '';
-            console.log(log);
             if (log != '') {
                 try {
                     if (log.charAt(log.length - 1) == '}') {
@@ -3371,6 +3411,7 @@ function MDE365AlertHandler(...kwargs) {
                         logObj = JSON.parse(formatJson.replace(/\\\(n/g, '\\n('));
                     }
                     if (logObj['integration'] == 'Wazuh-MDE') {
+                        raw_alert += 1;
                         const { mde } = logObj;
                         const { title, id, computerDnsName, relatedUser, evidence, alertCreationTime } = mde;
                         let dotIndex = alertCreationTime.lastIndexOf('.');
@@ -3405,6 +3446,7 @@ function MDE365AlertHandler(...kwargs) {
                         }
                         alertInfo_MDE.push({ ...alert, userName, extrainfo });
                     } else {
+                        raw_alert += 1;
                         const alerts = logObj['incidents']['alerts'][0];
                         console.log(alerts);
                         let entities = {};
@@ -3586,6 +3628,10 @@ function MDE365AlertHandler(...kwargs) {
         }
     }
     function generateDescription() {
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         generateDescription_MDE();
         generateDescription_365();
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
