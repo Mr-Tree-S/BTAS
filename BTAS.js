@@ -1512,8 +1512,6 @@ function FortigateAlertHandler(...kwargs) {
     }
 
     const alertInfos = ParseFortigateLog(rawLog);
-    console.log(alertInfos);
-
     function ExtractAlertInfo(alertInfos) {
         const extract_alert_infos = alertInfos.reduce((acc, alertInfo) => {
             const {
@@ -1536,7 +1534,8 @@ function FortigateAlertHandler(...kwargs) {
                 forwardedfor,
                 analyticscksum,
                 from,
-                to
+                to,
+                remip
             } = alertInfo;
             let arr = [];
             if (summary.toLowerCase().includes('infected file detected in fortigate')) {
@@ -1555,7 +1554,11 @@ function FortigateAlertHandler(...kwargs) {
             } else if (summary.toLowerCase().includes('connection to newly registered domain')) {
                 let vt_url = 'https://www.virustotal.com/gui/domain/' + hostname;
                 arr.push(`<a href="${vt_url}">${vt_url}</a>`);
+            } else if (summary.toLowerCase().includes('non-office hour successful vpn login')) {
+                let vt_url = 'https://www.virustotal.com/gui/ip-address/' + remip;
+                arr.push(`<a href="${vt_url}">${vt_url}</a>`);
             }
+
             const extract_alert_info = {
                 datetime: `${date} ${time}`,
                 srcip: srcip ? `${srcip}:${srcport}[${srccountry}]` : undefined,
@@ -1572,6 +1575,7 @@ function FortigateAlertHandler(...kwargs) {
                 analyticscksum: analyticscksum,
                 from: from,
                 to,
+                remip: remip,
                 VT: arr
             };
             acc.push(extract_alert_info);
@@ -2013,6 +2017,13 @@ function paloaltoAlertHandler(...kwargs) {
             try {
                 let logArray = log.split(',');
                 let logType = logArray[3];
+                if (logType == 'GLOBALPROTECT') {
+                    acc.push({
+                        'Createtime': logArray[1],
+                        'src ip': logArray[15],
+                        'user': logArray[12]
+                    });
+                }
                 if (logType == 'TRAFFIC') {
                     acc.push({
                         'Createtime': logArray[1],
