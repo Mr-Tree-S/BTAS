@@ -718,7 +718,7 @@ function ticketNotify(pageData) {
             timeout: 4000, // 超过4秒未获取到文件则使用缓存文件
             onload: function (response) {
                 if (response.status === 200) {
-                    const data = JSON.parse(response.responseText);
+                    const data = JSON.parse(response.responseText)['data'];
 
                     // 本地无缓存，第一次获取文件保存到本地
                     if (cachedContent == null) {
@@ -850,7 +850,7 @@ function ticketNotify(pageData) {
                 }
                 return isAllConditionsMet; // 如果所有属性都不满足条件，则返回 false
             };
-
+            properties = JSON.parse(properties);
             return properties.reduce((acc, property) => {
                 return acc && condition(property);
             }, true);
@@ -3773,14 +3773,16 @@ function MDE365AlertHandler(...kwargs) {
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             // console.log(DecoderName.split(' '))
-            let decoder_name = [];
-            DecoderName.split(' ').forEach((element, index) => {
-                if (element != 'hide\n' && element != '' && element != 'show\n' && element != '\n') {
-                    decoder_name.push(element);
+            if (DecoderName.includes('m365-defender-json')) {
+                let decoder_name = [];
+                DecoderName.split(' ').forEach((element, index) => {
+                    if (element != 'hide\n' && element != '' && element != 'show\n' && element != '\n') {
+                        decoder_name.push(element);
+                    }
+                });
+                if (decoder_name[0].includes('m365-defender-json\n')) {
+                    DecoderName = 'm365-defender-json';
                 }
-            });
-            if (decoder_name[0].includes('m365-defender-json\n')) {
-                DecoderName = 'm365-defender-json';
             }
             const handler = handlers[DecoderName];
             if (handler) {
