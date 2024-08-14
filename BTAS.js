@@ -163,6 +163,9 @@ function addCss() {
             #reply{
                 column-count: 2;
             }
+            .aui-flag{
+                  border: 4px solid rgb(222,184,135) ;
+            }
 	    </style>
 	    `);
     $('head').append(ss);
@@ -3662,7 +3665,7 @@ function MDE365AlertHandler(...kwargs) {
             if (alertid && !MDEURL.includes(alertid)) {
                 MDEURL.push(`https://security.microsoft.com/alerts/${alertid}`);
             }
-            if (!alertid && incidenturi) {
+            if (incidenturi) {
                 MDEURL.push(incidenturi.replace('hXXps[:]', 'https:'));
             }
         }
