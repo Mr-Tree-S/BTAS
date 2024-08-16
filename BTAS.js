@@ -659,7 +659,7 @@ function checkKeywords() {
     function fetchKeywordsList() {
         GM_xmlhttpRequest({
             method: 'GET',
-            url: 'https://aspirepig-1251964320.cos.ap-shanghai.myqcloud.com/keywords.csv',
+            url: 'https://172.18.4.120/static_file/keywords.csv',
             onload: function (response) {
                 if (response.status === 200) {
                     const keywords = parseCSV(response.responseText);
@@ -3661,7 +3661,6 @@ function MDE365AlertHandler(...kwargs) {
         }
         for (const info of alertInfo_365) {
             const { alertid, incidenturi } = info;
-            console.log(info);
             if (alertid && !MDEURL.includes(alertid)) {
                 MDEURL.push(`https://security.microsoft.com/alerts/${alertid}`);
             }
