@@ -656,28 +656,69 @@ function checkKeywords() {
         return data;
     }
 
+    function check(keywords) {
+        const rawLog = $('#customfield_10219-val').text().trim().toLowerCase();
+        const summary = $('#summary-val').text().trim().toLowerCase();
+
+        for (const keyword of keywords) {
+            if (
+                rawLog.includes(keyword['Keyword'].toLowerCase()) ||
+                summary.includes(keyword['Keyword'].toLowerCase())
+            ) {
+                AJS.banner({
+                    body: `\"${keyword['Keyword']}\" was found in the ticket, it is maybe used for "${keyword['Remark']}", please double-check and contact L2 or TL if suspicious.`
+                });
+            }
+        }
+    }
+
     function fetchKeywordsList() {
+        const cachedKeywordsContent = GM_getValue('cachedKeywordsContent', null);
         GM_xmlhttpRequest({
             method: 'GET',
-            url: 'https://aspirepig-1251964320.cos.ap-shanghai.myqcloud.com/keywords.csv',
+            url: 'https://172.18.4.120/static_file/keywords.csv',
+            timeout: 4000, // 超过4秒未获取到文件则使用缓存文件
             onload: function (response) {
                 if (response.status === 200) {
                     const keywords = parseCSV(response.responseText);
-                    const rawLog = $('#customfield_10219-val').text().trim().toLowerCase();
-                    const summary = $('#summary-val').text().trim().toLowerCase();
+                    // 本地无缓存，第一次获取文件保存到本地
+                    if (cachedKeywordsContent == null) {
+                        // 更新本地存储中的文件内容和更新时间
+                        GM_setValue('cachedKeywordsContent', keywords);
+                        check(keywords);
+                    }
 
-                    for (const keyword of keywords) {
-                        if (
-                            rawLog.includes(keyword['Keyword'].toLowerCase()) ||
-                            summary.includes(keyword['Keyword'].toLowerCase())
-                        ) {
-                            AJS.banner({
-                                body: `\"${keyword['Keyword']}\" was found in the ticket, it is maybe used for "${keyword['Remark']}", please double-check and contact L2 or TL if suspicious.`
-                            });
-                        }
+                    // 如果本地存储中有缓存，并且文件内容有变化
+                    if (
+                        cachedKeywordsContent !== null &&
+                        JSON.stringify(cachedKeywordsContent) !== JSON.stringify(keywords)
+                    ) {
+                        console.log('如果本地存储中有缓存，并且文件内容有变化');
+                        // 更新本地存储中的文件内容
+                        GM_setValue('cachedKeywordsContent', keywords);
+                        // 使用最新文件
+                        check(keywords);
+                    }
+
+                    // 本地存在缓存，且内容相同则使用缓存文件
+                    if (
+                        cachedKeywordsContent !== null &&
+                        JSON.stringify(cachedKeywordsContent) == JSON.stringify(keywords)
+                    ) {
+                        console.log('本地存在缓存，且内容相同则使用缓存文件');
+                        check(cachedKeywordsContent);
                     }
                 } else {
                     console.error('Error fetching Keywords List:', response.status);
+                }
+            },
+            ontimeout: function () {
+                console.log('未连接 Darklab VPN 时使用缓存文件');
+                // 未连接 Darklab VPN 时使用缓存文件
+                if (cachedKeywordsContent !== null) {
+                    check(cachedKeywordsContent);
+                } else {
+                    showFlag('Error', 'keywords.csv文件获取失败', '未连接到 Darklab VPN，请连接后刷新页面', 'auto');
                 }
             },
             onerror: function (error) {
@@ -3661,7 +3702,6 @@ function MDE365AlertHandler(...kwargs) {
         }
         for (const info of alertInfo_365) {
             const { alertid, incidenturi } = info;
-            console.log(info);
             if (alertid && !MDEURL.includes(alertid)) {
                 MDEURL.push(`https://security.microsoft.com/alerts/${alertid}`);
             }
@@ -3775,7 +3815,6 @@ function MDE365AlertHandler(...kwargs) {
                 'carbonblack_cloud': CarbonAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
-            // console.log(DecoderName.split(' '))
             if (DecoderName.includes('m365-defender-json')) {
                 let decoder_name = [];
                 DecoderName.split(' ').forEach((element, index) => {
