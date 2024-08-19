@@ -166,9 +166,22 @@ function addCss() {
             .aui-flag{
                   border: 4px solid rgb(222,184,135) ;
             }
+            #aui-flag-container:hover {
+                opacity: 0.1 !important;
+            }
+         
 	    </style>
 	    `);
     $('head').append(ss);
+    document.getElementsByClassName('issue-view')[0].addEventListener('scroll', function () {
+        const targetDiv = document.getElementById('aui-flag-container');
+        const scrollPosition = this.scrollTop;
+        if (scrollPosition == 0) {
+            targetDiv.style.opacity = `1`;
+        } else {
+            targetDiv.style.opacity = `0`;
+        }
+    });
 }
 
 function showFlag(type, title, body, close) {
