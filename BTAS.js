@@ -166,22 +166,35 @@ function addCss() {
             .aui-flag{
                   border: 4px solid rgb(222,184,135) ;
             }
-            #aui-flag-container:hover {
-                opacity: 0.1 !important;
-            }
+            .fix-button{
+                background-color: rgb(222,184,135);
+                color:white;
+				z-index: 100;
+                margin-right: 12px;
+			}
          
 	    </style>
 	    `);
     $('head').append(ss);
-    document.getElementsByClassName('issue-view')[0].addEventListener('scroll', function () {
+
+    function hideAllFlag() {
+        $('.aui-flag').toggle();
+    }
+    const button = $('<div>')
+        .attr('id', 'hide-reminder')
+        .addClass('aui-button toolbar-trigger  fix-button aui-button-primary')
+        .append($('<span>').addClass('trigger-label').text('NOTICE'))
+        .click(hideAllFlag);
+
+    const checkExist = setInterval(function () {
         const targetDiv = document.getElementById('aui-flag-container');
-        const scrollPosition = this.scrollTop;
-        if (scrollPosition == 0) {
-            targetDiv.style.opacity = `1`;
-        } else {
-            targetDiv.style.opacity = `0`;
+        const toolbar = $('.aui-header-secondary');
+
+        if (targetDiv) {
+            toolbar.prepend(button);
+            clearInterval(checkExist); // 停止检查
         }
-    });
+    }, 100); // 每100毫秒检查一次
 }
 
 function showFlag(type, title, body, close) {
@@ -195,7 +208,7 @@ function showFlag(type, title, body, close) {
         close: close
     });
 
-    addButton('hide-reminder', 'Hide Reminder', hideAllFlag);
+    // addButton('hide-reminder', 'Hide Reminder', hideAllFlag);
 
     // 为 flag 的内容区域添加滚动条样式
     const flagBody = $('#aui-flag-container > div > div');
