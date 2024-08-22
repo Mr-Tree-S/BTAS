@@ -1019,7 +1019,8 @@ function cortexAlertHandler(...kwargs) {
         'hkbn': 'https://elite.xdr.sg.paloaltonetworks.com/',
         'cityu': 'https://cityu.xdr.us.paloaltonetworks.com/',
         'hthk': 'https://hthk.xdr.sg.paloaltonetworks.com/',
-        'hendersonland': 'https://hld.xdr.sg.paloaltonetworks.com/'
+        'hendersonland': 'https://hld.xdr.sg.paloaltonetworks.com/',
+        'sunhungkai': 'https://shkr.xdr.sg.paloaltonetworks.com/'
     };
     const orgNavigator = orgDict[LogSourceDomain];
 
@@ -1646,7 +1647,7 @@ function FortigateAlertHandler(...kwargs) {
                 from: from,
                 to,
                 remip: remip,
-                VT: arr
+                VT: arr.length > 0 ? arr : undefined
             };
             acc.push(extract_alert_info);
             return acc;
