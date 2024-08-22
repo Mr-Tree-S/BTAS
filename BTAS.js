@@ -3772,8 +3772,6 @@ function MDE365AlertHandler(...kwargs) {
         }, 100); // 每100毫秒检查一次
     });
 
-    AJS.whenIType('zx').click('#assign-to-me');
-
     // Filter page: audio control registration and regular issues table update
     if (
         (window.location.href.includes('filter=15200') ||
