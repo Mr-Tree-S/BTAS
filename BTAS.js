@@ -198,9 +198,6 @@ function addCss() {
 }
 
 function showFlag(type, title, body, close) {
-    function hideAllFlag() {
-        $('.aui-flag').toggle();
-    }
     AJS.flag({
         type: type,
         title: DOMPurify.sanitize(title),
@@ -3764,6 +3761,18 @@ function MDE365AlertHandler(...kwargs) {
     registerExceptionMenu();
     registerCustomQuickReplyMenu();
     addCss();
+    AJS.whenIType('zv').execute(function () {
+        document.getElementById('opsbar-transitions_more').click();
+        const interval = setInterval(() => {
+            const element = document.querySelector('#action_id_761');
+            if (element) {
+                document.getElementById('action_id_761').click();
+                clearInterval(interval);
+            }
+        }, 100); // 每100毫秒检查一次
+    });
+
+    AJS.whenIType('zx').click('#assign-to-me');
 
     // Filter page: audio control registration and regular issues table update
     if (
