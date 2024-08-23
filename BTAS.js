@@ -3754,8 +3754,24 @@ function MDE365AlertHandler(...kwargs) {
     addButton('openMDE', 'MDE', openMDE);
 }
 
+function formatCurrentDateTime() {
+    const pad = (num) => (num < 10 ? '0' : '') + num;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const date = new Date();
+
+    const day = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear().toString().slice(-2); // 取最后两位
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const hour = hours % 12 || 12; // Convert to 12-hour format and handle 0 case
+
+    return `${pad(day)}/${month}/${year} ${pad(hour)}:${pad(minutes)} ${ampm}`;
+}
+
 (function () {
-    'use strict';
+    ('use strict');
 
     registerSearchMenu();
     registerExceptionMenu();
@@ -3770,6 +3786,38 @@ function MDE365AlertHandler(...kwargs) {
                 clearInterval(interval);
             }
         }, 100); // 每100毫秒检查一次
+    });
+    AJS.whenIType('zx').execute(function () {
+        document.getElementById('edit-issue').click();
+        const interval = setInterval(() => {
+            const tabsMenu = document.querySelector('#horizontal');
+            const elements = tabsMenu.querySelectorAll('*');
+            const elementsArray = Array.from(elements);
+            const reviewElement = elementsArray.find((element) => element.outerText.trim() === 'Review');
+            if (reviewElement) {
+                const menuItem = reviewElement.querySelector('.menu-item a');
+                const idValue = menuItem.id;
+                const element = document.querySelector('#' + idValue);
+                if (element) {
+                    document.getElementById(idValue).click();
+                    $('#customfield_17201').val(formatCurrentDateTime());
+                    const metaElement = document
+                        .querySelector('meta[name="ajs-remote-user-fullname"]')
+                        .getAttribute('content');
+                    $('#customfield_17203-field').val(metaElement);
+                    document.getElementById('customfield_17203-field').click();
+                    clearInterval(interval);
+                }
+            }
+        }, 500); // 每100毫秒检查一次
+        const intervals = setInterval(() => {
+            const element1 = document.querySelector('#showing-1-of-1-matching-users');
+            console.log(element1);
+            if (element1) {
+                document.querySelector('#showing-1-of-1-matching-users li').click();
+                clearInterval(intervals);
+            }
+        }, 500); // 每100毫秒检查一次
     });
 
     // Filter page: audio control registration and regular issues table update
