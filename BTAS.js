@@ -1727,7 +1727,7 @@ function CSAlertHandler(...kwargs) {
                         Command: cef_log_extends.cs5,
                         Sha256: cef_log_extends.fileHash,
                         Msg: cef_log_extends.msg,
-                        CSLink: cef_log_extends.cs6
+                        CSLink: cef_log_extends.cs6 ? cef_log_extends.cs6 : cef_log_extends.cs1
                     });
                 }
                 return acc;
@@ -1762,11 +1762,13 @@ function CSAlertHandler(...kwargs) {
     }
     function openCS() {
         let CSURL = '';
+        let cs_url = [];
         for (const info of alertInfo) {
             const { CSLink } = info;
-            if (CSLink) {
+            if (CSLink && !cs_url.includes(CSLink)) {
                 CSURL += `${CSLink.replace('hXXps', 'https').replace(/[\[\]]/g, '')}<br><br>`;
             }
+            cs_url.push(CSLink);
         }
         showFlag('info', 'CS URL:', `${CSURL}`, 'manual');
     }
