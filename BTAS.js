@@ -511,6 +511,15 @@ function jsonToTree(data) {
     return html;
 }
 
+function ToWhitelist() {
+    const summary = $('#summary-val').text().trim();
+    var LogSourceDomain = $('#customfield_10223-val').text().trim();
+    let whitelist = { summary: summary, LogSourceDomain: LogSourceDomain, MSS: window.location.href };
+    localStorage.setItem('whitelist', JSON.stringify(whitelist));
+    let white = localStorage.getItem('whitelist');
+    window.open('https://caas.pwchk.com/plugins/servlet/desk/portal/2/create/100', '_blank');
+}
+
 /**
  * This function registers two Tampermonkey exception menu command
  * Add Exception: adds the currently selected text to an exception list stored in local storage
@@ -3772,6 +3781,45 @@ function formatCurrentDateTime() {
     return `${pad(day)}/${month}/${year} ${pad(hour)}:${pad(minutes)} ${ampm}`;
 }
 
+function MonitorDev() {
+    let white = JSON.parse(localStorage.getItem('whitelist'));
+
+    if (window.location.href.includes('/portal/2/create/100')) {
+        const interval = setInterval(() => {
+            var iframe = document.getElementById('rw_iframe');
+            var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+            var element = iframeDocument.getElementById('summary');
+            if (element) {
+                console.log('white22', white['summary']);
+                iframeDocument.getElementById('summary').value = white['summary'];
+                iframeDocument.getElementById('s2id_labels').innerHTML =
+                    `<ul class="select2-choices">  <li class="select2-search-choice">    <div>` +
+                    white['LogSourceDomain'] +
+                    `</div>    <a href="#" class="select2-search-choice-close" tabindex="-1"></a></li><li class="select2-search-field">    <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="select2-input" id="s2id_autogen1" style="width: 10px;">  </li></ul>`;
+                iframeDocument.getElementById('labels').value = white['LogSourceDomain'];
+                clearInterval(interval);
+            }
+        }, 600);
+    }
+    if (window.location.href.includes('/servlet/desk/portal/2') && window.location.href.includes('DEV')) {
+        window.location.href = 'https://caas.pwchk.com/browse/' + window.location.href.split('portal/2/')[1];
+        localStorage.setItem('Dev_link', window.location.href.split('portal/2/')[1]);
+    }
+    if (window.location.href.includes(localStorage.getItem('Dev_link'))) {
+        document.getElementById('edit-issue').click();
+        const interval = setInterval(() => {
+            const components = document.querySelector('#components-textarea');
+            if (components) {
+                $('#components-textarea').val('Cortex');
+                $('#components-textarea').click();
+                $('#issuelinks-issues-textarea').val(white['MSS'].split('browse/')[1]);
+                $('#tab-0').click();
+                clearInterval(interval);
+            }
+        }, 500);
+    }
+}
+
 (function () {
     ('use strict');
 
@@ -3779,6 +3827,7 @@ function formatCurrentDateTime() {
     registerExceptionMenu();
     registerCustomQuickReplyMenu();
     addCss();
+    MonitorDev();
     AJS.whenIType('zv').execute(function () {
         document.getElementById('opsbar-transitions_more').click();
         const interval = setInterval(() => {
@@ -3811,7 +3860,7 @@ function formatCurrentDateTime() {
                     clearInterval(interval);
                 }
             }
-        }, 500); // 每100毫秒检查一次
+        }, 500);
         const intervals = setInterval(() => {
             const element1 = document.querySelector('#showing-1-of-1-matching-users');
             console.log(element1);
@@ -3819,7 +3868,7 @@ function formatCurrentDateTime() {
                 document.querySelector('#showing-1-of-1-matching-users li').click();
                 clearInterval(intervals);
             }
-        }, 500); // 每100毫秒检查一次
+        }, 500);
     });
 
     // Filter page: audio control registration and regular issues table update
@@ -3999,7 +4048,8 @@ function formatCurrentDateTime() {
         };
 
         // If it pops up once, it will not be reminded again
-        if ($('#issue-content').length && !$('#generateTicketNotify').length) {
+        if ($('#issue-content').length && !$('#generateTicketNotify').length && window.location.href.includes('MSS')) {
+            addButton('towhitelist', 'WhiteList', ToWhitelist);
             ticketNotify(pageData);
         }
     }, 1000);
