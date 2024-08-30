@@ -3790,8 +3790,8 @@ function MonitorDev() {
             var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
             var element = iframeDocument.getElementById('summary');
             if (element) {
-                console.log('white22', white['summary']);
-                iframeDocument.getElementById('summary').value = white['summary'];
+                let summary = 'Whitelist ' + white['summary'].replace('Wazuh', white['LogSourceDomain']);
+                iframeDocument.getElementById('summary').value = summary;
                 iframeDocument.getElementById('s2id_labels').innerHTML =
                     `<ul class="select2-choices">  <li class="select2-search-choice">    <div>` +
                     white['LogSourceDomain'] +
@@ -3814,6 +3814,7 @@ function MonitorDev() {
                 $('#components-textarea').click();
                 $('#issuelinks-issues-textarea').val(white['MSS'].split('browse/')[1]);
                 $('#tab-0').click();
+                localStorage.removeItem('Dev_link');
                 clearInterval(interval);
             }
         }, 500);
