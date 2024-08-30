@@ -3819,58 +3819,7 @@ function MonitorDev() {
         }, 500);
     }
 }
-
-(function () {
-    ('use strict');
-
-    registerSearchMenu();
-    registerExceptionMenu();
-    registerCustomQuickReplyMenu();
-    addCss();
-    MonitorDev();
-    AJS.whenIType('zv').execute(function () {
-        document.getElementById('opsbar-transitions_more').click();
-        const interval = setInterval(() => {
-            const element = document.querySelector('#action_id_761');
-            if (element) {
-                document.getElementById('action_id_761').click();
-                clearInterval(interval);
-            }
-        }, 100); // 每100毫秒检查一次
-    });
-    AJS.whenIType('zx').execute(function () {
-        document.getElementById('edit-issue').click();
-        const interval = setInterval(() => {
-            const tabsMenu = document.querySelector('#horizontal');
-            const elements = tabsMenu.querySelectorAll('*');
-            const elementsArray = Array.from(elements);
-            const reviewElement = elementsArray.find((element) => element.outerText.trim() === 'Review');
-            if (reviewElement) {
-                const menuItem = reviewElement.querySelector('.menu-item a');
-                const idValue = menuItem.id;
-                const element = document.querySelector('#' + idValue);
-                if (element) {
-                    document.getElementById(idValue).click();
-                    $('#customfield_17201').val(formatCurrentDateTime());
-                    const metaElement = document
-                        .querySelector('meta[name="ajs-remote-user-fullname"]')
-                        .getAttribute('content');
-                    $('#customfield_17203-field').val(metaElement);
-                    document.getElementById('customfield_17203-field').click();
-                    clearInterval(interval);
-                }
-            }
-        }, 500);
-        const intervals = setInterval(() => {
-            const element1 = document.querySelector('#showing-1-of-1-matching-users');
-            console.log(element1);
-            if (element1) {
-                document.querySelector('#showing-1-of-1-matching-users li').click();
-                clearInterval(intervals);
-            }
-        }, 500);
-    });
-
+function RealTimeMonitoring() {
     // Filter page: audio control registration and regular issues table update
     if (
         (window.location.href.includes('filter=15200') ||
@@ -3995,7 +3944,6 @@ function MonitorDev() {
             }
         }
     }, 1000);
-
     // Issue page: check Keywords and ATT&CK and Org
     setTimeout(() => {
         if ($('#issue-content').length && !$('.aui-banner-error').length) {
@@ -4060,4 +4008,58 @@ function MonitorDev() {
             QuickReply();
         }
     }, 3000);
+}
+
+(function () {
+    ('use strict');
+
+    registerSearchMenu();
+    registerExceptionMenu();
+    registerCustomQuickReplyMenu();
+    addCss();
+    MonitorDev();
+    AJS.whenIType('zv').execute(function () {
+        document.getElementById('opsbar-transitions_more').click();
+        const interval = setInterval(() => {
+            const element = document.querySelector('#action_id_761');
+            if (element) {
+                document.getElementById('action_id_761').click();
+                clearInterval(interval);
+            }
+        }, 100); // 每100毫秒检查一次
+    });
+    AJS.whenIType('zx').execute(function () {
+        document.getElementById('edit-issue').click();
+        const interval = setInterval(() => {
+            const tabsMenu = document.querySelector('#horizontal');
+            const elements = tabsMenu.querySelectorAll('*');
+            const elementsArray = Array.from(elements);
+            const reviewElement = elementsArray.find((element) => element.outerText.trim() === 'Review');
+            if (reviewElement) {
+                const menuItem = reviewElement.querySelector('.menu-item a');
+                const idValue = menuItem.id;
+                const element = document.querySelector('#' + idValue);
+                if (element) {
+                    document.getElementById(idValue).click();
+                    $('#customfield_17201').val(formatCurrentDateTime());
+                    const metaElement = document
+                        .querySelector('meta[name="ajs-remote-user-fullname"]')
+                        .getAttribute('content');
+                    $('#customfield_17203-field').val(metaElement);
+                    document.getElementById('customfield_17203-field').click();
+                    clearInterval(interval);
+                }
+            }
+        }, 500);
+        const intervals = setInterval(() => {
+            const element1 = document.querySelector('#showing-1-of-1-matching-users');
+            console.log(element1);
+            if (element1) {
+                document.querySelector('#showing-1-of-1-matching-users li').click();
+                clearInterval(intervals);
+            }
+        }, 500);
+    });
+
+    RealTimeMonitoring();
 })();
