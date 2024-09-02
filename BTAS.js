@@ -1959,6 +1959,25 @@ function AwsAlertHandler(...kwargs) {
                                     .countryName
                         });
                     }
+                } else if (summary.toLowerCase().includes('multiple sms request for same source ip')) {
+                    let headers = aws.logEvents.message.httpRequest.headers;
+                    let host, content;
+                    headers.forEach((item) => {
+                        if (item.name === 'host') {
+                            host = item.value;
+                        }
+                        if (item.name == 'content-type') {
+                            content = item.value;
+                        }
+                    });
+                    acc.push({
+                        log_file: aws.log_info.log_file,
+                        clientIp: aws.logEvents.message.httpRequest.clientIp,
+                        httpMethod: aws.logEvents.message.httpRequest.httpMethod,
+                        uri: aws.logEvents.message.httpRequest.uri,
+                        host: host,
+                        content_type: content
+                    });
                 } else {
                     acc.push({
                         EventTime: aws?.eventTime,
@@ -3920,7 +3939,8 @@ function RealTimeMonitoring() {
                 'agent disconnected': Agent_Disconnect_AlertHandler,
                 'suspicious geolocation ip login success': PulseAlertHandler,
                 'login success from malware ip(s)': ThreatMatrixAlertHandler,
-                'multiple account being disabled or deleted in short period of time': MultipleAccountAlertHandler
+                'multiple account being disabled or deleted in short period of time': MultipleAccountAlertHandler,
+                'multiple sms request for same source ip': AwsAlertHandler
             };
             const Summary = $('#summary-val').text().trim();
             let No_Decoder_handler = null;
