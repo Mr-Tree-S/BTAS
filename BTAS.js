@@ -994,6 +994,15 @@ function monitorList() {
             audio.play();
         }
     });
+    var time_to_first_response = document.querySelectorAll('.sla-tag.sla-tag-ongoing');
+    time_to_first_response.forEach(function (element) {
+        console.log(element.outerText.replace('min', ''), element.outerText.replace('min', '') < 20);
+        if (element.outerText.includes('min') && element.outerText.replace('min', '') < 50) {
+            var audio = document.getElementById('myAudio');
+            audio.play();
+            console.log('出现特殊情况');
+        }
+    });
 }
 
 /**
