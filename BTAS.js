@@ -997,7 +997,7 @@ function monitorList() {
     var time_to_first_response = document.querySelectorAll('.sla-tag.sla-tag-ongoing');
     time_to_first_response.forEach(function (element) {
         console.log(element.outerText.replace('min', ''), element.outerText.replace('min', '') < 20);
-        if (element.outerText.includes('min') && element.outerText.replace('min', '') < 50) {
+        if (element.outerText.includes('min') && element.outerText.replace('min', '') < 20) {
             var audio = document.getElementById('myAudio');
             audio.play();
             console.log('出现特殊情况');
@@ -3538,8 +3538,10 @@ function MDE365AlertHandler(...kwargs) {
                         const alert = { title, id, computerDnsName, dateTimeStr };
                         const userName = relatedUser ? relatedUser.userName : 'N/A';
                         let extrainfo = '';
+                        let processCommandLine = '';
                         if (evidence) {
                             const tmp = [];
+
                             for (const evidenceItem of evidence) {
                                 let description = '';
                                 if (evidenceItem.entityType === 'File') {
@@ -3547,7 +3549,14 @@ function MDE365AlertHandler(...kwargs) {
                                     tmp.push(description);
                                 }
                                 if (evidenceItem.entityType === 'Process') {
-                                    description = `cmd: ${evidenceItem.processCommandLine}\naccount: ${evidenceItem.accountName}\nsha1: ${evidenceItem.sha1}`;
+                                    if (evidenceItem.processCommandLine !== undefined) {
+                                        processCommandLine = evidenceItem.processCommandLine.replace(
+                                            /\r\n\r\n+/g,
+                                            '\n'
+                                        );
+                                        console.log(processCommandLine);
+                                    }
+                                    description = `cmd: ${processCommandLine}\naccount: ${evidenceItem.accountName}\nsha1: ${evidenceItem.sha1}`;
                                     tmp.push(description);
                                 }
                                 if (evidenceItem.entityType === 'Url') {
@@ -3573,6 +3582,10 @@ function MDE365AlertHandler(...kwargs) {
                                 // if (entity['entityType'] == 'Mailbox') {
                                 //     entities['userPrincipalName'] = entity['userPrincipalName'];
                                 // }
+                                if (entity.processCommandLine !== undefined) {
+                                    processCommandLine = entity.processCommandLine.replace(/\r\n\r\n+/g, '\n');
+                                    console.log(processCommandLine);
+                                }
                                 if (entity['entityType'] == 'User' || entity['entityType'] == 'Mailbox') {
                                     entities['user'] = `${entity['domainName']}\\\\${entity['accountName']}`;
                                     entities['userPrincipalName'] = entity['userPrincipalName'];
@@ -3585,7 +3598,7 @@ function MDE365AlertHandler(...kwargs) {
                                     entities['process'].push({
                                         filename: entity['fileName'],
                                         filePath: entity['filePath'],
-                                        cmd: entity['processCommandLine'],
+                                        cmd: processCommandLine,
                                         sha256: entity['sha256']
                                     });
                                 }
