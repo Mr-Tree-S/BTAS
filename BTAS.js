@@ -3806,6 +3806,101 @@ function MDE365AlertHandler(...kwargs) {
     addButton('openMDE', 'MDE', openMDE);
 }
 
+function WindowsSysAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                if (log != '') {
+                    console.log(log.split('#010'));
+                    let log_data = {},
+                        sub = '';
+                    log.split('#010').forEach((element, index) => {
+                        if (element.includes('=')) {
+                            let e = element.replace(/#013/g, '').split('=');
+                            log_data[e[0]] = e[1];
+                        }
+                        if (element.includes(':#013')) {
+                            sub = element.split(':')[0];
+                        }
+                        if (
+                            element.includes(':#009') &&
+                            (element.includes('Account') ||
+                                element.includes('Security ID') ||
+                                element.includes('Logon ID'))
+                        ) {
+                            let e = element.replace(/#009/g, ' ').replace(/#013/g, '').split(': ');
+                            log_data[sub + e[0].trim()] = e[1];
+                        }
+                        if (element.includes(':#009')) {
+                            let e = element.replace(/#009/g, ' ').replace(/#013/g, '').split(': ');
+                            log_data[e[0].trim()] = e[1];
+                        }
+                    });
+                    const regex = /(\S+\s+\S+\s+\S+\s+\S+\s+)(.*)/g;
+                    alertExtraInfo = {
+                        Event_time: regex.exec(log.split('#010')[0])[2],
+                        ComputerName: log_data.ComputerName ? log_data.ComputerName : undefined,
+                        EventCode: log_data.EventCode ? log_data.EventCode : undefined,
+                        SourceName: log_data.SourceName ? log_data.SourceName : undefined,
+                        CreatorAccountDomain: log_data['Creator SubjectAccount Domain']
+                            ? log_data['Creator SubjectAccount Domain']
+                            : undefined,
+                        CreatorAccountName: log_data['Creator SubjectAccount Name']
+                            ? log_data['Creator SubjectAccount Name']
+                            : undefined,
+                        Type: log_data.Type ? log_data.Type : undefined,
+                        Keywords: log_data.Keywords ? log_data.Keywords : undefined,
+                        Message: log_data.Message ? log_data.Message : undefined,
+                        CreatorProcessID: log_data['Creator Process ID'] ? log_data['Creator Process ID'] : undefined,
+                        CreatorProcessName: log_data['Creator Process Name']
+                            ? log_data['Creator Process Name']
+                            : undefined,
+                        NewProcessID: log_data['New Process ID'] ? log_data['New Process ID'] : undefined,
+                        NewProcessName: log_data['New Process Name'] ? log_data['New Process Name'] : undefined,
+                        ProcessCommandLine: log_data['Process Command Line']
+                            ? log_data['Process Command Line']
+                            : undefined,
+                        ProcessCommandLine: log_data['Process Command Line']
+                            ? log_data['Process Command Line']
+                            : undefined
+                    };
+                    acc.push({ alertExtraInfo });
+                }
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            const lastindex = summary.lastIndexOf(']');
+            let desc = `Observed ${summary.substr(lastindex + 1)}\n`;
+            for (const key in info.alertExtraInfo) {
+                if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
+                    const value = info.alertExtraInfo[key];
+                    if (value !== undefined) {
+                        if (key == 'start_time' || key == 'end_time') {
+                            desc += `${key}(<span class="red_highlight">GMT</span>): ${value.split('.')[0] + 'Z'}\n`;
+                        } else {
+                            desc += `${key}: ${value}\n`;
+                        }
+                    }
+                }
+            }
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 function formatCurrentDateTime() {
     const pad = (num) => (num < 10 ? '0' : '') + num;
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -3936,7 +4031,8 @@ function RealTimeMonitoring() {
                 'sangfor_cef': SangforAlertHandler,
                 'cyberark_cef': SangforAlertHandler,
                 'radware-json': RadwareAlertHandler,
-                'carbonblack_cloud': CarbonAlertHandler
+                'carbonblack_cloud': CarbonAlertHandler,
+                'windows-syslog': WindowsSysAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             if (DecoderName.includes('m365-defender-json')) {
