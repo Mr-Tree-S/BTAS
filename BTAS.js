@@ -1030,7 +1030,7 @@ function cortexAlertHandler(...kwargs) {
         'nws': 'https://nws.xdr.sg.paloaltonetworks.com/',
         'toppanmerrill': 'https://tpm-apac.xdr.us.paloaltonetworks.com/',
         'welab': 'https://welabbank.xdr.sg.paloaltonetworks.com/',
-        'goldpeak': 'https://gpbi-poc.xdr.sg.paloaltonetworks.com/',
+        'goldpeak': 'https://gpb.xdr.sg.paloaltonetworks.com/',
         'hkbn': 'https://elite.xdr.sg.paloaltonetworks.com/',
         'cityu': 'https://cityu.xdr.us.paloaltonetworks.com/',
         'hthk': 'https://hthk.xdr.sg.paloaltonetworks.com/',
