@@ -3189,7 +3189,6 @@ function DarktraceAlertHandler(...kwargs) {
 
 function SangforAlertHandler(...kwargs) {
     var { summary, rawLog } = kwargs[0];
-
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
@@ -3202,8 +3201,10 @@ function SangforAlertHandler(...kwargs) {
                 while ((match = regex.exec(log)) !== null) {
                     let item = match[0].split('=');
                     matches[item[0]] = item.slice(1, item.length).join('=');
-                    console.log(item);
                 }
+                console.log(matches);
+                var pattern = /event_evidence.*?(?=suffer_classify1_id_name)/g;
+                console.log(log.match(pattern));
                 let logArray = log.split(' ').filter((item) => item !== ''); //Remove extra whitespace from the string
                 const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
                 if (DecoderName == 'cyberark_cef') {
@@ -3219,6 +3220,19 @@ function SangforAlertHandler(...kwargs) {
                     };
                     data_json[matches.cs3Label] = matches.cs3 ? matches.cs3 : undefined;
                     acc.push(data_json);
+                } else if (window.location.href.includes('pwcmacaumss')) {
+                    acc.push({
+                        'Event time': logArray.slice(0, 3).join(' '),
+                        'event_desc': matches.event_desc ? matches.event_desc : undefined,
+                        'dev_name': matches.dev_name ? matches.dev_name : undefined,
+                        'attack_ip': matches.attack_ip ? matches.attack_ip : undefined,
+                        'suffer_ip': matches.suffer_ip ? matches.suffer_ip : undefined,
+                        'suffer_port': matches.suffer_port ? matches.suffer_port : undefined,
+                        'status_code': matches.status_code ? matches.status_code : undefined,
+                        'x_forwarded_for': matches.x_forwarded_for ? matches.x_forwarded_for : undefined,
+                        'event_evidence': log.match(pattern) ? log.match(pattern)[0] : undefined,
+                        'attack_type_name': matches.attack_type_name ? matches.attack_type_name : undefined
+                    });
                 } else {
                     acc.push({
                         'Event time': logArray.slice(0, 3).join(' '),
@@ -3253,7 +3267,11 @@ function SangforAlertHandler(...kwargs) {
                 if (Object.hasOwnProperty.call(info, key)) {
                     const value = info[key];
                     if (value !== undefined) {
-                        desc += `${key}: ${value}\n`;
+                        if (key == 'event_evidence') {
+                            desc += `${key}: ${value.replace(/</g, '&lt;').replace(/>/g, '&gt;')}\n`;
+                        } else {
+                            desc += `${key}: ${value}\n`;
+                        }
                     }
                 }
             }
@@ -3998,7 +4016,10 @@ function RealTimeMonitoring() {
     // Issue page: Alert Handler
     setInterval(() => {
         var LogSourceDomain = $('#customfield_10223-val').text().trim();
-        const rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
+        let rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
+        if (rawLog == '') {
+            rawLog = $('#field-customfield_10904 > div:first-child > div:nth-child(2)').text().trim().split('\n');
+        }
         const summary = $('#summary-val').text().trim();
         if ($('#issue-content').length && !$('#generateDescription').length) {
             console.log('#### Code Issue page: Alert Handler ####');
@@ -4035,6 +4056,9 @@ function RealTimeMonitoring() {
                 'windows-syslog': WindowsSysAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
+            if (DecoderName == '') {
+                DecoderName = $('#customfield_10906-val').text().trim().toLowerCase();
+            }
             if (DecoderName.includes('m365-defender-json')) {
                 let decoder_name = [];
                 DecoderName.split(' ').forEach((element, index) => {
