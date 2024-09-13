@@ -514,9 +514,21 @@ function jsonToTree(data) {
 function ToWhitelist() {
     const summary = $('#summary-val').text().trim();
     var LogSourceDomain = $('#customfield_10223-val').text().trim();
-    let whitelist = { summary: summary, LogSourceDomain: LogSourceDomain, MSS: window.location.href };
+    let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
+    let Component = 'Wazuh';
+    if (DecoderName.includes('mde') || DecoderName.includes('m365')) {
+        Component = 'MDE';
+    }
+    if (DecoderName.includes('cortex')) {
+        Component = 'Cortex';
+    }
+    let whitelist = {
+        summary: summary,
+        LogSourceDomain: LogSourceDomain,
+        Component: Component,
+        MSS: window.location.href
+    };
     localStorage.setItem('whitelist', JSON.stringify(whitelist));
-    let white = localStorage.getItem('whitelist');
     window.open('https://caas.pwchk.com/plugins/servlet/desk/portal/2/create/100', '_blank');
 }
 
@@ -3964,7 +3976,7 @@ function MonitorDev() {
         const interval = setInterval(() => {
             const components = document.querySelector('#components-textarea');
             if (components) {
-                $('#components-textarea').val('Cortex');
+                $('#components-textarea').val(white['Component']);
                 $('#components-textarea').click();
                 $('#issuelinks-issues-textarea').val(white['MSS'].split('browse/')[1]);
                 $('#tab-0').click();
