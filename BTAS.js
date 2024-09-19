@@ -903,6 +903,8 @@ function ticketNotify(pageData) {
                             case 'contain':
                                 if (pageData[property.propertiesKey].toLowerCase().includes(val.trim().toLowerCase())) {
                                     isAllConditionsMet = true;
+                                } else {
+                                    isAllConditionsMet = false;
                                 }
                                 break;
                             case 'not contain':
@@ -915,6 +917,8 @@ function ticketNotify(pageData) {
                             case 'equal':
                                 if (pageData[property.propertiesKey].toLowerCase() == val.trim().toLowerCase()) {
                                     isAllConditionsMet = true;
+                                } else {
+                                    isAllConditionsMet = false;
                                 }
                                 break;
                             case 'not equal':
