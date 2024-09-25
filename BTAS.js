@@ -2477,9 +2477,8 @@ function ProofpointAlertHandler(...kwargs) {
                     // Intercepts a substring from the beginning of the brace to the end of the string
                     json_text = log.toString().substr(BraceIndex, lastBraceIndex);
                     try {
-                        const json_alert = JSON.parse(json_text);
+                        let json_alert = JSON.parse(json_text);
                         if (json_alert.hasOwnProperty('messagesDelivered')) {
-                            console.log('存在messagesDelivered');
                             for (const message of json_alert['messagesDelivered']) {
                                 const { subject, sender, senderIP, recipient } = message;
                                 const alertExtraInfo = {
@@ -2490,15 +2489,46 @@ function ProofpointAlertHandler(...kwargs) {
                                 };
                                 acc.push({ alertExtraInfo });
                             }
+                        } else if (json_alert['sourcetype'].includes('clicksPermitted')) {
+                            json_alert['clickTime'] = json_alert['clickTime'].split('.')[0];
+                            json_alert['threatTime'] = json_alert['threatTime'].split('.')[0];
+                            acc.push({ alertExtraInfo: json_alert });
+                            console.log('hellO');
                         } else {
-                            const { subject, sender, senderIP, recipient } = json_alert;
-                            console.log(subject, recipient);
-                            const alertExtraInfo = {
+                            const {
+                                subject,
+                                sender,
+                                senderIP,
+                                recipient,
+                                headerFrom,
+                                messageTime,
+                                threatsInfoMap,
+                                sourcetype,
+                                spamScore,
+                                phishScore,
+                                cluster,
+                                completelyRewritten,
+                                id,
+                                QID,
+                                GUID
+                            } = json_alert;
+                            let alertExtraInfo = {
+                                sourcetype: sourcetype ? sourcetype : undefined,
+                                messageTime: messageTime ? messageTime : undefined,
                                 subject: subject ? subject : undefined,
+                                senderIP: senderIP ? senderIP : undefined,
                                 sender: sender ? sender : undefined,
                                 recipient: recipient ? recipient : undefined,
-                                senderIP: senderIP ? senderIP : undefined
+                                headerFrom: headerFrom ? headerFrom : undefined,
+                                spamScore: spamScore ? spamScore : undefined,
+                                phishScore: phishScore ? phishScore : undefined,
+                                cluster: cluster ? cluster : undefined,
+                                completelyRewritten: completelyRewritten ? completelyRewritten : undefined,
+                                id: id ? id : undefined,
+                                QID: QID ? QID : undefined,
+                                GUID: GUID ? GUID : undefined
                             };
+                            alertExtraInfo = Object.assign({}, alertExtraInfo, threatsInfoMap[0]);
                             acc.push({ alertExtraInfo });
                         }
                     } catch (error) {
@@ -2544,7 +2574,11 @@ function ProofpointAlertHandler(...kwargs) {
                 if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
                     const value = info.alertExtraInfo[key];
                     if (value !== undefined) {
-                        desc += `${key}: ${value}\n`;
+                        if (key == 'messageTime' || key == 'clickTime' || key == 'threatTime') {
+                            desc += `${key}(<span class="red_highlight">GMT</span>): ${value.split('.')[0]}\n`;
+                        } else {
+                            desc += `${key}: ${value}\n`;
+                        }
                     }
                 }
             }
