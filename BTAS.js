@@ -3969,6 +3969,66 @@ function WindowsSysAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function ClarotyAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    var raw_alert = 0;
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                if (log.length == 0) {
+                    return acc;
+                }
+                const regex = /(\b\w+=)([^=\s].*?)(?=\s+\w+=|$)/g;
+                let match;
+                const matches = {};
+                while ((match = regex.exec(log)) !== null) {
+                    let item = match[0].split('=');
+                    matches[item[0]] = item.slice(1, item.length).join('=');
+                }
+                console.log(matches);
+                let logArray = log.split(' ').filter((item) => item !== ''); //Remove extra whitespace from the string
+                acc.push({
+                    'Event time': logArray.slice(0, 3).join(' '),
+                    'Extra information': logArray.slice(3, 8).join(' '),
+                    'CtdSourceIp': matches.CtdSourceIp ? matches.CtdSourceIp : undefined,
+                    'CtdDestinationIp': matches.CtdDestinationIp ? matches.CtdDestinationIp : undefined,
+                    'CtdMessage': matches.CtdMessage ? matches.CtdMessage : undefined,
+                    'CtdCategory': matches.CtdCategory ? matches.CtdCategory : undefined,
+                    'CtdSourceZone': matches.CtdSourceZone ? matches.CtdSourceZone : undefined,
+                    'CtdDestinationZone': matches.CtdDestinationZone ? matches.CtdDestinationZone : undefined,
+                    'CtdAlertLink': matches.CtdAlertLink ? matches.CtdAlertLink : undefined
+                });
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    console.log(alertInfo);
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            const lastindex = summary.lastIndexOf(']');
+            let desc = `Observed ${summary.substr(lastindex + 1)}\n`;
+            for (const key in info) {
+                if (Object.hasOwnProperty.call(info, key)) {
+                    const value = info[key];
+                    if (value !== undefined) {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 function formatCurrentDateTime() {
     const pad = (num) => (num < 10 ? '0' : '') + num;
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -4103,7 +4163,8 @@ function RealTimeMonitoring() {
                 'cyberark_cef': SangforAlertHandler,
                 'radware-json': RadwareAlertHandler,
                 'carbonblack_cloud': CarbonAlertHandler,
-                'windows-syslog': WindowsSysAlertHandler
+                'windows-syslog': WindowsSysAlertHandler,
+                'claroty_cef': ClarotyAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             if (DecoderName == '') {
