@@ -4046,6 +4046,22 @@ function formatCurrentDateTime() {
 }
 
 function MonitorDev() {
+    function formatDate() {
+        const date = new Date();
+        const day = String(date.getDate()).padStart(2, '0'); // 日期补齐两位数
+        const month = date.toLocaleString('en-US', { month: 'short' }); // 获取月份缩写
+        const year = String(date.getFullYear()).slice(-2); // 取年份的后两位
+
+        let hours = date.getHours();
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+
+        hours = hours % 12; // 将24小时制转换为12小时制
+        hours = hours ? hours : 12; // 如果是0点，将其转换为12
+        hours = String(hours).padStart(2, '0'); // 补齐小时为两位数
+
+        return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+    }
     let white = JSON.parse(localStorage.getItem('whitelist'));
 
     if (window.location.href.includes('/portal/2/create/100')) {
@@ -4061,6 +4077,11 @@ function MonitorDev() {
                     white['LogSourceDomain'] +
                     `</div>    <a href="#" class="select2-search-choice-close" tabindex="-1"></a></li><li class="select2-search-field">    <input type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" class="select2-input" id="s2id_autogen1" style="width: 10px;">  </li></ul>`;
                 iframeDocument.getElementById('labels').value = white['LogSourceDomain'];
+                iframeDocument.getElementById('customfield_14601').value = formatDate();
+                iframeDocument.getElementById('customfield_14600').value = formatDate();
+                iframeDocument.getElementById('customfield_14610').value = 'Yes';
+                iframeDocument.getElementById('customfield_14609').value = 'Yes';
+                iframeDocument.getElementById('customfield_14608').value = 'Yes';
                 clearInterval(interval);
             }
         }, 600);
