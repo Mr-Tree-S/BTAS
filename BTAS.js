@@ -3837,23 +3837,23 @@ function MDE365AlertHandler(...kwargs) {
         showDialog(alertMsg);
     }
     function openMDE() {
-        let MDEURL = [];
+        let MDEURL = '';
         for (const info of alertInfo_MDE) {
             const { id } = info;
             if (id) {
-                MDEURL.push(`https://security.microsoft.com/alerts/${id}`);
+                MDEURL += `https://security.microsoft.com/alerts/${id}<br>`;
             }
         }
         for (const info of alertInfo_365) {
             const { alertid, incidenturi } = info;
             if (alertid && !MDEURL.includes(alertid)) {
-                MDEURL.push(`https://security.microsoft.com/alerts/${alertid}`);
+                MDEURL += `https://security.microsoft.com/alerts/${alertid}<br>`;
             }
             if (incidenturi) {
-                MDEURL.push(incidenturi.replace('hXXps[:]', 'https:'));
+                let incident_url = incidenturi.replace('hXXps[:]', 'https:') + '<br>';
+                MDEURL += incident_url;
             }
         }
-        MDEURL = [...new Set(MDEURL)];
         showFlag('info', 'MDE URL:', `${MDEURL}`, 'manual');
         let url = 'https://security.microsoft.com/homepage?&current=';
         url += LogSourceDomain;
