@@ -887,44 +887,40 @@ function ticketNotify(pageData) {
                 let isAllConditionsMet = false;
                 for (const val of propertyArray) {
                     try {
-                        let isTrue = pageData[property.propertiesKey]
-                            .toLowerCase()
-                            .includes(val.trim().toLowerCase().replace('!', ''));
-                        if (val.trim().toLowerCase().includes('!')) {
-                            isTrue = !isTrue;
-                        }
-                        if (isTrue) {
-                            if (property.propertiesKey == 'RawLog') {
-                                searchStrings.push(val.trim());
+                        if (!property.conditionOptions) {
+                            let isTrue = pageData[property.propertiesKey]
+                                .toLowerCase()
+                                .includes(val.trim().toLowerCase().replace('!', ''));
+                            if (val.trim().toLowerCase().includes('!')) {
+                                isTrue = !isTrue;
                             }
-                            isAllConditionsMet = true; // 如果任何一个属性满足条件，返回 true
+                            if (isTrue) {
+                                if (property.propertiesKey == 'RawLog') {
+                                    searchStrings.push(val.trim());
+                                }
+                                isAllConditionsMet = true; // 如果任何一个属性满足条件，返回 true
+                            }
                         }
                         switch (property.conditionOptions) {
                             case 'contain':
                                 if (pageData[property.propertiesKey].toLowerCase().includes(val.trim().toLowerCase())) {
                                     isAllConditionsMet = true;
-                                } else {
-                                    isAllConditionsMet = false;
                                 }
                                 break;
                             case 'not contain':
-                                if (pageData[property.propertiesKey].toLowerCase().includes(val.trim().toLowerCase())) {
-                                    isAllConditionsMet = false;
-                                } else {
+                                if (
+                                    !pageData[property.propertiesKey].toLowerCase().includes(val.trim().toLowerCase())
+                                ) {
                                     isAllConditionsMet = true;
                                 }
                                 break;
                             case 'equal':
-                                if (pageData[property.propertiesKey].toLowerCase() == val.trim().toLowerCase()) {
+                                if (pageData[property.propertiesKey].toLowerCase() === val.trim().toLowerCase()) {
                                     isAllConditionsMet = true;
-                                } else {
-                                    isAllConditionsMet = false;
                                 }
                                 break;
                             case 'not equal':
-                                if (pageData[property.propertiesKey].toLowerCase() == val.trim().toLowerCase()) {
-                                    isAllConditionsMet = false;
-                                } else {
+                                if (pageData[property.propertiesKey].toLowerCase() !== val.trim().toLowerCase()) {
                                     isAllConditionsMet = true;
                                 }
                                 break;
