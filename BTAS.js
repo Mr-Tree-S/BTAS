@@ -703,10 +703,12 @@ function checkKeywords() {
     function check(keywords) {
         const rawLog = $('#customfield_10219-val').text().trim().toLowerCase();
         const summary = $('#summary-val').text().trim().toLowerCase();
+        let Raw_Crotex_alert = $('.code-java').text().trim().toLowerCase();
 
         for (const keyword of keywords) {
             if (
                 rawLog.includes(keyword['Keyword'].toLowerCase()) ||
+                Raw_Crotex_alert.includes(keyword['Keyword'].toLowerCase()) ||
                 summary.includes(keyword['Keyword'].toLowerCase())
             ) {
                 AJS.banner({
