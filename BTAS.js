@@ -4253,6 +4253,7 @@ function RealTimeMonitoring() {
         if (window.location.host === 'caas.pwchk.com') {
             // for HK
             LogSourceDomain = $('#customfield_10223-val').text().trim();
+            Source = $('#customfield_10113-val').text().trim();
             Labels = $('.labels-wrap .labels li a span').text();
             LogSource = $('#customfield_10204-val').text().trim();
             DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
@@ -4278,6 +4279,7 @@ function RealTimeMonitoring() {
 
         const pageData = {
             LogSourceDomain,
+            Source,
             Labels,
             LogSource,
             DecoderName,
