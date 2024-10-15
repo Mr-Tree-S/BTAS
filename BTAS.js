@@ -1098,6 +1098,7 @@ function cortexAlertHandler(...kwargs) {
                     action_process_image_name,
                     action_process_image_sha256,
                     action_process_image_command_line,
+                    action_external_hostname,
                     actor_process_image_name,
                     actor_process_image_path,
                     actor_process_image_sha256,
@@ -1209,7 +1210,8 @@ function cortexAlertHandler(...kwargs) {
                     sha256,
                     action_pretty,
                     action_local_ip,
-                    action_file_macro_sha256
+                    action_file_macro_sha256,
+                    action_external_hostname
                 });
             }
         } catch (error) {
@@ -1247,7 +1249,8 @@ function cortexAlertHandler(...kwargs) {
                 description,
                 action_file_macro_sha256,
                 alert_link,
-                rule_description
+                rule_description,
+                action_external_hostname
             } = info;
             if (description && description.includes('xdr_data')) {
                 console.log(rule_description);
@@ -1263,7 +1266,7 @@ function cortexAlertHandler(...kwargs) {
                     description || name
                 }\ntimestamp: ${dateTimeStr} \nHost: ${host_name}   IP: ${host_ip}\n${
                     action_local_ip ? 'action_local_ip: ' + action_local_ip + '\n' : ''
-                }username: ${user_name}\ncmd: ${cmd}\nfilename: ${filename}\nfilepath: ${filepath}\naction: ${action_pretty}\n${
+                }username: ${user_name}\ncmd: ${cmd}\nfilename: ${filename}\nfilepath: ${filepath}\n<span class="red_highlight">action_external_hostname: ${action_external_hostname}\n</span>action: ${action_pretty}\n${
                     action_file_macro_sha256 ? 'macro file hash: ' + action_file_macro_sha256 + '\n' : ''
                 }<a href="https://www.virustotal.com/gui/file/${
                     action_file_macro_sha256 || sha256
