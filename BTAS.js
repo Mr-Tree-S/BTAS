@@ -2744,37 +2744,60 @@ function Risky_Countries_AlertHandler(...kwargs) {
                     acc.push({ alertExtraInfo });
                 }
                 if (json_alert.hasOwnProperty('office_365')) {
-                    const {
-                        CreationTime,
-                        Operation,
-                        Workload,
-                        ClientIP,
-                        UserId,
-                        ResultStatusDetail,
-                        UserAgent,
-                        ActorIpAddress,
-                        DeviceProperties,
-                        UserKey
-                    } = json_alert['office_365'];
-                    let devicename = '';
-                    DeviceProperties.forEach((item) => {
-                        if (item.Name === 'DisplayName') {
-                            devicename = item.Value;
-                            console.log(item.Value);
-                        }
-                    });
-                    const alertExtraInfo = {
-                        CreationEventTime: CreationTime ? CreationTime : undefined,
-                        Operation: Operation ? Operation : undefined,
-                        Workload: Workload ? Workload : undefined,
-                        UserId: UserId ? UserId : undefined,
-                        ClientIP: ClientIP ? ClientIP : undefined,
-                        ActorIpAddress: ActorIpAddress ? ActorIpAddress : undefined,
-                        UserAgent: UserAgent ? UserAgent : undefined,
-                        DeviceName: devicename ? devicename : 'N/A',
-                        UserKey: UserKey ? UserKey : undefined,
-                        ResultStatusDetail: ResultStatusDetail ? ResultStatusDetail : undefined
-                    };
+                    let alertExtraInfo;
+                    if (json_alert['office_365'].hasOwnProperty('Data')) {
+                        console.log(JSON.parse(json_alert['office_365']['Data']));
+                        let data = JSON.parse(json_alert['office_365']['Data']);
+                        alertExtraInfo = {
+                            CreationEventTime: data['wsrt'] ? data['wsrt'] : undefined,
+                            Username: data['f3u'] ? data['f3u'] : undefined,
+                            Workload: data['wl'] ? data['wl'] : undefined,
+                            Reason: data['ad'] ? data['ad'] : undefined
+                        };
+                    } else if (!json_alert['office_365'].hasOwnProperty('ClientIP')) {
+                        let data = json_alert['office_365'];
+                        alertExtraInfo = {
+                            CreationEventTime: data['CreationTime'] ? data['CreationTime'] : undefined,
+                            Operation: data['Operation'] ? data['Operation'] : undefined,
+                            ResultStatus: data['ResultStatus'] ? data['ResultStatus'] : undefined,
+                            UserId: data['UserId'] ? data['UserId'] : undefined,
+                            ObjectId: data['ObjectId'] ? data['ObjectId'] : undefined,
+                            UserKey: data['UserKey'] ? data['UserKey'] : undefined
+                        };
+                    } else {
+                        const {
+                            CreationTime,
+                            Operation,
+                            Workload,
+                            ClientIP,
+                            UserId,
+                            ResultStatusDetail,
+                            UserAgent,
+                            ActorIpAddress,
+                            DeviceProperties,
+                            UserKey
+                        } = json_alert['office_365'];
+
+                        let devicename = '';
+                        DeviceProperties.forEach((item) => {
+                            if (item.Name === 'DisplayName') {
+                                devicename = item.Value;
+                            }
+                        });
+                        alertExtraInfo = {
+                            CreationEventTime: CreationTime ? CreationTime : undefined,
+                            Operation: Operation ? Operation : undefined,
+                            Workload: Workload ? Workload : undefined,
+                            UserId: UserId ? UserId : undefined,
+                            ClientIP: ClientIP ? ClientIP : undefined,
+                            ActorIpAddress: ActorIpAddress ? ActorIpAddress : undefined,
+                            UserAgent: UserAgent ? UserAgent : undefined,
+                            DeviceName: devicename ? devicename : 'N/A',
+                            UserKey: UserKey ? UserKey : undefined,
+                            ResultStatusDetail: ResultStatusDetail ? ResultStatusDetail : undefined
+                        };
+                    }
+
                     acc.push({ alertExtraInfo });
                 }
             } catch (error) {
@@ -2796,7 +2819,11 @@ function Risky_Countries_AlertHandler(...kwargs) {
                 if (Object.hasOwnProperty.call(info.alertExtraInfo, key)) {
                     const value = info.alertExtraInfo[key];
                     if (value !== undefined) {
-                        desc += `${key}: ${value}\n`;
+                        if (key == 'CreationEventTime') {
+                            desc += `CreationEventTime(<span class="red_highlight">GMT</span>): ${value}\n`;
+                        } else {
+                            desc += `${key}: ${value}\n`;
+                        }
                     }
                 }
             }
@@ -4186,7 +4213,8 @@ function RealTimeMonitoring() {
                 'radware-json': RadwareAlertHandler,
                 'carbonblack_cloud': CarbonAlertHandler,
                 'windows-syslog': WindowsSysAlertHandler,
-                'claroty_cef': ClarotyAlertHandler
+                'claroty_cef': ClarotyAlertHandler,
+                'office-365': Risky_Countries_AlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             if (DecoderName == '') {
