@@ -4012,6 +4012,7 @@ function WindowsSysAlertHandler(...kwargs) {
 function ClarotyAlertHandler(...kwargs) {
     var { summary, rawLog } = kwargs[0];
     var raw_alert = 0;
+    const num_alert = $('#customfield_10300-val').text().trim();
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
@@ -4025,6 +4026,7 @@ function ClarotyAlertHandler(...kwargs) {
                     let item = match[0].split('=');
                     matches[item[0]] = item.slice(1, item.length).join('=');
                 }
+                raw_alert += 1;
                 console.log(matches);
                 let logArray = log.split(' ').filter((item) => item !== ''); //Remove extra whitespace from the string
                 acc.push({
@@ -4046,9 +4048,87 @@ function ClarotyAlertHandler(...kwargs) {
         return alertInfo;
     }
     const alertInfo = parseLog(rawLog);
-    console.log(alertInfo);
     function generateDescription() {
         const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
+        for (const info of alertInfo) {
+            const lastindex = summary.lastIndexOf(']');
+            let desc = `Observed ${summary.substr(lastindex + 1)}\n`;
+            for (const key in info) {
+                if (Object.hasOwnProperty.call(info, key)) {
+                    const value = info[key];
+                    if (value !== undefined) {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
+function FireeyeAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    var raw_alert = 0;
+    const num_alert = $('#customfield_10300-val').text().trim();
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                if (log.length == 0) {
+                    return acc;
+                }
+                const regex = /(\b\w+=)([^=\s].*?)(?=\s+\w+=|$)/g;
+                let match;
+                const matches = {};
+                while ((match = regex.exec(log)) !== null) {
+                    let item = match[0].split('=');
+                    matches[item[0]] = item.slice(1, item.length).join('=');
+                }
+                raw_alert += 1;
+                let logArray = log.split(' ').filter((item) => item !== ''); //Remove extra whitespace from the string
+                acc.push({
+                    'Event time': logArray.slice(0, 3).join(' '),
+                    'Vlan': matches.cn1 ? matches.cn1 : undefined,
+                    'Sid': matches.cn2 ? matches.cn2 : undefined,
+                    'CncHost': matches.cs5 ? matches.cs5 : undefined,
+                    'CncPort': matches.cn3 ? matches.cn3 : undefined,
+                    'Sname': matches.cs1 ? matches.cs1 : undefined,
+                    'anomaly': matches.cs2 ? matches.cs2 : undefined,
+                    'Link': matches.cs4 ? matches.cs4 : undefined,
+                    'Channel': matches.cs6 ? matches.cs6 : undefined,
+                    'request': matches.request ? matches.request : undefined,
+                    'requestClientApplication': matches.requestClientApplication
+                        ? matches.requestClientApplication
+                        : undefined,
+                    'requestMethod': matches.requestMethod ? matches.requestMethod : undefined,
+                    'dst': matches.dst ? matches.dst : undefined,
+                    'dpt': matches.dpt ? matches.dpt : undefined,
+                    'src': matches.src ? matches.src : undefined,
+                    'spt': matches.spt ? matches.spt : undefined,
+                    'dvchost': matches.dvchost ? matches.dvchost : undefined,
+                    'dvc': matches.dvc ? matches.dvc : undefined
+                });
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    function generateDescription() {
+        const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
         for (const info of alertInfo) {
             const lastindex = summary.lastIndexOf(']');
             let desc = `Observed ${summary.substr(lastindex + 1)}\n`;
@@ -4226,7 +4306,8 @@ function RealTimeMonitoring() {
                 'carbonblack_cloud': CarbonAlertHandler,
                 'windows-syslog': WindowsSysAlertHandler,
                 'claroty_cef': ClarotyAlertHandler,
-                'office-365': Risky_Countries_AlertHandler
+                'office-365': Risky_Countries_AlertHandler,
+                'fireeye': FireeyeAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             if (DecoderName == '') {
