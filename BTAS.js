@@ -3908,10 +3908,16 @@ function WindowsSysAlertHandler(...kwargs) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
                 if (log != '') {
-                    console.log(log.split('#010'));
                     let log_data = {},
                         sub = '';
                     log.split('#010').forEach((element, index) => {
+                        if (element.includes('#013')) {
+                            element = element.replace(/#013/g, '');
+                        }
+                        if (element.includes('#009')) {
+                            let e = element.replace(/#009/g, '').split(':');
+                            log_data[e[0]] = e[1];
+                        }
                         if (element.includes('=')) {
                             let e = element.replace(/#013/g, '').split('=');
                             log_data[e[0]] = e[1];
@@ -3959,7 +3965,13 @@ function WindowsSysAlertHandler(...kwargs) {
                             : undefined,
                         ProcessCommandLine: log_data['Process Command Line']
                             ? log_data['Process Command Line']
-                            : undefined
+                            : undefined,
+                        SecurityID: log_data['Security ID'] ? log_data['Security ID'] : undefined,
+                        ServiceAccount: log_data['Service Account'] ? log_data['Service Account'] : undefined,
+                        ServiceFileName: log_data['Service File Name'] ? log_data['Service File Name'] : undefined,
+                        ServiceName: log_data['Service Name'] ? log_data['Service Name'] : undefined,
+                        ServiceStartType: log_data['Service Start Type'] ? log_data['Service Start Type'] : undefined,
+                        ServiceType: log_data['Service Type'] ? log_data['Service Type'] : undefined
                     };
                     acc.push({ alertExtraInfo });
                 }
