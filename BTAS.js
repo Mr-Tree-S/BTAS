@@ -1025,7 +1025,7 @@ function monitorList() {
  */
 function cortexAlertHandler(...kwargs) {
     console.log('#### Code cortexAlertHandler run ####');
-    const { LogSourceDomain } = kwargs[0];
+    const { LogSourceDomain, summary } = kwargs[0];
     const rawLog = $('#field-customfield_10232 > div.twixi-wrap.verbose > div > div > div > pre').text();
     /**
      * Extracts the log information and organization name from the current JIRA issue page
@@ -1262,17 +1262,25 @@ function cortexAlertHandler(...kwargs) {
                 }\n\nPlease help to verify if this activity is legitimate.\n`;
                 alertDescriptions.push(desc);
             } else {
-                const desc = `Observed ${
-                    description || name
-                }\ntimestamp: ${dateTimeStr} \nHost: ${host_name}   IP: ${host_ip}\n${
-                    action_local_ip ? 'action_local_ip: ' + action_local_ip + '\n' : ''
-                }username: ${user_name}\ncmd: ${cmd}\nfilename: ${filename}\nfilepath: ${filepath}\n<span class="red_highlight">action_external_hostname: ${action_external_hostname}\n</span>action: ${action_pretty}\n${
-                    action_file_macro_sha256 ? 'macro file hash: ' + action_file_macro_sha256 + '\n' : ''
-                }<a href="https://www.virustotal.com/gui/file/${
-                    action_file_macro_sha256 || sha256
-                }">https://www.virustotal.com/gui/file/${action_file_macro_sha256 || sha256}<\a>\n${
-                    LogSourceDomain === 'cityu' ? 'Cortex Portal: ' + alert_link + '\n' : ''
-                }\n\nPlease help to verify if this activity is legitimate.\n`;
+                let comment = 'Please help to verify if this activity is legitimate.\n';
+                if (
+                    summary.toLowerCase().includes('wildfire malware') ||
+                    summary.toLowerCase().includes('local analysis malware')
+                ) {
+                    comment = 'Please verify if the File is legitimate.   IF NOT, please Remove the File.\n';
+                }
+                const desc =
+                    `Observed ${
+                        description || name
+                    }\ntimestamp: ${dateTimeStr} \nHost: ${host_name}   IP: ${host_ip}\n${
+                        action_local_ip ? 'action_local_ip: ' + action_local_ip + '\n' : ''
+                    }username: ${user_name}\ncmd: ${cmd}\nfilename: ${filename}\nfilepath: ${filepath}\n<span class="red_highlight">action_external_hostname: ${action_external_hostname}\n</span>action: ${action_pretty}\n${
+                        action_file_macro_sha256 ? 'macro file hash: ' + action_file_macro_sha256 + '\n' : ''
+                    }<a href="https://www.virustotal.com/gui/file/${
+                        action_file_macro_sha256 || sha256
+                    }">https://www.virustotal.com/gui/file/${action_file_macro_sha256 || sha256}<\a>\n${
+                        LogSourceDomain === 'cityu' ? 'Cortex Portal: ' + alert_link + '\n' : ''
+                    }\n\n` + comment;
                 alertDescriptions.push(desc);
             }
             const toolbarSha256 = $('.aui-toolbar2-inner');
@@ -1701,7 +1709,11 @@ function FortigateAlertHandler(...kwargs) {
                     desc += `${index}: ${value}\n`;
                 }
             });
-            desc += `\nPlease verify if the activity is legitimate.\n`;
+            let comment = '\nPlease help to verify if this activity is legitimate.\n';
+            if (summary.toLowerCase().includes('to malware ip(s)') || summary.toLowerCase().includes('to tor ip(s)')) {
+                comment = '\nPlease verify if the IP is legitimate.   If NOT, please block the dst ip\n';
+            }
+            desc += comment;
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
@@ -2234,7 +2246,11 @@ Vulnerability Information:</br>
                     }
                 });
             }
-            desc += `\nPlease verify if the activity is legitimate.\n</br>`;
+            let comment = '\nPlease help to verify if this activity is legitimate.\n</br>';
+            if (summary.toLowerCase().includes('to malware ip(s)') || summary.toLowerCase().includes('to tor ip(s)')) {
+                comment = '\nPlease verify if the IP is legitimate.   If NOT, please block the dst ip\n';
+            }
+            desc += comment;
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
