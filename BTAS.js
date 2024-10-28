@@ -1049,7 +1049,8 @@ function cortexAlertHandler(...kwargs) {
         'cityu': 'https://cityu.xdr.us.paloaltonetworks.com/',
         'hthk': 'https://hthk.xdr.sg.paloaltonetworks.com/',
         'hendersonland': 'https://hld.xdr.sg.paloaltonetworks.com/',
-        'sunhungkai': 'https://shkr.xdr.sg.paloaltonetworks.com/'
+        'sunhungkai': 'https://shkr.xdr.sg.paloaltonetworks.com/',
+        'consumercouncil': 'https://cchk.xdr.us.paloaltonetworks.com/'
     };
     const orgNavigator = orgDict[LogSourceDomain];
 
