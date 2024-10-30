@@ -4166,6 +4166,76 @@ function FireeyeAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function WebAccesslogAlertHandler(...kwargs) {
+    var { summary, rawLog } = kwargs[0];
+    var raw_alert = 0;
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                if (log.length == 0) {
+                    return acc;
+                }
+                // const regex = /(\b\w+=)([^=\s].*?)(?=\s+\w+=|$)/g;
+                const regex = /(\b\w+=)"([^"]*?)"/g;
+                const regex_ = /"(.*?)"/g;
+                let match;
+                const matches = {};
+                while ((match = regex.exec(log)) !== null) {
+                    let item = match[0].split('=');
+                    matches[item[0]] = item.slice(1, item.length).join('=');
+                }
+                let match_;
+                const matches_ = [];
+                while ((match_ = regex_.exec(log)) !== null) {
+                    matches_.push(match_[0]);
+                }
+                console.log(matches);
+                console.log(matches_);
+                let logArray = log.split(' ').filter((item) => item !== ''); //Remove extra whitespace from the string
+                console.log(logArray);
+                acc.push({
+                    'Event time': logArray.slice(3, 5).join(' '),
+                    // 'request_uri': matches.request_uri ? matches.request_uri : undefined,
+                    'URL': matches_[0] ? matches_[0] : undefined,
+                    'User-Agent': matches_[2] ? matches_[2] : undefined,
+                    'upstream_status': logArray[8] ? logArray[8] : undefined,
+                    'upstream_addr': matches.upstream_addr ? matches.upstream_addr : undefined,
+                    'sn': matches.sn ? matches.sn : undefined,
+                    'http_referrer': matches.http_referrer ? matches.http_referrer : undefined,
+                    'http_cookie': matches.http_cookie ? matches.http_cookie : undefined,
+                    'location': matches.location ? matches.location : undefined
+                });
+            } catch (error) {
+                console.log(`Error: ${error.message}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+    const alertInfo = parseLog(rawLog);
+    console.log(alertInfo);
+    function generateDescription() {
+        const alertDescriptions = [];
+        for (const info of alertInfo) {
+            const lastindex = summary.lastIndexOf(']');
+            let desc = `Observed ${summary.substr(lastindex + 1)}\n`;
+            for (const key in info) {
+                if (Object.hasOwnProperty.call(info, key)) {
+                    const value = info[key];
+                    if (value !== undefined && value !== '-' && value !== '"-"') {
+                        desc += `${key}: ${value}\n`;
+                    }
+                }
+            }
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 function formatCurrentDateTime() {
     const pad = (num) => (num < 10 ? '0' : '') + num;
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -4324,7 +4394,8 @@ function RealTimeMonitoring() {
                 'windows-syslog': WindowsSysAlertHandler,
                 'claroty_cef': ClarotyAlertHandler,
                 'office-365': Risky_Countries_AlertHandler,
-                'fireeye': FireeyeAlertHandler
+                'fireeye': FireeyeAlertHandler,
+                'web-accesslog': WebAccesslogAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             if (DecoderName == '') {
