@@ -1050,7 +1050,8 @@ function cortexAlertHandler(...kwargs) {
         'hthk': 'https://hthk.xdr.sg.paloaltonetworks.com/',
         'hendersonland': 'https://hld.xdr.sg.paloaltonetworks.com/',
         'sunhungkai': 'https://shkr.xdr.sg.paloaltonetworks.com/',
-        'consumercouncil': 'https://cchk.xdr.us.paloaltonetworks.com/'
+        'consumercouncil': 'https://cchk.xdr.us.paloaltonetworks.com/',
+        'miramar': 'https://miramargroup.xdr.sg.paloaltonetworks.com/'
     };
     const orgNavigator = orgDict[LogSourceDomain];
 
