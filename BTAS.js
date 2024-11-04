@@ -1575,7 +1575,9 @@ function WineventAlertHandler(...kwargs) {
         }
         for (const info of alertInfo) {
             let desc = `Observed${info.summary}\nHost: ${info.alertHost}\n`;
-            desc += `systemTime(<span class="red_highlight">GMT</span>): ${info.systemTime.split('.')[0]}Z\n`;
+            const date = new Date(info.systemTime.split('.')[0]);
+            date.setHours(date.getHours() + 16);
+            desc += `systemTime(<span class="red_highlight">UTC+8</span>): ${date.toISOString().split('.')[0]}\n`;
             for (const key in info.eventdata) {
                 if (Object.hasOwnProperty.call(info.eventdata, key)) {
                     const value = info.eventdata[key];
