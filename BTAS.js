@@ -2095,6 +2095,11 @@ function AzureAlertHandler(...kwargs) {
                     });
                 }
                 acc.push({
+                    AlertType: eventhub['AlertType'],
+                    StartTimeUtc: eventhub['StartTimeUtc'],
+                    Severity: eventhub['Severity'],
+                    Intent: eventhub['Intent'],
+                    Description: eventhub['Description'],
                     summary: azure['ThreatDescription'] || eventhub['AlertDisplayName'],
                     Protocol: azure['Protocol'],
                     SourceIP: azure['SourceIp'],
@@ -2103,9 +2108,9 @@ function AzureAlertHandler(...kwargs) {
                     DestinationPort: azure['DestinationPort'],
                     URL: azure['Url'],
                     Action: azure['Action'],
-                    alerturi: eventhub['AlertUri'],
                     ExtendedProperties: JSON.stringify(ExtendedProperties, null, 4),
-                    ...entities
+                    ...entities,
+                    alerturi: eventhub['AlertUri']
                 });
             } catch (error) {
                 console.log(`Error: ${error}`);
@@ -2122,8 +2127,12 @@ function AzureAlertHandler(...kwargs) {
         for (const info of alertInfo) {
             let desc = `Observed ${info.summary}\n`;
             Object.entries(info).forEach(([index, value]) => {
-                if (value !== undefined && value !== '' && index !== 'summary' && index !== 'alerturi') {
-                    desc += `${index}: ${value}\n`;
+                if (value !== undefined && value !== '' && index !== 'summary') {
+                    if (index == 'StartTimeUtc') {
+                        desc += `StartTimeUtc(<span class="red_highlight">GMT</span>): ${value.split('.')[0]}\n`;
+                    } else {
+                        desc += `${index}: ${value}\n`;
+                    }
                 }
             });
             desc += `\nPlease verify if the activity is legitimate.\n`;
