@@ -3159,6 +3159,7 @@ function ThreatMatrixAlertHandler(...kwargs) {
 function DarktraceAlertHandler(...kwargs) {
     var { summary, rawLog } = kwargs[0];
     var raw_alert = 0;
+    var breach_Url;
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
@@ -3171,6 +3172,7 @@ function DarktraceAlertHandler(...kwargs) {
                     const json_alert = JSON.parse(json_text);
                     let alertExtraInfo = {},
                         Resource_paths = [];
+                    breach_Url = json_alert['breachUrl'] + '<br>' + json_alert['incidentEventUrl'];
                     if (json_alert.hasOwnProperty('model')) {
                         const { device, triggeredComponents, model } = json_alert;
                         let User_agent = '',
@@ -3281,8 +3283,11 @@ function DarktraceAlertHandler(...kwargs) {
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
         showDialog(alertMsg);
     }
-
+    function breachUrl() {
+        showFlag('info', 'breach Url:', `${breach_Url.replace('hXXps[:]', 'https:')}`, 'manual');
+    }
     addButton('generateDescription', 'Description', generateDescription);
+    addButton('breachUrl', 'breachUrl', breachUrl);
 }
 
 function SangforAlertHandler(...kwargs) {
