@@ -4490,6 +4490,7 @@ function RealTimeMonitoring() {
             Status = $('#status-val > span').text().trim();
             RawLog =
                 $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim() ||
+                $('#customfield_10219-val').text().trim() ||
                 $('#field-customfield_10232 > div.twixi-wrap.verbose > div > div > div > pre').text();
             Summary = $('#summary-val').text().trim();
             AgentName = $('#customfield_10805-val').text().trim();
