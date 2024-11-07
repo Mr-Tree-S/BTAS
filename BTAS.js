@@ -2405,7 +2405,10 @@ function AzureGraphAlertHandler(...kwargs) {
                                         ? `${azure?.location?.countryOrRegion}\\${azure?.location?.state}\\${azure?.location?.city}`
                                         : undefined,
                                 ...properties,
-                                Result: azure?.status?.failureReason || azure.result
+                                Result: azure?.status?.failureReason || azure.result,
+                                AdditionalInfo: azure?.additionalDetails[0]?.value
+                                    ? azure?.additionalDetails[0]?.value
+                                    : undefined
                             });
                         }
                     }
