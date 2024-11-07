@@ -4524,7 +4524,12 @@ function RealTimeMonitoring() {
         };
 
         // If it pops up once, it will not be reminded again
-        if ($('#issue-content').length && !$('#generateTicketNotify').length && window.location.href.includes('MSS')) {
+        if (
+            ($('#issue-content').length &&
+                !$('#generateTicketNotify').length &&
+                window.location.href.includes('MSS')) ||
+            window.location.href.includes('OPS')
+        ) {
             addButton('towhitelist', 'WhiteList', ToWhitelist);
             ticketNotify(pageData);
         }
