@@ -4195,7 +4195,6 @@ function WebAccesslogAlertHandler(...kwargs) {
                 if (log.length == 0) {
                     return acc;
                 }
-                // const regex = /(\b\w+=)([^=\s].*?)(?=\s+\w+=|$)/g;
                 const regex = /(\b\w+=)"([^"]*?)"/g;
                 const regex_ = /"(.*?)"/g;
                 let match;
@@ -4215,6 +4214,7 @@ function WebAccesslogAlertHandler(...kwargs) {
                 console.log(logArray);
                 acc.push({
                     'Event time': logArray.slice(3, 5).join(' '),
+                    'Source_IP': logArray[0] ? logArray[0] : undefined,
                     // 'request_uri': matches.request_uri ? matches.request_uri : undefined,
                     'URL': matches_[0] ? matches_[0] : undefined,
                     'User-Agent': matches_[2] ? matches_[2] : undefined,
