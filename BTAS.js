@@ -3001,25 +3001,50 @@ function AlicloudAlertHandler(...kwargs) {
                 const lastBraceIndex = log.toString().lastIndexOf('}');
                 if (BraceIndex !== -1) {
                     raw_alert += 1;
-                    console.log(`${raw_alert} iteration 'is being processed`);
                     // Intercepts a substring from the beginning of the brace to the end of the string
                     json_text = log.toString().substr(BraceIndex, lastBraceIndex);
                     let time_1 = log.toString().substr(0, BraceIndex).split(' ');
                     let time = time_1.slice(time_1.length - 4, time_1.length - 2).join(' ');
                     time = time_1[0] + ' ' + time;
-                    console.log(time);
                     try {
                         const json_alert = JSON.parse(json_text);
-                        const { eventId, eventName, resourceName, sourceIpAddress, userIdentity } =
-                            json_alert['alicloud'];
-                        const alertExtraInfo = {
+                        let {
+                            eventId,
+                            uuid,
+                            eventName,
+                            resourceName,
+                            sourceIpAddress,
+                            userIdentity,
+                            intranet_ip,
+                            internet_ip,
+                            instance_id,
+                            extend_content,
+                            detail
+                        } = json_alert['alicloud'];
+                        let alertExtraInfo = {
                             createTime: time,
                             eventId: eventId ? eventId : undefined,
+                            uuid: uuid ? uuid : undefined,
                             eventName: eventName ? eventName : undefined,
                             InstanceId: resourceName ? resourceName : undefined,
                             sourceIpAddress: sourceIpAddress ? sourceIpAddress : undefined,
-                            userName: userIdentity?.userName ? userIdentity?.userName : undefined
+                            userName: userIdentity?.userName ? userIdentity?.userName : undefined,
+                            internet_ip: internet_ip ? internet_ip : undefined,
+                            intranet_ip: intranet_ip ? intranet_ip : undefined,
+                            instance_id: instance_id ? instance_id : undefined,
+                            extend_content: extend_content ? extend_content : undefined
                         };
+                        detail = JSON.parse(detail);
+                        console.log(detail);
+                        if (detail != undefined) {
+                            alertExtraInfo['displayEventName'] = detail.displayEventName
+                                ? detail.displayEventName
+                                : undefined;
+                            alertExtraInfo['file_path'] = detail.file_path ? detail.file_path : undefined;
+                            alertExtraInfo['cmdline'] = detail.cmdline ? detail.cmdline : undefined;
+                            alertExtraInfo['pcmdline'] = detail.pcmdline ? detail.pcmdline : undefined;
+                            alertExtraInfo['ppcmdline'] = detail.ppcmdline ? detail.ppcmdline : undefined;
+                        }
                         console.log(alertExtraInfo);
                         acc.push({ alertExtraInfo });
                     } catch (error) {
