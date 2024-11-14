@@ -3360,6 +3360,22 @@ function SangforAlertHandler(...kwargs) {
                     };
                     data_json[matches.cs3Label] = matches.cs3 ? matches.cs3 : undefined;
                     acc.push(data_json);
+                } else if (DecoderName == 'checkpoint_cef') {
+                    let data_json = {
+                        Signature: matches.Signature ? matches.Signature : undefined,
+                        cp_severity: matches.cp_severity ? matches.cp_severity : undefined,
+                        src: matches.src ? matches.src : undefined,
+                        dst: matches.dst ? matches.dst : undefined,
+                        origin: matches.origin ? matches.origin : undefined
+                    };
+                    data_json[matches.cs2Label] = matches.cs2 ? matches.cs2 : undefined;
+                    data_json[matches.cs3Label] = matches.cs3 ? matches.cs3 : undefined;
+                    data_json[matches.cs4Label] = matches.cs4 ? matches.cs4 : undefined;
+                    data_json[matches.flexNumber1Label] = matches.flexNumber1 ? matches.flexNumber1 : undefined;
+                    data_json[matches.flexNumber2Label] = matches.flexNumber2 ? matches.flexNumber2 : undefined;
+                    data_json[matches.flexString2Label] = matches.flexString2 ? matches.flexString2 : undefined;
+
+                    acc.push(data_json);
                 } else if (window.location.href.includes('pwcmacaumss')) {
                     acc.push({
                         'Event time': logArray.slice(0, 3).join(' '),
@@ -4440,7 +4456,8 @@ function RealTimeMonitoring() {
                 'claroty_cef': ClarotyAlertHandler,
                 'office-365': Risky_Countries_AlertHandler,
                 'fireeye': FireeyeAlertHandler,
-                'web-accesslog': WebAccesslogAlertHandler
+                'web-accesslog': WebAccesslogAlertHandler,
+                'checkpoint_cef': SangforAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             if (DecoderName == '') {
