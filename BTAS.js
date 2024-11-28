@@ -3276,7 +3276,6 @@ function DarktraceAlertHandler(...kwargs) {
                     breach_Url = json_alert['breachUrl'] + '<br>' + json_alert['incidentEventUrl'];
                     if (json_alert.hasOwnProperty('model')) {
                         const { device, triggeredComponents, model } = json_alert;
-
                         let User_agent = '',
                             Message;
                         alertExtraInfo = {
@@ -3313,7 +3312,6 @@ function DarktraceAlertHandler(...kwargs) {
                         let values;
                         alertExtraInfo = {
                             AlertTime: formatCurrentDateTime(logarray.slice(0, 3).join(' ') + ' 2024'),
-
                             hostname: breachDevices[0]?.hostname ? breachDevices[0]?.hostname : undefined,
                             host_ip: breachDevices[0]?.ip ? breachDevices[0]?.ip : undefined,
                             summary: summary ? summary : undefined
@@ -3921,7 +3919,8 @@ function MDE365AlertHandler(...kwargs) {
                             url: entities.url,
                             alertid: alerts?.alertId,
                             incidenturi: logObj['incidents'].incidentUri,
-                            severity: logObj['incidents'].severity
+                            severity: logObj['incidents'].severity,
+                            description: alerts['description']
                         });
                     }
                 } catch (error) {
