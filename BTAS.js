@@ -3265,6 +3265,7 @@ function DarktraceAlertHandler(...kwargs) {
             try {
                 const BraceIndex = log.toString().indexOf('{');
                 const lastBraceIndex = log.toString().lastIndexOf('}');
+                const logarray = log.toString().split(' ');
                 if (BraceIndex !== -1) {
                     raw_alert += 1;
                     // Intercepts a substring from the beginning of the brace to the end of the string
@@ -3275,9 +3276,11 @@ function DarktraceAlertHandler(...kwargs) {
                     breach_Url = json_alert['breachUrl'] + '<br>' + json_alert['incidentEventUrl'];
                     if (json_alert.hasOwnProperty('model')) {
                         const { device, triggeredComponents, model } = json_alert;
+
                         let User_agent = '',
                             Message;
                         alertExtraInfo = {
+                            AlertTime: formatCurrentDateTime(logarray.slice(0, 3).join(' ') + ' 2024'),
                             hostname: device?.hostname ? device?.hostname : undefined,
                             ip: device?.ip ? device?.ip : undefined,
                             credentials: device?.credentials ? device?.credentials : undefined,
@@ -3309,6 +3312,8 @@ function DarktraceAlertHandler(...kwargs) {
                         const { summary, breachDevices, details } = json_alert;
                         let values;
                         alertExtraInfo = {
+                            AlertTime: formatCurrentDateTime(logarray.slice(0, 3).join(' ') + ' 2024'),
+
                             hostname: breachDevices[0]?.hostname ? breachDevices[0]?.hostname : undefined,
                             host_ip: breachDevices[0]?.ip ? breachDevices[0]?.ip : undefined,
                             summary: summary ? summary : undefined
@@ -4389,20 +4394,37 @@ function WebAccesslogAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
-function formatCurrentDateTime() {
+function formatCurrentDateTime(dateStr) {
+    if (dateStr) {
+        var date = new Date(dateStr.replace(/-/g, '/'));
+
+        var localOffset = date.getTimezoneOffset();
+
+        var targetDate = new Date(date.getTime() + (960 + localOffset) * 60000);
+
+        var year = targetDate.getFullYear();
+        var month = ('0' + (targetDate.getMonth() + 1)).slice(-2);
+        var day = ('0' + targetDate.getDate()).slice(-2);
+        var hours = ('0' + targetDate.getHours()).slice(-2);
+        var minutes = ('0' + targetDate.getMinutes()).slice(-2);
+        var seconds = ('0' + targetDate.getSeconds()).slice(-2);
+
+        // 返回格式化的日期字符串
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
     const pad = (num) => (num < 10 ? '0' : '') + num;
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const date = new Date();
+    const date_ = new Date();
 
-    const day = date.getDate();
-    const month = months[date.getMonth()];
-    const year = date.getFullYear().toString().slice(-2); // 取最后两位
-    const hours = date.getHours();
-    const minutes = date.getMinutes();
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const hour = hours % 12 || 12; // Convert to 12-hour format and handle 0 case
+    const day_ = date_.getDate();
+    const month_ = months[date_.getMonth()];
+    const year_ = date_.getFullYear().toString().slice(-2); // 取最后两位
+    const hours_ = date_.getHours();
+    const minutes_ = date_.getMinutes();
+    const ampm = hours_ >= 12 ? 'PM' : 'AM';
+    const hour = hours_ % 12 || 12; // Convert to 12-hour format and handle 0 case
 
-    return `${pad(day)}/${month}/${year} ${pad(hour)}:${pad(minutes)} ${ampm}`;
+    return `${pad(day_)}/${month_}/${year_} ${pad(hour)}:${pad(minutes_)} ${ampm}`;
 }
 
 function MonitorDev() {
