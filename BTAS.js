@@ -718,6 +718,52 @@ function checkKeywords() {
         }
     }
 
+    function fetchWhiteFilehashsList() {
+        const cachedKeywordsContent = GM_getValue('cachedWhiteFilehashsContent', null);
+        GM_xmlhttpRequest({
+            method: 'GET',
+            url: 'https://172.18.4.120/static_file/whitelis_hash.csv',
+            timeout: 4000, // 超过4秒未获取到文件则使用缓存文件
+            onload: function (response) {
+                if (response.status === 200) {
+                    const keywords = parseCSV(response.responseText);
+                    // 本地无缓存，第一次获取文件保存到本地
+                    if (cachedKeywordsContent == null) {
+                        // 更新本地存储中的文件内容和更新时间
+                        GM_setValue('cachedWhiteFilehashsContent', keywords);
+                    }
+
+                    // 如果本地存储中有缓存，并且文件内容有变化
+                    if (
+                        cachedKeywordsContent !== null &&
+                        JSON.stringify(cachedKeywordsContent) !== JSON.stringify(keywords)
+                    ) {
+                        console.log('如果本地存储中有缓存，并且文件内容有变化');
+                        GM_setValue('cachedWhiteFilehashsContent', keywords);
+                    }
+                } else {
+                    console.error('Error fetching Keywords List:', response.status);
+                }
+            },
+            ontimeout: function () {
+                console.log('未连接 Darklab VPN 时使用缓存文件');
+                if (cachedKeywordsContent == null) {
+                    showFlag(
+                        'Error',
+                        'whitelis_hash.csv文件获取失败',
+                        '未连接到 Darklab VPN，请连接后刷新页面',
+                        'auto'
+                    );
+                }
+            },
+            onerror: function (error) {
+                console.error('Error fetching Keywords List:', error);
+            }
+        });
+    }
+
+    fetchWhiteFilehashsList();
+
     function fetchKeywordsList() {
         const cachedKeywordsContent = GM_getValue('cachedKeywordsContent', null);
         GM_xmlhttpRequest({
@@ -1179,25 +1225,33 @@ function cortexAlertHandler(...kwargs) {
                 let cmd;
 
                 if (action_cmd_length === maxLength && actionPropsCount === maxCount) {
+                    if (!WhiteFilehash(action_file_sha256 || action_process_image_sha256)) {
+                        sha256 = action_file_sha256 || action_process_image_sha256;
+                    }
                     filename = action_file_name || action_process_image_name;
                     filepath = action_file_path;
                     cmd = action_process_image_command_line;
-                    sha256 = action_file_sha256 || action_process_image_sha256;
                 } else if (actor_cmd_length === maxLength && actorPropsCount === maxCount) {
+                    if (!WhiteFilehash(actor_process_image_sha256)) {
+                        sha256 = actor_process_image_sha256;
+                    }
                     filename = actor_process_image_name;
                     filepath = actor_process_image_path;
                     cmd = actor_process_command_line;
-                    sha256 = actor_process_image_sha256;
                 } else if (causality_cmd_length === maxLength && causalityPropsCount === maxCount) {
+                    if (!WhiteFilehash(causality_actor_process_image_sha256)) {
+                        sha256 = causality_actor_process_image_sha256;
+                    }
                     filename = causality_actor_process_image_name;
                     filepath = causality_actor_process_image_path;
                     cmd = causality_actor_process_command_line;
-                    sha256 = causality_actor_process_image_sha256;
                 } else if (os_actor_process_image_name && osPropsCount === maxCount) {
+                    if (!WhiteFilehash(os_actor_process_image_sha256)) {
+                        sha256 = os_actor_process_image_sha256;
+                    }
                     filename = os_actor_process_image_name;
                     filepath = os_actor_process_image_path;
                     cmd = os_actor_process_command_line;
-                    sha256 = os_actor_process_image_sha256;
                 }
 
                 alertInfo.push({
@@ -1241,19 +1295,22 @@ function cortexAlertHandler(...kwargs) {
                 action_remote_ip,
                 action_remote_port,
                 action_pretty,
-                host_name,
-                host_ip,
-                user_name,
-                filename,
-                filepath,
-                cmd,
-                sha256,
                 description,
-                action_file_macro_sha256,
                 alert_link,
                 rule_description,
                 action_external_hostname
             } = info;
+            let unPanNgfw = [
+                'host_name',
+                'host_ip',
+                'sha256',
+                'action_file_macro_sha256',
+                'filepath',
+                'filename',
+                'cmd',
+                'user_name',
+                'action_local_ip'
+            ];
             if (description && description.includes('xdr_data')) {
                 console.log(rule_description);
                 description = rule_description;
@@ -1264,30 +1321,36 @@ function cortexAlertHandler(...kwargs) {
                 }\n\nPlease help to verify if this activity is legitimate.\n`;
                 alertDescriptions.push(desc);
             } else {
-                let comment = 'Please help to verify if this activity is legitimate.\n';
+                let comment = '\nPlease help to verify if this activity is legitimate.\n';
                 if (
                     summary.toLowerCase().includes('wildfire malware') ||
                     summary.toLowerCase().includes('local analysis malware')
                 ) {
-                    comment = 'Please verify if the File is legitimate.   IF NOT, please Remove the File.\n';
+                    comment = '\nPlease verify if the File is legitimate.   IF NOT, please Remove the File.\n';
                 }
-                const desc =
-                    `Observed ${
-                        description || name
-                    }\ntimestamp: ${dateTimeStr} \nHost: ${host_name}   IP: ${host_ip}\n${
-                        action_local_ip ? 'action_local_ip: ' + action_local_ip + '\n' : ''
-                    }username: ${user_name}\ncmd: ${cmd}\nfilename: ${filename}\nfilepath: ${filepath}\n<span class="red_highlight">action_external_hostname: ${action_external_hostname}\n</span>action: ${action_pretty}\n${
-                        action_file_macro_sha256 ? 'macro file hash: ' + action_file_macro_sha256 + '\n' : ''
-                    }<a href="https://www.virustotal.com/gui/file/${
-                        action_file_macro_sha256 || sha256
-                    }">https://www.virustotal.com/gui/file/${action_file_macro_sha256 || sha256}<\a>\n${
-                        LogSourceDomain === 'cityu' ? 'Cortex Portal: ' + alert_link + '\n' : ''
-                    }\n\n` + comment;
-                alertDescriptions.push(desc);
-            }
-            const toolbarSha256 = $('.aui-toolbar2-inner');
-            if (sha256 && !toolbarSha256.clone().children().remove().end().text().trim().includes(sha256)) {
-                toolbarSha256.append(`${sha256} `);
+                let desc = `Observed ${
+                    description || name
+                }\ntimestamp: ${dateTimeStr} \n<span class="red_highlight">action_external_hostname: ${action_external_hostname}\n</span>action: ${action_pretty}\n`;
+                for (const key of unPanNgfw) {
+                    console.log(key);
+                    if (Object.hasOwnProperty.call(info, key)) {
+                        const value = info[key];
+                        console.log(key, value);
+                        if (value !== undefined) {
+                            if (key == 'event_evidence') {
+                                desc += `${key}: ${value.replace(/</g, '&lt;').replace(/>/g, '&gt;')}\n`;
+                            } else {
+                                desc += `${key}: ${value}\n`;
+                            }
+                        }
+                    }
+                }
+                if (info['action_file_macro_sha256'] || info['sha256']) {
+                    desc += `<a href="https://www.virustotal.com/gui/file/${
+                        info['action_file_macro_sha256'] || info['sha256']
+                    }">https://www.virustotal.com/gui/file/${info['action_file_macro_sha256'] || info['sha256']}</a>\n`;
+                }
+                alertDescriptions.push(desc + comment);
             }
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
@@ -3715,12 +3778,18 @@ function MDE365AlertHandler(...kwargs) {
                         let processCommandLine = '';
                         if (evidence) {
                             const tmp = [];
-
                             for (const evidenceItem of evidence) {
                                 let description = '';
+
                                 if (evidenceItem.entityType === 'File') {
-                                    description = `filename: ${evidenceItem.fileName}\nfilePath: ${evidenceItem.filePath}\nsha1: ${evidenceItem.sha1}`;
-                                    tmp.push(description);
+                                    console.log('===', WhiteFilehash(evidenceItem.sha1));
+                                    if (WhiteFilehash(evidenceItem.sha1) || WhiteFilehash(evidenceItem.sha256)) {
+                                        description = `filename: ${evidenceItem.fileName}\nfilePath: ${evidenceItem.filePath}`;
+                                        tmp.push(description);
+                                    } else {
+                                        description = `filename: ${evidenceItem.fileName}\nfilePath: ${evidenceItem.filePath}\nsha1: ${evidenceItem.sha1}`;
+                                        tmp.push(description);
+                                    }
                                 }
                                 if (evidenceItem.entityType === 'Process') {
                                     if (evidenceItem.processCommandLine !== undefined) {
@@ -3730,8 +3799,13 @@ function MDE365AlertHandler(...kwargs) {
                                         );
                                         console.log(processCommandLine);
                                     }
-                                    description = `cmd: ${processCommandLine}\naccount: ${evidenceItem.accountName}\nsha1: ${evidenceItem.sha1}`;
-                                    tmp.push(description);
+                                    if (WhiteFilehash(evidenceItem.sha1) || WhiteFilehash(evidenceItem.sha256)) {
+                                        description = `cmd: ${processCommandLine}\naccount: ${evidenceItem.accountName}`;
+                                        tmp.push(description);
+                                    } else {
+                                        description = `cmd: ${processCommandLine}\naccount: ${evidenceItem.accountName}\nsha1: ${evidenceItem.sha1}`;
+                                        tmp.push(description);
+                                    }
                                 }
                                 if (evidenceItem.entityType === 'Url') {
                                     description += `Url: ${evidenceItem.url}`;
@@ -3769,23 +3843,41 @@ function MDE365AlertHandler(...kwargs) {
                                     if (!entities['process']) {
                                         entities['process'] = [];
                                     }
-                                    entities['process'].push({
+                                    const fileEntry = {
                                         filename: entity['fileName'],
                                         filePath: entity['filePath'],
-                                        cmd: processCommandLine,
-                                        sha256: entity['sha256']
-                                    });
+                                        cmd: processCommandLine
+                                    };
+                                    if (
+                                        Object.keys(entity).includes('sha256') &&
+                                        (WhiteFilehash(entity['sha256']) || WhiteFilehash(entity['sha1']))
+                                    ) {
+                                        entities['process'].push(fileEntry);
+                                    } else {
+                                        fileEntry['filename'] = entity['fileName'];
+                                        fileEntry['filePath'] = entity['filePath'];
+                                        fileEntry['sha256'] = entity['sha256'];
+                                        entities['process'].push(fileEntry);
+                                    }
                                 }
 
                                 if (entity['entityType'] == 'File') {
                                     if (!entities['file']) {
                                         entities['file'] = [];
                                     }
-                                    entities['file'].push({
+                                    const fileEntry = {
                                         filename: entity['fileName'],
-                                        filePath: entity['filePath'],
-                                        sha256: entity['sha256']
-                                    });
+                                        filePath: entity['filePath']
+                                    };
+                                    if (
+                                        Object.keys(entity).includes('sha256') &&
+                                        (WhiteFilehash(entity['sha256']) || WhiteFilehash(entity['sha1']))
+                                    ) {
+                                        entities['file'].push(fileEntry);
+                                    } else {
+                                        fileEntry['sha256'] = entity['sha256'];
+                                        entities['file'].push(fileEntry);
+                                    }
                                 }
 
                                 if (entity['entityType'] == 'Ip') {
@@ -4373,6 +4465,21 @@ function MonitorDev() {
         }, 500);
     }
 }
+
+function WhiteFilehash(filehash) {
+    if (filehash == undefined) {
+        return 0;
+    }
+    const cachedWhiteFilehashsContent = GM_getValue('cachedWhiteFilehashsContent', null);
+    console.log(cachedWhiteFilehashsContent, filehash);
+    for (const f of cachedWhiteFilehashsContent) {
+        if (filehash.includes(f['Hash'].toLowerCase())) {
+            console.log('命中了', filehash);
+            return true;
+        }
+    }
+}
+
 function RealTimeMonitoring() {
     // Filter page: audio control registration and regular issues table update
     if (
