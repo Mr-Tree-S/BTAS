@@ -3756,6 +3756,19 @@ function MDE365AlertHandler(...kwargs) {
     const num_alert = $('#customfield_10300-val').text().trim();
     let alertInfo_MDE = [],
         alertInfo_365 = [];
+    function GMT8(params) {
+        let date = new Date(params);
+        date.setHours(date.getHours() + 16); // 获取当前的小时数并加上8小时
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const hours = String(date.getUTCHours()).padStart(2, '0');
+        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+
+        const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        return formattedDate;
+    }
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             let logObj = '';
@@ -3774,7 +3787,8 @@ function MDE365AlertHandler(...kwargs) {
                         const { title, id, computerDnsName, relatedUser, evidence, alertCreationTime } = mde;
                         let dotIndex = alertCreationTime.lastIndexOf('.');
 
-                        let dateTimeStr = alertCreationTime.slice(0, dotIndex) + 'Z';
+                        let dateTimeStr = GMT8(alertCreationTime.slice(0, dotIndex));
+                        console.log('===', dateTimeStr);
                         const alert = { title, id, computerDnsName, dateTimeStr };
                         const userName = relatedUser ? relatedUser.userName : 'N/A';
                         let extrainfo = '';
@@ -3901,7 +3915,7 @@ function MDE365AlertHandler(...kwargs) {
                                 }
                             });
                         }
-                        let creationTime = alerts.creationTime.split('.')[0] + 'Z';
+                        let creationTime = GMT8(alerts.creationTime.split('.')[0]);
                         let title = alerts?.title;
                         if (summary.toLowerCase().includes(title.toLowerCase())) {
                             title = undefined;
@@ -3937,7 +3951,7 @@ function MDE365AlertHandler(...kwargs) {
     function generateDescription_MDE() {
         for (const info of alertInfo_MDE) {
             const { title, computerDnsName, userName, extrainfo, dateTimeStr } = info;
-            const desc = `Observed ${title}\nalertCreationTime(<span class="red_highlight">GMT</span>): ${dateTimeStr}\nHost: ${computerDnsName}\nusername: ${userName}\n${extrainfo}\n\nPlease help to verify if it is legitimate.\n`;
+            const desc = `Observed ${title}\nalertCreationTime(<span class="red_highlight">GMT+8</span>): ${dateTimeStr}\nHost: ${computerDnsName}\nusername: ${userName}\n${extrainfo}\n\nPlease help to verify if it is legitimate.\n`;
             alertDescriptions.push(desc);
         }
     }
@@ -4011,7 +4025,7 @@ function MDE365AlertHandler(...kwargs) {
                                     key !== 'severity'
                                 ) {
                                     if (key == 'creationTime') {
-                                        desc += `creationTime(<span class="red_highlight">GMT</span>): ${info[key]}\n`;
+                                        desc += `creationTime(<span class="red_highlight">GMT+8</span>): ${info[key]}\n`;
                                     } else {
                                         desc += `${key}: ${info[key]}\n`;
                                     }
@@ -4492,7 +4506,6 @@ function WhiteFilehash(filehash) {
         return 0;
     }
     const cachedWhiteFilehashsContent = GM_getValue('cachedWhiteFilehashsContent', null);
-    console.log(cachedWhiteFilehashsContent, filehash);
     for (const f of cachedWhiteFilehashsContent) {
         if (filehash.includes(f['Hash'].toLowerCase())) {
             console.log('命中了', filehash);
