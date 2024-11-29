@@ -3788,7 +3788,6 @@ function MDE365AlertHandler(...kwargs) {
                         let dotIndex = alertCreationTime.lastIndexOf('.');
 
                         let dateTimeStr = GMT8(alertCreationTime.slice(0, dotIndex));
-                        console.log('===', dateTimeStr);
                         const alert = { title, id, computerDnsName, dateTimeStr };
                         const userName = relatedUser ? relatedUser.userName : 'N/A';
                         let extrainfo = '';
@@ -3815,6 +3814,15 @@ function MDE365AlertHandler(...kwargs) {
                                             '\n'
                                         );
                                         console.log(processCommandLine);
+                                    }
+                                    if (evidenceItem.processCommandLine.includes('EncodedCommand')) {
+                                        let cmd_length = evidenceItem.processCommandLine.split(' ').length;
+                                        description = `Decode_Cmd: ${atob(
+                                            evidenceItem.processCommandLine
+                                                .split(' ')
+                                                [cmd_length - 1].replace(/['"]/g, '')
+                                        )}`;
+                                        tmp.push(description);
                                     }
                                     if (WhiteFilehash(evidenceItem.sha1) || WhiteFilehash(evidenceItem.sha256)) {
                                         description = `cmd: ${processCommandLine}\naccount: ${evidenceItem.accountName}`;
@@ -3865,14 +3873,18 @@ function MDE365AlertHandler(...kwargs) {
                                         filePath: entity['filePath'],
                                         cmd: processCommandLine
                                     };
+                                    if (processCommandLine.includes('EncodedCommand')) {
+                                        let cmd_length = processCommandLine.split(' ').length;
+                                        fileEntry['Decode_Cmd'] = atob(
+                                            processCommandLine.split(' ')[cmd_length - 1].replace(/['"]/g, '')
+                                        );
+                                    }
                                     if (
                                         Object.keys(entity).includes('sha256') &&
                                         (WhiteFilehash(entity['sha256']) || WhiteFilehash(entity['sha1']))
                                     ) {
                                         entities['process'].push(fileEntry);
                                     } else {
-                                        fileEntry['filename'] = entity['fileName'];
-                                        fileEntry['filePath'] = entity['filePath'];
                                         fileEntry['sha256'] = entity['sha256'];
                                         entities['process'].push(fileEntry);
                                     }
