@@ -3274,12 +3274,18 @@ function DarktraceAlertHandler(...kwargs) {
                     let alertExtraInfo = {},
                         Resource_paths = [];
                     breach_Url = json_alert['breachUrl'] + '<br>' + json_alert['incidentEventUrl'];
+                    let year = ' 20' + $('#created-val').text().trim().split('/')[2].split(' ')[0]; //动态产生工单的年份
+                    let time_str = logarray.slice(0, 3).join(' ') + year;
+                    if (!time_str.includes(':')) {
+                        time_str = logarray.slice(0, 4).join(' ').replace('  ', ' ') + year;
+                    }
+
                     if (json_alert.hasOwnProperty('model')) {
                         const { device, triggeredComponents, model } = json_alert;
                         let User_agent = '',
                             Message;
                         alertExtraInfo = {
-                            AlertTime: formatCurrentDateTime(logarray.slice(0, 3).join(' ') + ' 2024'),
+                            AlertTime: formatCurrentDateTime(time_str),
                             hostname: device?.hostname ? device?.hostname : undefined,
                             ip: device?.ip ? device?.ip : undefined,
                             credentials: device?.credentials ? device?.credentials : undefined,
@@ -3311,7 +3317,7 @@ function DarktraceAlertHandler(...kwargs) {
                         const { summary, breachDevices, details } = json_alert;
                         let values;
                         alertExtraInfo = {
-                            AlertTime: formatCurrentDateTime(logarray.slice(0, 3).join(' ') + ' 2024'),
+                            AlertTime: formatCurrentDateTime(time_str),
                             hostname: breachDevices[0]?.hostname ? breachDevices[0]?.hostname : undefined,
                             host_ip: breachDevices[0]?.ip ? breachDevices[0]?.ip : undefined,
                             summary: summary ? summary : undefined
@@ -4421,20 +4427,16 @@ function WebAccesslogAlertHandler(...kwargs) {
 
 function formatCurrentDateTime(dateStr) {
     if (dateStr) {
-        var date = new Date(dateStr.replace(/-/g, '/'));
-
+        var date = new Date(dateStr);
         var localOffset = date.getTimezoneOffset();
 
         var targetDate = new Date(date.getTime() + (960 + localOffset) * 60000);
-
         var year = targetDate.getFullYear();
         var month = ('0' + (targetDate.getMonth() + 1)).slice(-2);
         var day = ('0' + targetDate.getDate()).slice(-2);
         var hours = ('0' + targetDate.getHours()).slice(-2);
         var minutes = ('0' + targetDate.getMinutes()).slice(-2);
         var seconds = ('0' + targetDate.getSeconds()).slice(-2);
-
-        // 返回格式化的日期字符串
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     }
     const pad = (num) => (num < 10 ? '0' : '') + num;
