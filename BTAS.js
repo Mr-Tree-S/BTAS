@@ -3274,12 +3274,18 @@ function DarktraceAlertHandler(...kwargs) {
                     let alertExtraInfo = {},
                         Resource_paths = [];
                     breach_Url = json_alert['breachUrl'] + '<br>' + json_alert['incidentEventUrl'];
+                    let year = ' 20' + $('#created-val').text().trim().split('/')[2].split(' ')[0];
+                    let time_str = logarray.slice(0, 3).join(' ') + year;
+                    if (!time_str.includes(':')) {
+                        time_str = logarray.slice(0, 4).join(' ').replace('  ', ' ') + year;
+                    }
+
                     if (json_alert.hasOwnProperty('model')) {
                         const { device, triggeredComponents, model } = json_alert;
                         let User_agent = '',
                             Message;
                         alertExtraInfo = {
-                            AlertTime: formatCurrentDateTime(logarray.slice(0, 3).join(' ') + ' 2024'),
+                            AlertTime: formatCurrentDateTime(time_str),
                             hostname: device?.hostname ? device?.hostname : undefined,
                             ip: device?.ip ? device?.ip : undefined,
                             credentials: device?.credentials ? device?.credentials : undefined,
@@ -3311,7 +3317,7 @@ function DarktraceAlertHandler(...kwargs) {
                         const { summary, breachDevices, details } = json_alert;
                         let values;
                         alertExtraInfo = {
-                            AlertTime: formatCurrentDateTime(logarray.slice(0, 3).join(' ') + ' 2024'),
+                            AlertTime: formatCurrentDateTime(time_str),
                             hostname: breachDevices[0]?.hostname ? breachDevices[0]?.hostname : undefined,
                             host_ip: breachDevices[0]?.ip ? breachDevices[0]?.ip : undefined,
                             summary: summary ? summary : undefined
@@ -4421,11 +4427,7 @@ function WebAccesslogAlertHandler(...kwargs) {
 
 function formatCurrentDateTime(dateStr) {
     if (dateStr) {
-        var date = new Date(dateStr.replace(/-/g, '/'));
-
-        var localOffset = date.getTimezoneOffset();
-
-        var targetDate = new Date(date.getTime() + (960 + localOffset) * 60000);
+        var targetDate = new Date(dateStr);
 
         var year = targetDate.getFullYear();
         var month = ('0' + (targetDate.getMonth() + 1)).slice(-2);
