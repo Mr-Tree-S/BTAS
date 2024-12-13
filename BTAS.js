@@ -4425,6 +4425,35 @@ function WebAccesslogAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function LHG_CS_AlertHandler(DecoderName) {
+    let ORG = $('#customfield_10002-val').text().trim();
+    console.log(ORG.split(' ')[ORG.split(' ').length - 1]);
+    const elements = document.querySelectorAll('.user-hover.user-avatar');
+    const userList = ['kitty.li', 'anson.cho', 'ray.tan', 'philip.ng', 'yuanlin tang'];
+    console.log(elements[0].textContent.toLowerCase()); // 对每个元素执行操作
+    let ClientComment = false;
+    for (const dataItem of userList) {
+        if (elements[0].textContent.toLowerCase().includes(dataItem.toLowerCase())) {
+            ClientComment = true;
+            break;
+        }
+    }
+    //判断工单是否升级，
+    if (ORG.split(' ')[ORG.split(' ').length - 1] == 'None' && DecoderName == 'crowdstrike_cef') {
+        $('#opsbar-opsbar-transitions').on('click', () => {
+            let userConfirmed = confirm('LHG的所有 Crowdstrike 告警均需要升级，即使是误报也需要升级');
+        });
+    } else {
+        if (!ClientComment) {
+            $('#opsbar-opsbar-transitions').on('click', () => {
+                let userConfirmed = confirm(
+                    '只有这四个客户回复philip.ng,ray.tan,anson.cho,kitty.li，才可关单,若以上四个客户已允许关掉，可忽略此提示'
+                );
+            });
+        }
+    }
+}
+
 function formatCurrentDateTime(dateStr) {
     if (dateStr) {
         var date = new Date(dateStr);
@@ -4731,6 +4760,18 @@ function RealTimeMonitoring() {
             ticketNotify(pageData);
         }
     }, 1000);
+
+    // Issue page: Norm Alert
+    setTimeout(() => {
+        var LogSourceDomain = $('#customfield_10223-val').text().trim();
+        let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
+        if (DecoderName == '') {
+            DecoderName = $('#customfield_10906-val').text().trim().toLowerCase();
+        }
+        if (LogSourceDomain.includes('lhg')) {
+            LHG_CS_AlertHandler(DecoderName);
+        }
+    }, 3500);
 
     // Issue page: Quick Reply
     setInterval(() => {
