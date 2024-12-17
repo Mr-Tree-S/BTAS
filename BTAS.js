@@ -4454,6 +4454,21 @@ function LHG_CS_AlertHandler(DecoderName) {
     }
 }
 
+function RealMonitorMe() {
+    let ORG = $('#customfield_10002-val').text().trim();
+    const intervalId = setInterval(() => {
+        var element_one = document.getElementById('opsbar-opsbar-transitions');
+        var first = element_one ? element_one.textContent || element_one.innerText : null;
+        console.log(first);
+        if (first == 'Waiting for customer' && ORG.split(' ')[ORG.split(' ').length - 1] == 'None') {
+            console.log('===发生了改变', first);
+            confirm('请注意,该工单变为Waiting for customer,请检查该工单是否已添加ORG');
+            first = 'Waiting for customer';
+            clearInterval(intervalId);
+        }
+    }, 500);
+}
+
 function formatCurrentDateTime(dateStr) {
     if (dateStr) {
         var date = new Date(dateStr);
@@ -4831,6 +4846,7 @@ function RealTimeMonitoring() {
             }
         }, 500);
     });
+    RealMonitorMe();
 
     RealTimeMonitoring();
 })();
