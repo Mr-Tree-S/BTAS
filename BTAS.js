@@ -3446,7 +3446,25 @@ function SangforAlertHandler(...kwargs) {
                     data_json[matches.flexNumber1Label] = matches.flexNumber1 ? matches.flexNumber1 : undefined;
                     data_json[matches.flexNumber2Label] = matches.flexNumber2 ? matches.flexNumber2 : undefined;
                     data_json[matches.flexString2Label] = matches.flexString2 ? matches.flexString2 : undefined;
-
+                    acc.push(data_json);
+                } else if (DecoderName == 'incapsula_cef') {
+                    console.log('===', matches);
+                    let data_json = {
+                        requestClientApplication: matches.requestClientApplication
+                            ? matches.requestClientApplication
+                            : undefined,
+                        request: matches.request ? matches.request : undefined,
+                        requestMethod: matches.requestMethod ? matches.requestMethod : undefined,
+                        postbody: matches.postbody ? matches.postbody : undefined,
+                        qstr: matches.qstr ? matches.qstr : undefined,
+                        act: matches.act ? matches.act : undefined,
+                        sip: matches.sip ? matches.sip : undefined,
+                        spt: matches.spt ? matches.spt : undefined,
+                        xff: matches.xff ? matches.xff : undefined,
+                        cpt: matches.cpt ? matches.cpt : undefined,
+                        src: matches.src ? matches.src : undefined
+                    };
+                    data_json[matches.cs9Label] = matches.cs9 ? matches.cs9 : undefined;
                     acc.push(data_json);
                 } else if (window.location.href.includes('pwcmacaumss')) {
                     acc.push({
@@ -4656,7 +4674,8 @@ function RealTimeMonitoring() {
                 'office-365': Risky_Countries_AlertHandler,
                 'fireeye': FireeyeAlertHandler,
                 'web-accesslog': WebAccesslogAlertHandler,
-                'checkpoint_cef': SangforAlertHandler
+                'checkpoint_cef': SangforAlertHandler,
+                'incapsula_cef': SangforAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             if (DecoderName == '') {
