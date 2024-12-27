@@ -3432,6 +3432,40 @@ function SangforAlertHandler(...kwargs) {
                     };
                     data_json[matches.cs3Label] = matches.cs3 ? matches.cs3 : undefined;
                     acc.push(data_json);
+                } else if (DecoderName == 'impervainc_cef') {
+                    console.log('===', matches);
+                    console.log('===start ', formatCurrentDateTime(parseInt(matches.start), 'impervainc_cef'));
+                    let data_json = {
+                        start_time: matches.start
+                            ? formatCurrentDateTime(parseInt(matches.start), 'impervainc_cef')
+                            : undefined,
+                        end_time: matches.end
+                            ? formatCurrentDateTime(parseInt(matches.end), 'impervainc_cef')
+                            : undefined,
+                        dhost: matches.dhost ? matches.dhost : undefined,
+                        AlertTime: matches.rt ? matches.rt : undefined,
+                        src: matches.src ? matches.src : undefined,
+                        sptPort: matches.spt ? matches.spt : undefined,
+                        dstIP: matches.dst ? matches.dst : undefined,
+                        dstPort: matches.dpt ? matches.dpt : undefined,
+                        protocol: matches.proto ? matches.proto : undefined,
+                        request: matches.request ? matches.request : undefined,
+                        requestClientApplication: matches.requestClientApplication
+                            ? matches.requestClientApplication
+                            : undefined,
+                        msg: matches.msg ? matches.msg : undefined
+                    };
+                    data_json[matches.cs1Label] = matches.cs1 ? matches.cs1 : undefined;
+                    data_json[matches.cs2Label] = matches.cs2 ? matches.cs2 : undefined;
+                    data_json[matches.cs3Label] = matches.cs3 ? matches.cs3 : undefined;
+                    data_json[matches.cs4Label] = matches.cs4 ? matches.cs4 : undefined;
+                    data_json[matches.cs5Label] = matches.cs5 ? matches.cs5 : undefined;
+                    data_json[matches.cs6Label] = matches.cs6 ? matches.cs6 : undefined;
+                    data_json[matches.cs7Label] = matches.cs7 ? matches.cs7 : undefined;
+                    data_json[matches.cs8Label] = matches.cs8 ? matches.cs8 : undefined;
+                    data_json[matches.cs9Label] = matches.cs9 ? matches.cs9 : undefined;
+
+                    acc.push(data_json);
                 } else if (DecoderName == 'checkpoint_cef') {
                     let data_json = {
                         Signature: matches.Signature ? matches.Signature : undefined,
@@ -3448,7 +3482,6 @@ function SangforAlertHandler(...kwargs) {
                     data_json[matches.flexString2Label] = matches.flexString2 ? matches.flexString2 : undefined;
                     acc.push(data_json);
                 } else if (DecoderName == 'incapsula_cef') {
-                    console.log('===', matches);
                     let data_json = {
                         requestClientApplication: matches.requestClientApplication
                             ? matches.requestClientApplication
@@ -3515,6 +3548,8 @@ function SangforAlertHandler(...kwargs) {
                     if (value !== undefined) {
                         if (key == 'event_evidence') {
                             desc += `${key}: ${value.replace(/</g, '&lt;').replace(/>/g, '&gt;')}\n`;
+                        } else if (key == 'start_time' || key == 'end_time' || key == 'AlertTime') {
+                            desc += `${key}(<span class="red_highlight">GMT+8</span>): ${value.split('.')[0]}\n`;
                         } else {
                             desc += `${key}: ${value}\n`;
                         }
@@ -4487,12 +4522,15 @@ function RealMonitorMe() {
     }, 500);
 }
 
-function formatCurrentDateTime(dateStr) {
+function formatCurrentDateTime(dateStr, decoder_name) {
     if (dateStr) {
         var date = new Date(dateStr);
         var localOffset = date.getTimezoneOffset();
-
-        var targetDate = new Date(date.getTime() + (960 + localOffset) * 60000);
+        if (decoder_name == 'impervainc_cef') {
+            var targetDate = new Date(date.getTime() + (480 + localOffset) * 60000);
+        } else {
+            var targetDate = new Date(date.getTime() + (960 + localOffset) * 60000);
+        }
         var year = targetDate.getFullYear();
         var month = ('0' + (targetDate.getMonth() + 1)).slice(-2);
         var day = ('0' + targetDate.getDate()).slice(-2);
@@ -4658,7 +4696,7 @@ function RealTimeMonitoring() {
                 'azureeventhub': AzureAlertHandler,
                 'azuregraphapi-json': AzureGraphAlertHandler,
                 'paloalto-firewall': paloaltoAlertHandler,
-                'impervainc_cef': ImpervaincCEFAlertHandler,
+                'impervainc_cef': SangforAlertHandler,
                 'proofpoint_tap': ProofpointAlertHandler,
                 'zscaler-zpa-json': ZscalerAlertHandler,
                 'pulse-secure': PulseAlertHandler,
