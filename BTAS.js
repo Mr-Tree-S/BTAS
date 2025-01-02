@@ -4478,6 +4478,67 @@ function WebAccesslogAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function FireeyeEtpAlertHandler(...kwargs) {
+    const { rawLog, summary } = kwargs[0];
+    var raw_alert = 0;
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                const { meta, alert, email } = JSON.parse(log)['fireeye'];
+                acc.push({
+                    timestamp: alert['timestamp'],
+                    accepted: email['timestamp']['accepted'],
+                    last_malware: meta['last_malware'],
+                    alert_type: meta['alert_type'],
+                    status: email['status'],
+                    source_ip: email['source_ip'],
+                    rcpt_to: email['smtp']['rcpt_to'],
+                    mail_from: email['smtp']['mail_from'],
+                    etp_message_id: email['etp_message_id'],
+                    To: email['headers']['to'],
+                    From: email['headers']['from'],
+                    Subject: email['headers']['subject'],
+                    attachment: email['attachment']
+                });
+                raw_alert += 1;
+            } catch (error) {
+                console.log(`Error: ${error}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLog(rawLog);
+    const num_alert = $('#customfield_10300-val').text().trim();
+    function generateDescription() {
+        const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
+        for (const info of alertInfo) {
+            let desc = `Observed ${summary.split(']')[1]}\n`;
+            Object.entries(info).forEach(([index, value]) => {
+                if (value !== undefined && value !== ' ' && index != 'Summary') {
+                    if (index == 'timestamp') {
+                        desc += `timestamp(<span class="red_highlight">GMT</span>): ${value.split('.')[0]}Z\n`;
+                    } else if (index == 'accepted') {
+                        desc += `accepted(<span class="red_highlight">GMT</span>): ${value}Z\n`;
+                    } else {
+                        desc += `${index}: ${value}\n`;
+                    }
+                }
+            });
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 function LHG_CS_AlertHandler(DecoderName) {
     let ORG = $('#customfield_10002-val').text().trim();
     console.log(ORG.split(' ')[ORG.split(' ').length - 1]);
@@ -4713,7 +4774,8 @@ function RealTimeMonitoring() {
                 'fireeye': FireeyeAlertHandler,
                 'web-accesslog': WebAccesslogAlertHandler,
                 'checkpoint_cef': SangforAlertHandler,
-                'incapsula_cef': SangforAlertHandler
+                'incapsula_cef': SangforAlertHandler,
+                'fireeye-etp-json': FireeyeEtpAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             if (DecoderName == '') {
