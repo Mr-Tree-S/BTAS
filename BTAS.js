@@ -3082,7 +3082,9 @@ function AlicloudAlertHandler(...kwargs) {
                             internet_ip,
                             instance_id,
                             extend_content,
-                            detail
+                            detail,
+                            requestParameters,
+                            responseElements
                         } = json_alert['alicloud'];
                         let alertExtraInfo = {
                             createTime: time,
@@ -3095,19 +3097,19 @@ function AlicloudAlertHandler(...kwargs) {
                             internet_ip: internet_ip ? internet_ip : undefined,
                             intranet_ip: intranet_ip ? intranet_ip : undefined,
                             instance_id: instance_id ? instance_id : undefined,
-                            extend_content: extend_content ? extend_content : undefined
+                            extend_content: extend_content ? extend_content : undefined,
+                            responseElements: responseElements ? JSON.stringify(responseElements) : undefined
                         };
-                        detail = JSON.parse(detail);
-                        console.log(detail);
+                        console.log('===', requestParameters, time);
+
                         if (detail != undefined) {
-                            alertExtraInfo['displayEventName'] = detail.displayEventName
-                                ? detail.displayEventName
-                                : undefined;
-                            alertExtraInfo['file_path'] = detail.file_path ? detail.file_path : undefined;
-                            alertExtraInfo['cmdline'] = detail.cmdline ? detail.cmdline : undefined;
-                            alertExtraInfo['pcmdline'] = detail.pcmdline ? detail.pcmdline : undefined;
-                            alertExtraInfo['ppcmdline'] = detail.ppcmdline ? detail.ppcmdline : undefined;
+                            detail = JSON.parse(detail);
+                            alertExtraInfo = Object.assign({}, alertExtraInfo, detail);
                         }
+                        if (requestParameters != undefined) {
+                            alertExtraInfo = Object.assign({}, alertExtraInfo, requestParameters);
+                        }
+
                         console.log(alertExtraInfo);
                         acc.push({ alertExtraInfo });
                     } catch (error) {
