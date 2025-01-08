@@ -3876,7 +3876,10 @@ function MDE365AlertHandler(...kwargs) {
                                         );
                                         console.log(processCommandLine);
                                     }
-                                    if (evidenceItem.processCommandLine.includes('EncodedCommand')) {
+                                    if (
+                                        evidenceItem.processCommandLine !== undefined &&
+                                        evidenceItem.processCommandLine.includes('EncodedCommand')
+                                    ) {
                                         let cmd_length = evidenceItem.processCommandLine.split(' ').length;
                                         description = `Decode_Cmd: ${atob(
                                             evidenceItem.processCommandLine
