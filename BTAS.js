@@ -4575,14 +4575,17 @@ function LHG_CS_AlertHandler(DecoderName) {
 
 function RealMonitorMe() {
     let ORG = $('#customfield_10002-val').text().trim();
-    let rules = $('#customfield_10302-val').text().trim().split(' \n')[1].split('\n');
-    if (rules.length - 1 >= 3) {
-        confirm(
-            `检测到该工单的RuleName有${
-                rules.length - 1
-            }个，(如果同一张tickets出现三个告警及以上，需要往cortex群里发，如果是误报请描述原因，谢谢)`
-        );
+    if ($('#customfield_10302-val').text().trim().includes('\n')) {
+        let rules = $('#customfield_10302-val').text().trim().split(' \n')[1].split('\n');
+        if (rules.length - 1 >= 3) {
+            confirm(
+                `检测到该工单的RuleName有${
+                    rules.length - 1
+                }个，(如果同一张tickets出现三个告警及以上，需要往cortex群里发，如果是误报请描述原因，谢谢)`
+            );
+        }
     }
+
     const intervalId = setInterval(() => {
         var element_one = document.getElementById('opsbar-opsbar-transitions');
         var first = element_one ? element_one.textContent || element_one.innerText : null;
