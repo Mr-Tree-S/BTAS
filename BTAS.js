@@ -4585,9 +4585,10 @@ function LHG_CS_AlertHandler(DecoderName) {
 
 function RealMonitorMe() {
     let ORG = $('#customfield_10002-val').text().trim();
+    let status = $('#opsbar-transitions_more').text().trim();
     if ($('#customfield_10302-val').text().trim().includes('\n')) {
         let rules = $('#customfield_10302-val').text().trim().split(' \n')[1].split('\n');
-        if (rules.length - 1 >= 3) {
+        if (rules.length - 1 >= 3 && status == 'Work in progress') {
             confirm(
                 `检测到该工单的RuleName有${
                     rules.length - 1
@@ -4595,7 +4596,6 @@ function RealMonitorMe() {
             );
         }
     }
-
     const intervalId = setInterval(() => {
         var element_one = document.getElementById('opsbar-opsbar-transitions');
         var first = element_one ? element_one.textContent || element_one.innerText : null;
