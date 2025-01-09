@@ -2033,35 +2033,45 @@ function AwsAlertHandler(...kwargs) {
                 const { aws } = JSON.parse(log);
                 if (DecoderName == 'aws-guardduty') {
                     let EventTime = aws.service.eventFirstSeen.split('.')[0] + 'Z';
-                    const actionType = aws.service.action.actionType;
-                    if (actionType == 'AWS_API_CALL') {
+                    const action = aws.service.action;
+                    if (action.actionType == 'AWS_API_CALL') {
                         acc.push({
                             EventTime: EventTime,
-                            actionType: actionType,
-                            Api_Name: aws?.service?.action?.awsApiCallAction?.api,
+                            actionType: action.actionType,
+                            Api_Name: action?.awsApiCallAction?.api,
                             userName: aws?.resource?.accessKeyDetails?.userName,
-                            RemoteIP: aws?.service?.action?.awsApiCallAction?.remoteIpDetails?.ipAddressV4,
-                            RemoteIP_country:
-                                aws?.service?.action?.awsApiCallAction?.remoteIpDetails?.country.countryName
+                            RemoteIP: action?.awsApiCallAction?.remoteIpDetails?.ipAddressV4,
+                            RemoteIP_country: action?.awsApiCallAction?.remoteIpDetails?.country.countryName
                         });
-                    } else if (actionType == 'KUBERNETES_API_CALL') {
+                    } else if (action.actionType == 'KUBERNETES_API_CALL') {
                         acc.push({
                             EventTime: EventTime,
-                            actionType: actionType,
+                            actionType: action.actionType,
                             userName: aws?.resource?.accessKeyDetails?.userName,
-                            sourceIPs: aws?.service?.action?.kubernetesApiCallAction?.sourceIPs,
-                            requestUri: aws?.service?.action?.kubernetesApiCallAction?.requestUri
+                            sourceIPs: action?.kubernetesApiCallAction?.sourceIPs,
+                            requestUri: action?.kubernetesApiCallAction?.requestUri
                         });
-                    } else if (actionType == 'PORT_PROBE') {
+                    } else if (action.actionType == 'PORT_PROBE') {
                         acc.push({
                             EventTime: EventTime,
-                            actionType: actionType,
-                            localPort: aws?.service?.action?.portProbeAction?.portProbeDetails.localPortDetails.port,
-                            RemoteIP:
-                                aws?.service?.action?.portProbeAction?.portProbeDetails.remoteIpDetails.ipAddressV4,
+                            actionType: action.actionType,
+                            localPort: action?.portProbeAction?.portProbeDetails.localPortDetails.port,
+                            RemoteIP: action?.portProbeAction?.portProbeDetails.remoteIpDetails.ipAddressV4,
                             RemoteIP_country:
-                                aws?.service?.action?.portProbeAction?.portProbeDetails.remoteIpDetails.country
-                                    .countryName
+                                action?.portProbeAction?.portProbeDetails.remoteIpDetails.country.countryName
+                        });
+                    } else if (action.actionType == 'NETWORK_CONNECTION') {
+                        console.log('===', action);
+                        acc.push({
+                            EventTime: EventTime,
+                            actionType: action.actionType,
+                            localIp: action?.networkConnectionAction?.localIpDetails.ipAddressV4,
+                            localPortDetails: action?.networkConnectionAction?.localPortDetails.port,
+                            remoteIp: action?.networkConnectionAction?.remoteIpDetails.ipAddressV4,
+                            remotePortDetails: action?.networkConnectionAction?.remotePortDetails.port,
+                            instanceId: aws?.resource?.instanceDetails?.instanceId,
+                            platform: aws?.resource?.instanceDetails?.platform,
+                            remoteIpcountryName: action?.networkConnectionAction?.remoteIpDetails?.country?.countryName
                         });
                     }
                 } else if (summary.toLowerCase().includes('multiple sms request for same source ip')) {
