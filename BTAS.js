@@ -4554,6 +4554,64 @@ function FireeyeEtpAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
+function SentinelOneAlertHandler(...kwargs) {
+    const { rawLog, summary } = kwargs[0];
+    var raw_alert = 0;
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                console.log('===sentinel_one');
+                const sentinel_one = JSON.parse(log)['sentinel_one'];
+                acc.push({
+                    timestamp: sentinel_one.threatInfo.createdAt.split('.')[0],
+                    accountName: sentinel_one.accountName,
+                    agentDomain: sentinel_one.agentDomain,
+                    agentIpV4: sentinel_one.agentIpV4,
+                    agentOsName: sentinel_one.agentOsName,
+                    agentMitigationMode: sentinel_one.agentMitigationMode,
+                    filePath: sentinel_one.threatInfo.filePath,
+                    sha1: sentinel_one.threatInfo.sha1,
+                    confidenceLevel: sentinel_one.threatInfo.filePath,
+                    threatName: sentinel_one.threatInfo.threatName,
+                    processUser: sentinel_one.threatInfo.processUser
+                });
+                raw_alert += 1;
+            } catch (error) {
+                console.log(`Error: ${error}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLog(rawLog);
+    const num_alert = $('#customfield_10300-val').text().trim();
+    function generateDescription() {
+        const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
+        for (const info of alertInfo) {
+            let desc = `Observed ${summary.split(']')[1]}\n`;
+            Object.entries(info).forEach(([index, value]) => {
+                if (value !== undefined && value !== ' ' && index != 'Summary') {
+                    if (index == 'timestamp') {
+                        desc += `timestamp(<span class="red_highlight">GMT</span>): ${value.split('.')[0]}Z\n`;
+                    } else {
+                        desc += `${index}: ${value}\n`;
+                    }
+                }
+            });
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
 function LHG_CS_AlertHandler(DecoderName) {
     let ORG = $('#customfield_10002-val').text().trim();
     console.log(ORG.split(' ')[ORG.split(' ').length - 1]);
@@ -4801,7 +4859,8 @@ function RealTimeMonitoring() {
                 'web-accesslog': WebAccesslogAlertHandler,
                 'checkpoint_cef': SangforAlertHandler,
                 'incapsula_cef': SangforAlertHandler,
-                'fireeye-etp-json': FireeyeEtpAlertHandler
+                'fireeye-etp-json': FireeyeEtpAlertHandler,
+                'sentinelone-json': SentinelOneAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             if (DecoderName == '') {
