@@ -26,7 +26,7 @@
 // @grant        GM_setValue
 // @connect      raw.githubusercontent.com
 // @connect      myqcloud.com
-// @connect      172.18.4.120
+// @connect      172.18.4.200
 // @run-at       document-idle
 // @grant        GM_addStyle
 // ==/UserScript==
@@ -722,7 +722,7 @@ function checkKeywords() {
         const cachedKeywordsContent = GM_getValue('cachedWhiteFilehashsContent', null);
         GM_xmlhttpRequest({
             method: 'GET',
-            url: 'https://172.18.4.120/static_file/whitelis_hash.csv',
+            url: 'https://172.18.4.200/static_file/whitelis_hash.csv',
             timeout: 4000, // 超过4秒未获取到文件则使用缓存文件
             onload: function (response) {
                 if (response.status === 200) {
@@ -768,7 +768,7 @@ function checkKeywords() {
         const cachedKeywordsContent = GM_getValue('cachedKeywordsContent', null);
         GM_xmlhttpRequest({
             method: 'GET',
-            url: 'https://172.18.4.120/static_file/keywords.csv',
+            url: 'https://172.18.4.200/static_file/keywords.csv',
             timeout: 4000, // 超过4秒未获取到文件则使用缓存文件
             onload: function (response) {
                 if (response.status === 200) {
@@ -847,7 +847,7 @@ function ticketNotify(pageData) {
 
         GM_xmlhttpRequest({
             method: 'GET',
-            url: 'https://172.18.4.120/api/7vVKD9hF/notifys/',
+            url: 'https://172.18.4.200/api/7vVKD9hF/notifys/',
             headers: {
                 'api-key': 'Tnznjha3yhJgA7YG'
             },
