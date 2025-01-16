@@ -1660,7 +1660,7 @@ function WineventAlertHandler(...kwargs) {
 }
 
 function FortigateAlertHandler(...kwargs) {
-    let { rawLog, summary } = kwargs[0];
+    let { rawLog, summary, LogSourceDomain } = kwargs[0];
     var raw_alert = 0;
     const num_alert = $('#customfield_10300-val').text().trim();
     summary = summary.split(']')[1].trim();
@@ -1690,7 +1690,7 @@ function FortigateAlertHandler(...kwargs) {
     }
 
     const alertInfos = ParseFortigateLog(rawLog);
-    function ExtractAlertInfo(alertInfos) {
+    function ExtractAlertInfo(ExtractAlertInfo) {
         const extract_alert_infos = alertInfos.reduce((acc, alertInfo) => {
             const {
                 date,
@@ -1761,7 +1761,30 @@ function FortigateAlertHandler(...kwargs) {
         }, []);
         return extract_alert_infos;
     }
-    const extract_alert_infos = ExtractAlertInfo(alertInfos);
+    function ExtractAlertInfo_sonicwall(ExtractAlertInfo) {
+        const extract_alert_infos = alertInfos.reduce((acc, alertInfo) => {
+            acc.push({
+                time: alertInfo.time,
+                msg: alertInfo.msg,
+                src: alertInfo.src,
+                srcZone: alertInfo.srcZone,
+                natSrc: alertInfo.natSrc,
+                dst: alertInfo.dst,
+                dstZone: alertInfo.dstZone,
+                natDst: alertInfo.natDst,
+                proto: alertInfo.proto
+            });
+            return acc;
+        }, []);
+        return extract_alert_infos;
+    }
+    let extract_alert_infos = '';
+    if (LogSourceDomain == 'miramar') {
+        console.log('===miramar');
+        extract_alert_infos = ExtractAlertInfo_sonicwall(alertInfos);
+    } else {
+        extract_alert_infos = ExtractAlertInfo(alertInfos);
+    }
 
     function generateDescription() {
         const alertDescriptions = [];
@@ -4860,7 +4883,8 @@ function RealTimeMonitoring() {
                 'checkpoint_cef': SangforAlertHandler,
                 'incapsula_cef': SangforAlertHandler,
                 'fireeye-etp-json': FireeyeEtpAlertHandler,
-                'sentinelone-json': SentinelOneAlertHandler
+                'sentinelone-json': SentinelOneAlertHandler,
+                'sonicwall': FortigateAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             if (DecoderName == '') {
