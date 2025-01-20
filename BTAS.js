@@ -4145,6 +4145,20 @@ function MDE365AlertHandler(...kwargs) {
                 } catch (error) {
                     console.error(`Error: ${error}`);
                 }
+                let MDEURL = '';
+                if (
+                    LogSourceDomain == 'wkcda' &&
+                    summary.includes('Multiple failed user logon attempts to a service involving one user')
+                ) {
+                    if (info.alertid && !MDEURL.includes(info.alertid)) {
+                        MDEURL += `https://security.microsoft.com/alerts/${info.alertid}<br>`;
+                    }
+                    if (info.incidenturi) {
+                        let incident_url = info.incidenturi.replace('hXXps[:]', 'https:') + '<br>';
+                        MDEURL += incident_url;
+                    }
+                    desc += `MDE URL: \n${MDEURL}\n`;
+                }
 
                 desc += `\nPlease verify if the activity is legitimate.\n`;
                 alertDescriptions.push(desc);
