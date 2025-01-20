@@ -1056,8 +1056,8 @@ function monitorList() {
     });
     var time_to_first_response = document.querySelectorAll('.sla-tag.sla-tag-ongoing');
     time_to_first_response.forEach(function (element) {
-        console.log(element.outerText.replace('min', ''), element.outerText.replace('min', '') < 20);
-        if (element.outerText.includes('min') && element.outerText.replace('min', '') < 20) {
+        console.log(element.outerText.replace('min', ''), element.outerText.replace('min', '') < 30);
+        if (element.outerText.includes('min') && element.outerText.replace('min', '') < 30) {
             var audio = document.getElementById('myAudio');
             audio.play();
             console.log('出现特殊情况');
@@ -4680,7 +4680,7 @@ function RealMonitorMe() {
     const intervalId = setInterval(() => {
         var element_one = document.getElementById('opsbar-opsbar-transitions');
         var first = element_one ? element_one.textContent || element_one.innerText : null;
-        console.log(first);
+        // console.log(first);
         if (first == 'Waiting for customer' && ORG.split(' ')[ORG.split(' ').length - 1] == 'None') {
             console.log('===发生了改变', first);
             confirm('请注意,该工单变为Waiting for customer,请检查该工单是否已添加ORG');
