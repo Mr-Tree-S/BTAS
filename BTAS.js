@@ -742,14 +742,8 @@ function checkKeywords() {
                 }
             },
             ontimeout: function () {
-                console.log('未连接 Darklab VPN 时使用缓存文件');
                 if (cachedKeywordsContent == null || cachedWebsiteContent == null || cachedWhitehashContent == null) {
-                    showFlag(
-                        'Error',
-                        'whitelis_hash.csv文件获取失败',
-                        '未连接到 Darklab VPN，请连接后刷新页面',
-                        'auto'
-                    );
+                    showFlag('Error', 'BTAS缓存数据获取失败', '未连接到 VPN，请连接后刷新页面', 'auto');
                 }
             },
             onerror: function (error) {
@@ -827,11 +821,10 @@ function ticketNotify(pageData) {
                 }
             },
             ontimeout: function () {
-                // 未连接 Darklab VPN 时使用缓存文件
                 if (cachedContent !== null) {
                     checkNotify(cachedContent.items, pageData);
                 } else {
-                    showFlag('Error', '文件获取失败', '未连接到 Darklab VPN，请连接后刷新页面', 'auto');
+                    showFlag('Error', '文件获取失败', '未连接到 VPN，请连接后刷新页面', 'auto');
                 }
             },
             onerror: function (error) {
@@ -1037,7 +1030,7 @@ function cortexAlertHandler(...kwargs) {
         });
         console.log('===orgDict', orgDict);
     } else {
-        alert('cachedWebsiteContent is empty,please connect darklab vpn get information');
+        alert('cachedWebsiteContent is empty,please connect VPN get information');
     }
     const orgNavigator = orgDict[LogSourceDomain];
 
