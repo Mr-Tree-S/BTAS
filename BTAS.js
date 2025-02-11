@@ -10,8 +10,8 @@
 // @downloadURL  https://greasyfork.org/scripts/526044-btas/code/BTAS.user.js
 // @match        https://login.microsoftonline.com/*
 // @match        https://security.microsoft.com/*
-// @match        https://caas*.com/*
-// @match        https://mss*mss.com/*
+// @include        https://caas*.com/*
+// @include        https://mss*mss.com/*
 // @icon         https://avatars.githubusercontent.com/u/42169240?v=4
 // @require      https://code.jquery.com/jquery-3.6.4.min.js
 // @require      https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js
@@ -3000,9 +3000,7 @@ function MdbAlertHandler(...kwargs) {
     const alertInfo = parseLog(rawLog);
     function generateDescription() {
         const alertDescriptions = [];
-        if (
-            summary.toLowerCase().includes('anomaly: suspected lateral movement - linux containing session opened')
-        ) {
+        if (summary.toLowerCase().includes('anomaly: suspected lateral movement - linux containing session opened')) {
             const Log_source = $('#customfield_10204-val').text().trim();
             alertDescriptions.push(`Observed  session opened on <span class='black_highlight'>${Log_source}</span>\n`);
         }
@@ -3015,9 +3013,7 @@ function MdbAlertHandler(...kwargs) {
         if (summary.toLowerCase().includes('syslog: user missed the password more than one time')) {
             alertDescriptions.push('Kindly help to verify if the login is legitimate\n');
         }
-        if (
-            summary.toLowerCase().includes('anomaly: suspected lateral movement - linux containing session opened')
-        ) {
+        if (summary.toLowerCase().includes('anomaly: suspected lateral movement - linux containing session opened')) {
             alertDescriptions.push('Kindly help to verify if the session is legitimate\n');
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
