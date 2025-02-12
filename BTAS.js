@@ -6,8 +6,8 @@
 // @description  Blue Team Auxiliary Script
 // @author       Barry, Jack, Xingyu, Mike
 // @license      Apache-2.0
-// @updateURL    https://greasyfork.org/scripts/526044-btas/code/BTAS.user.js
-// @downloadURL  https://greasyfork.org/scripts/526044-btas/code/BTAS.user.js
+// @updateURL    https://raw.githubusercontent.com/Mr-Tree-S/BTAS/main/BTAS.js
+// @downloadURL  https://raw.githubusercontent.com/Mr-Tree-S/BTAS/main/BTAS.js
 // @match        https://login.microsoftonline.com/*
 // @match        https://security.microsoft.com/*
 // @include        https://caas*.com/*
