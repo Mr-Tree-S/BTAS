@@ -4647,6 +4647,15 @@ function RealMonitorMe() {
             clearInterval(intervalId);
         }
     }, 500);
+    let LogSourceDomain = $('#customfield_10223-val').text().trim();
+
+    if (LogSourceDomain == 'fusion') {
+        document.getElementById('opsbar-transitions_more').addEventListener('click', function () {
+            if (ORG.split(' ')[ORG.split(' ').length - 1] == 'None') {
+                alert('Fusion工单需要全部升级');
+            }
+        });
+    }
 }
 
 function formatCurrentDateTime(dateStr, decoder_name) {
