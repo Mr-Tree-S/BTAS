@@ -703,9 +703,6 @@ function checkKeywords() {
         }
     }
     function fetchData(url, apiKey) {
-        const cachedKeywordsContent = GM_getValue('cachedKeywordsContent', null);
-        const cachedWebsiteContent = GM_getValue('cachedWebsiteContent', null);
-        const cachedWhitehashContent = GM_getValue('cachedWhitehashContent', null);
         GM_xmlhttpRequest({
             method: 'GET',
             url: url,
@@ -716,27 +713,21 @@ function checkKeywords() {
             onload: function (response) {
                 if (response.status === 200) {
                     const data = JSON.parse(response.responseText)['data'];
-
                     console.log(data);
-                    if (cachedKeywordsContent == null) {
-                        GM_setValue('cachedKeywordsContent', data['keywords']);
-                    }
-                    if (cachedWebsiteContent == null) {
-                        GM_setValue('cachedWebsiteContent', data['website']);
-                        let cachedEntry = {};
-                        data['website'].forEach((item, index) => {
-                            if (item && item['name'] == 'hk' && item['url']) {
-                                cachedEntry['hk'] = item['url'];
-                            }
-                            if (item && item['name'] == 'macao' && item['url']) {
-                                cachedEntry['macao'] = item['url'];
-                            }
-                            GM_setValue('cachedEntry', cachedEntry);
-                        });
-                    }
-                    if (cachedWhitehashContent == null) {
-                        GM_setValue('cachedWhitehashContent', data['whitehash']);
-                    }
+                    let cachedEntry = {};
+                    data['website'].forEach((item, index) => {
+                        if (item && item['name'] == 'hk' && item['url']) {
+                            cachedEntry['hk'] = item['url'];
+                        }
+                        if (item && item['name'] == 'macao' && item['url']) {
+                            cachedEntry['macao'] = item['url'];
+                        }
+                        GM_setValue('cachedEntry', cachedEntry);
+                    });
+                    GM_setValue('cachedMappingContent', data['mapping']);
+                    GM_setValue('cachedKeywordsContent', data['keywords']);
+                    GM_setValue('cachedWebsiteContent', data['website']);
+                    GM_setValue('cachedWhitehashContent', data['whitehash']);
                 } else {
                     console.error('Error fetching cachedContent:', response.status);
                 }
@@ -799,19 +790,15 @@ function ticketNotify(pageData) {
                     if (cachedContent == null) {
                         // 更新本地存储中的文件内容和更新时间
                         GM_setValue('cachedFileContent', data);
-
                         checkNotify(data.items, pageData);
                     }
-
                     // 如果本地存储中有缓存，并且文件内容有变化
                     if (cachedContent !== null && JSON.stringify(cachedContent) !== JSON.stringify(data)) {
                         // 更新本地存储中的文件内容
                         GM_setValue('cachedFileContent', data);
-
                         // 使用最新文件
                         checkNotify(data.items, pageData);
                     }
-
                     // 本地存在缓存，且内容相同则使用缓存文件
                     if (cachedContent !== null && JSON.stringify(cachedContent) == JSON.stringify(data)) {
                         checkNotify(cachedContent.items, pageData);
@@ -1021,14 +1008,12 @@ function cortexAlertHandler(...kwargs) {
      */
     let orgDict = {};
     const cachedWebsiteContent = GM_getValue('cachedWebsiteContent', null);
-    console.log(cachedWebsiteContent);
     if (cachedWebsiteContent != null) {
         cachedWebsiteContent.forEach((item, index) => {
             if (item && item['category'] == 'cortex' && item['url']) {
                 orgDict[item['name']] = item['url'];
             }
         });
-        console.log('===orgDict', orgDict);
     } else {
         alert('cachedWebsiteContent is empty,please connect VPN get information');
     }
@@ -1248,9 +1233,11 @@ function cortexAlertHandler(...kwargs) {
                 console.log(rule_description);
                 description = rule_description;
             }
+            const cachedMappingContent = GM_getValue('cachedMappingContent', null);
+            console.log('===', cachedMappingContent);
             if (source === 'PAN NGFW') {
                 const desc = `Observed ${name}\ntimestamp: ${dateTimeStr}\nSrcip: ${action_local_ip}   Srcport: ${action_local_port}\nDstip: ${action_remote_ip}   Dstport: ${action_remote_port}\nAction: ${action_pretty}\n${
-                    LogSourceDomain === 'cityu' ? 'Cortex Portal: ' + alert_link + '\n' : ''
+                    LogSourceDomain === cachedMappingContent['cca'] ? 'Cortex Portal: ' + alert_link + '\n' : ''
                 }\n\nPlease help to verify if this activity is legitimate.\n`;
                 alertDescriptions.push(desc);
             } else {
@@ -1712,8 +1699,8 @@ function FortigateAlertHandler(...kwargs) {
         return extract_alert_infos;
     }
     let extract_alert_infos = '';
-    if (LogSourceDomain == 'miramar') {
-        console.log('===miramar');
+    const cachedMappingContent = GM_getValue('cachedMappingContent', null);
+    if (LogSourceDomain == cachedMappingContent['mma']) {
         extract_alert_infos = ExtractAlertInfo_sonicwall(alertInfos);
     } else {
         extract_alert_infos = ExtractAlertInfo(alertInfos);
@@ -3536,6 +3523,14 @@ function SangforAlertHandler(...kwargs) {
                 }
             }
             desc += `\nPlease verify if the activity is legitimate.\n`;
+            if (pageData_propertyVal.includes('</')) {
+                pageData_propertyVal = pageData_propertyVal.replace(/\//g, '?');
+                // desc = decodeURIComponent(desc);
+            }
+            if (desc.includes('%3c%2f')) {
+                desc = desc.replace(/script/g, 'SScript');
+                // desc = decodeURIComponent(desc);
+            }
             alertDescriptions.push(desc);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
@@ -4092,7 +4087,9 @@ function MDE365AlertHandler(...kwargs) {
                     console.error(`Error: ${error}`);
                 }
                 let MDEURL = '';
-                if (LogSourceDomain == 'wkcda') {
+                const cachedMappingContent = GM_getValue('cachedMappingContent', null);
+
+                if (LogSourceDomain == cachedMappingContent['wwa']) {
                     if (info.alertid && !MDEURL.includes(info.alertid)) {
                         MDEURL += `https://security.microsoft.com/alerts/${info.alertid}<br>`;
                     }
@@ -4592,7 +4589,7 @@ function SentinelOneAlertHandler(...kwargs) {
     addButton('generateDescription', 'Description', generateDescription);
 }
 
-function LHG_CS_AlertHandler(DecoderName) {
+function LLA_CS_AlertHandler(DecoderName) {
     let ORG = $('#customfield_10002-val').text().trim();
     console.log(ORG.split(' ')[ORG.split(' ').length - 1]);
     const elements = document.querySelectorAll('.user-hover.user-avatar');
@@ -4983,8 +4980,9 @@ function RealTimeMonitoring() {
         if (DecoderName == '') {
             DecoderName = $('#customfield_10906-val').text().trim().toLowerCase();
         }
-        if (LogSourceDomain.includes('lhg')) {
-            LHG_CS_AlertHandler(DecoderName);
+        const cachedMappingContent = GM_getValue('cachedMappingContent', null);
+        if (LogSourceDomain.includes(cachedMappingContent['lla'])) {
+            LLA_CS_AlertHandler(DecoderName);
         }
     }, 3500);
 
