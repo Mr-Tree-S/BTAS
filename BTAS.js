@@ -1530,7 +1530,7 @@ function CBAlertHandler(...kwargs) {
 
 function WineventAlertHandler(...kwargs) {
     console.log('#### Code WineventAlertHandler run ####');
-    let { rawLog, summary } = kwargs[0];
+    let { rawLog, summary, LogSourceDomain } = kwargs[0];
     var raw_alert = 0;
     const num_alert = $('#customfield_10300-val').text().trim();
     summary = summary.replace(/[\[(].*?[\])]/g, '');
@@ -1553,10 +1553,15 @@ function WineventAlertHandler(...kwargs) {
     const alertInfo = parseLog(rawLog);
 
     function generateDescription() {
+        const cachedMappingContent = GM_getValue('cachedMappingContent', null);
+
         const alertDescriptions = [];
         if (raw_alert < num_alert) {
             let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
             alertDescriptions.push(extra_message);
+        }
+        if (LogSourceDomain == cachedMappingContent['gga']) {
+            alertDescriptions.push(`Log Details:\n`);
         }
         for (const info of alertInfo) {
             let desc = `Observed${info.summary}\nHost: ${info.alertHost}\n`;
@@ -1573,6 +1578,14 @@ function WineventAlertHandler(...kwargs) {
             }
             desc += '\n' + 'Please help to verify if this activity is legitimate.' + '\n';
             alertDescriptions.push(desc);
+        }
+        if (LogSourceDomain == cachedMappingContent['gga']) {
+            let kibana = $('#field-customfield_10308').text().trim().split(' ')[36];
+            let newUrl = kibana.replace(
+                /https:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/,
+                'https://' + cachedMappingContent['gga_url']
+            );
+            alertDescriptions.push(`\n${newUrl}\n`);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
         showDialog(alertMsg);
@@ -3353,7 +3366,7 @@ function DarktraceAlertHandler(...kwargs) {
 }
 
 function SangforAlertHandler(...kwargs) {
-    var { summary, rawLog } = kwargs[0];
+    var { summary, rawLog, LogSourceDomain } = kwargs[0];
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
@@ -3501,14 +3514,18 @@ function SangforAlertHandler(...kwargs) {
     }
     const alertInfo = parseLog(rawLog);
     function generateDescription() {
+        const cachedMappingContent = GM_getValue('cachedMappingContent', null);
         const alertDescriptions = [];
+        if (LogSourceDomain == cachedMappingContent['gga']) {
+            alertDescriptions.push(`Log Details:\n`);
+        }
         for (const info of alertInfo) {
             const lastindex = summary.lastIndexOf(']');
-            let desc;
+            let desc = '';
             if (summary.includes('-')) {
-                desc = `Observed ${summary.substr(lastindex + 1).split('-')[1]}\n`;
+                desc += `Observed ${summary.substr(lastindex + 1).split('-')[1]}\n`;
             } else {
-                desc = `Observed ${summary.substr(lastindex + 1)}\n`;
+                desc += `Observed ${summary.substr(lastindex + 1)}\n`;
             }
             for (const key in info) {
                 if (Object.hasOwnProperty.call(info, key)) {
@@ -3525,15 +3542,16 @@ function SangforAlertHandler(...kwargs) {
                 }
             }
             desc += `\nPlease verify if the activity is legitimate.\n`;
-            if (pageData_propertyVal.includes('</')) {
-                pageData_propertyVal = pageData_propertyVal.replace(/\//g, '?');
-                // desc = decodeURIComponent(desc);
-            }
-            if (desc.includes('%3c%2f')) {
-                desc = desc.replace(/script/g, 'SScript');
-                // desc = decodeURIComponent(desc);
-            }
+
             alertDescriptions.push(desc);
+        }
+        if (LogSourceDomain == cachedMappingContent['gga']) {
+            let kibana = $('#field-customfield_10308').text().trim().split(' ')[36];
+            let newUrl = kibana.replace(
+                /https:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/,
+                'https://' + cachedMappingContent['gga_url']
+            );
+            alertDescriptions.push(`\n${newUrl}\n`);
         }
         const alertMsg = [...new Set(alertDescriptions)].join('\n');
         showDialog(alertMsg);
