@@ -108,10 +108,16 @@ function security_microsoft() {
 
 function switch_user_microsoft() {
     console.log('login.microsoft', $('#idDiv_SAOTCC_Title').text().trim());
-    if ($('#login_workload_logo_text').text().trim() == '您已注销帐户') {
+    if (
+        $('#login_workload_logo_text').text().trim() == '您已注销帐户' ||
+        $('#login_workload_logo_text').text().trim() == 'You signed out of your account'
+    ) {
         window.location.href = 'https://security.microsoft.com/homepage?&current=none';
     }
-    if (document.title == '登录到您的帐户' && $('#idDiv_SAOTCC_Title').text().trim() != '输入验证码') {
+    if (
+        (document.title == '登录到您的帐户' && $('#idDiv_SAOTCC_Title').text().trim() != '输入验证码') ||
+        (document.title == 'Sign in to your account' && $('#idDiv_SAOTCC_Title').textContent.trim() != 'Enter code')
+    ) {
         setTimeout(() => {
             var inputElement = document.querySelectorAll('.form-control')[0];
             inputElement.addEventListener('input', function (event) {
