@@ -849,7 +849,9 @@ function ticketNotify(pageData) {
                     (match) => `<span style="background-color: yellow;">${match}</span>`
                 );
             });
-
+            if (text.includes('</')) {
+                text = text.replace(/document/g, '?');
+            }
             // 将替换后的文本重新设置为元素的 HTML 内容
             element.html(text);
         }
