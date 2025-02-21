@@ -2908,7 +2908,10 @@ function Risky_Countries_AlertHandler(...kwargs) {
 
 function Agent_Disconnect_AlertHandler(...kwargs) {
     var { summary, rawLog } = kwargs[0];
-    const LogSource = $('#customfield_10204-val').text().trim().split('\n');
+    let LogSource = $('#customfield_10204-val').text().trim().split('\n');
+    if (LogSource.length == 1 && LogSource[0] == '') {
+        LogSource = $('#customfield_10854-val').text().trim().split('\n');
+    }
     function parseLog(LogSource) {
         const alertInfo = LogSource.reduce((acc, log) => {
             try {
