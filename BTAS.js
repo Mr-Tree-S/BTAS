@@ -3418,7 +3418,7 @@ function SangforAlertHandler(...kwargs) {
                         fileType: matches.fileType ? matches.fileType : undefined,
                         subject: matches.subject ? matches.subject : undefined
                     };
-                    let link = 'https://' + matches.cs5 + matches.cs4.split('local/')[1];
+                    let link = 'https://' + matches.cs5 + '/' + matches.cs4.split('local/')[1];
                     data_json[matches.cs1Label] = matches.cs1 ? matches.cs1 : undefined;
                     data_json[matches.cs4Label] = matches.cs4 ? link : undefined;
                     data_json[matches.flexString2Label] = matches.flexString2 ? matches.flexString2 : undefined;
