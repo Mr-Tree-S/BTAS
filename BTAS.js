@@ -3418,9 +3418,8 @@ function SangforAlertHandler(...kwargs) {
                         fileType: matches.fileType ? matches.fileType : undefined,
                         subject: matches.subject ? matches.subject : undefined
                     };
-                    let link = 'https://' + matches.cs5 + '/' + matches.cs4.split('local/')[1];
                     data_json[matches.cs1Label] = matches.cs1 ? matches.cs1 : undefined;
-                    data_json[matches.cs4Label] = matches.cs4 ? link : undefined;
+                    data_json['Malicious_Domain'] = matches.cs5 ? matches.cs5 : undefined;
                     data_json[matches.flexString2Label] = matches.flexString2 ? matches.flexString2 : undefined;
                     acc.push(data_json);
                 } else if (DecoderName == 'impervainc_cef') {
@@ -4623,7 +4622,7 @@ function LLA_CS_AlertHandler(DecoderName) {
     let ORG = $('#customfield_10002-val').text().trim();
     console.log(ORG.split(' ')[ORG.split(' ').length - 1]);
     const elements = document.querySelectorAll('.user-hover.user-avatar');
-    const userList = ['kitty.li', 'anson.cho', 'ray.tan', 'philip.ng'];
+    const userList = ['kitty li', 'anson cho', 'ray tan', 'philip ng'];
     console.log(elements[0].textContent.toLowerCase()); // 对每个元素执行操作
     let ClientComment = false;
     for (const dataItem of userList) {
