@@ -3308,6 +3308,7 @@ function DarktraceAlertHandler(...kwargs) {
                                 });
                             }
                             item.forEach((ii) => {
+                                alertExtraInfo[ii.header] = '--->';
                                 if (
                                     ii.header == 'Activity Details' ||
                                     ii.header == 'Details of Accessing Users' ||
@@ -3322,6 +3323,19 @@ function DarktraceAlertHandler(...kwargs) {
                                             i['key'].includes('Source IPs') ||
                                             i['key'].includes('Actors include')
                                         ) {
+                                            alertExtraInfo[i.key] = JSON.stringify(i.values);
+                                        }
+                                    });
+                                } else {
+                                    ii.contents.forEach((i) => {
+                                        if (i['type'] == 'device') {
+                                            alertExtraInfo[i.key] = JSON.stringify(
+                                                i.values.map(({ hostname, ip }) => ({
+                                                    hostname,
+                                                    ip
+                                                }))
+                                            );
+                                        } else if (i['type'] != 'timestamp') {
                                             alertExtraInfo[i.key] = JSON.stringify(i.values);
                                         }
                                     });
