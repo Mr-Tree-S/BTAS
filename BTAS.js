@@ -2,7 +2,7 @@
 // @name         BTAS
 // @namespace    https://github.com/Mr-Tree-S/BTAS
 // @homepageURL  https://github.com/Mr-Tree-S/BTAS
-// @version      3.9.5
+// @version      3.9.6
 // @description  Blue Team Auxiliary Script
 // @author       Barry, Jack, Xingyu, Mike
 // @license      Apache-2.0
@@ -10,8 +10,8 @@
 // @downloadURL  https://raw.githubusercontent.com/Mr-Tree-S/BTAS/main/BTAS.js
 // @match        https://login.microsoftonline.com/*
 // @match        https://security.microsoft.com/*
-// @include        https://caas*.com/*
-// @include        https://mss*mss.com/*
+// @include      https://caas*.com/*
+// @include      https://mss*mss.com/*
 // @icon         https://avatars.githubusercontent.com/u/42169240?v=4
 // @require      https://code.jquery.com/jquery-3.6.4.min.js
 // @require      https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js
