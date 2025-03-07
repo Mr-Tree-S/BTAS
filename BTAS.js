@@ -5039,8 +5039,13 @@ function RealTimeMonitoring() {
 
 (function () {
     ('use strict');
-    RealTimeMonitoring();
-
+    const interval = setInterval(() => {
+        const element = document.querySelector('#towhitelist');
+        if (!element) {
+            RealTimeMonitoring();
+            // clearInterval(interval);
+        }
+    }, 1500); // 每1500毫秒检查一次
     registerSearchMenu();
     registerExceptionMenu();
     registerCustomQuickReplyMenu();
