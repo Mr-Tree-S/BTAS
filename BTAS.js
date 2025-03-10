@@ -5041,7 +5041,7 @@ function RealTimeMonitoring() {
     ('use strict');
     const interval = setInterval(() => {
         const element = document.querySelector('#towhitelist');
-        if (!element) {
+        if (!element && window.location.href.includes('browse/MSS-')) {
             RealTimeMonitoring();
             // clearInterval(interval);
         }
