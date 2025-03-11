@@ -4835,8 +4835,16 @@ function RealTimeMonitoring() {
             security_microsoft();
         }, 3000);
     }
+    // Issue page: check Keywords and ATT&CK and Org
+    setTimeout(() => {
+        if ($('#issue-content').length && !$('.aui-banner-error').length) {
+            console.log('#### Code Issue page: check Keywords ####');
+            checkKeywords();
+            checkATTCK();
+        }
+    }, 4500);
     // Issue page: Alert Handler
-    const generation_description = setInterval(() => {
+    function Alert_Handler() {
         var LogSourceDomain = $('#customfield_10223-val').text().trim();
         let rawLog = $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim().split('\n');
         if (rawLog == '') {
@@ -4937,17 +4945,18 @@ function RealTimeMonitoring() {
             if (Log_Domain_handler) {
                 Log_Domain_handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, summary: summary });
             }
-            clearInterval(generation_description);
+            if (window.location.href.includes('MSS') || window.location.href.includes('OPS')) {
+                addButton('towhitelist', 'WhiteList', ToWhitelist);
+            }
         }
-    }, 1000);
-    // Issue page: check Keywords and ATT&CK and Org
-    setTimeout(() => {
-        if ($('#issue-content').length && !$('.aui-banner-error').length) {
-            console.log('#### Code Issue page: check Keywords ####');
-            checkKeywords();
-            checkATTCK();
+    }
+    const interval = setInterval(() => {
+        const element = document.querySelector('#towhitelist');
+        if (!element && window.location.href.includes('browse/MSS-')) {
+            Alert_Handler();
+            // clearInterval(interval);
         }
-    }, 4500);
+    }, 1500); // 每1500毫秒检查一次
 
     // Issue page: Edit Notify
     setTimeout(() => {
@@ -5011,7 +5020,6 @@ function RealTimeMonitoring() {
                 window.location.href.includes('MSS')) ||
             window.location.href.includes('OPS')
         ) {
-            addButton('towhitelist', 'WhiteList', ToWhitelist);
             ticketNotify(pageData);
         }
     }, 1000);
@@ -5039,18 +5047,8 @@ function RealTimeMonitoring() {
 
 (function () {
     ('use strict');
-    const interval = setInterval(() => {
-        const element = document.querySelector('#towhitelist');
-        if (!element && window.location.href.includes('browse/MSS-')) {
-            RealTimeMonitoring();
-            // clearInterval(interval);
-        }
-    }, 1500); // 每1500毫秒检查一次
-    registerSearchMenu();
-    registerExceptionMenu();
-    registerCustomQuickReplyMenu();
-    addCss();
-    MonitorDev();
+    RealTimeMonitoring();
+
     AJS.whenIType('zv').execute(function () {
         document.getElementById('opsbar-transitions_more').click();
         const interval = setInterval(() => {
@@ -5094,4 +5092,9 @@ function RealTimeMonitoring() {
         }, 500);
     });
     RealMonitorMe();
+    registerSearchMenu();
+    registerExceptionMenu();
+    registerCustomQuickReplyMenu();
+    addCss();
+    MonitorDev();
 })();
