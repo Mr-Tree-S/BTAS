@@ -4580,7 +4580,6 @@ function SentinelOneAlertHandler(...kwargs) {
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
-                console.log('===sentinel_one');
                 const sentinel_one = JSON.parse(log)['sentinel_one'];
                 acc.push({
                     timestamp: sentinel_one.threatInfo.createdAt.split('.')[0],
@@ -4618,6 +4617,69 @@ function SentinelOneAlertHandler(...kwargs) {
                 if (value !== undefined && value !== ' ' && index != 'Summary') {
                     if (index == 'timestamp') {
                         desc += `timestamp(<span class="red_highlight">GMT</span>): ${value.split('.')[0]}Z\n`;
+                    } else {
+                        desc += `${index}: ${value}\n`;
+                    }
+                }
+            });
+            desc += `\nPlease verify if the activity is legitimate.\n`;
+            alertDescriptions.push(desc);
+        }
+        const alertMsg = [...new Set(alertDescriptions)].join('\n');
+        showDialog(alertMsg);
+    }
+    addButton('generateDescription', 'Description', generateDescription);
+}
+
+function JsonAlertHandler(...kwargs) {
+    const { rawLog, summary } = kwargs[0];
+    var raw_alert = 0;
+    function parseLog(rawLog) {
+        const alertInfo = rawLog.reduce((acc, log) => {
+            try {
+                if (log.length == 0) {
+                    return acc;
+                }
+                const json_alert = JSON.parse(log)['proofpoint'];
+                let Mail_file = [];
+                json_alert.msgParts.forEach((item, index) => {
+                    Mail_file.push(item.detectedName);
+                });
+                Mail_file = JSON.stringify(Mail_file);
+                acc.push({
+                    createtime: json_alert.ts.split('.')[0],
+                    protocol: json_alert.connection.protocol,
+                    resolveStatus: json_alert.connection.resolveStatus,
+                    Mail_To: JSON.stringify(json_alert.msg.header.to).replace(/[<>]/g, ''),
+                    Mail_From: JSON.stringify(json_alert.msg.header.from).replace(/[<>]/g, ''),
+                    Mail_Subject: json_alert.msg.header.subject,
+                    country: json_alert.connection.country,
+                    host_ip: json_alert.connection.ip,
+                    Mail_file: Mail_file
+                });
+                raw_alert += 1;
+            } catch (error) {
+                console.log(`Error: ${error}`);
+            }
+            return acc;
+        }, []);
+        return alertInfo;
+    }
+
+    const alertInfo = parseLog(rawLog);
+    const num_alert = $('#customfield_10300-val').text().trim();
+    function generateDescription() {
+        const alertDescriptions = [];
+        if (raw_alert < num_alert) {
+            let extra_message = `<span class="red_highlight">Number Of Alert : ${num_alert}, Raw Log Alert : ${raw_alert} Raw log information is Not Complete, Please Get More Alert Information From Elastic.</span>\n`;
+            alertDescriptions.push(extra_message);
+        }
+        for (const info of alertInfo) {
+            let desc = `Observed ${summary.split(']').at(-1)}\n`;
+            Object.entries(info).forEach(([index, value]) => {
+                if (value !== undefined && value !== ' ' && index != 'Summary') {
+                    if (index == 'createtime') {
+                        desc += `createtime(<span class="red_highlight">GMT+8</span>): ${value}\n`;
                     } else {
                         desc += `${index}: ${value}\n`;
                     }
@@ -4893,7 +4955,8 @@ function RealTimeMonitoring() {
                 'fireeye-etp-json': FireeyeEtpAlertHandler,
                 'sentinelone-json': SentinelOneAlertHandler,
                 'sonicwall': FortigateAlertHandler,
-                'trellix_cef': SangforAlertHandler
+                'trellix_cef': SangforAlertHandler,
+                'json': JsonAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             if (DecoderName == '') {
