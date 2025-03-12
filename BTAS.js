@@ -4444,7 +4444,7 @@ function FireeyeAlertHandler(...kwargs) {
 }
 
 function WebAccesslogAlertHandler(...kwargs) {
-    var { summary, rawLog } = kwargs[0];
+    var { summary, rawLog, LogSourceDomain } = kwargs[0];
     var raw_alert = 0;
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
@@ -4452,36 +4452,97 @@ function WebAccesslogAlertHandler(...kwargs) {
                 if (log.length == 0) {
                     return acc;
                 }
-                const regex = /(\b\w+=)"([^"]*?)"/g;
-                const regex_ = /"(.*?)"/g;
-                let match;
-                const matches = {};
-                while ((match = regex.exec(log)) !== null) {
-                    let item = match[0].split('=');
-                    matches[item[0]] = item.slice(1, item.length).join('=');
+                if (!summary.toLowerCase().includes('higher than allowed on most browsers. possible attack.')) {
+                    const regex = /(\b\w+=)"([^"]*?)"/g;
+                    const regex_ = /"(.*?)"/g;
+                    let match;
+                    const matches = {};
+                    while ((match = regex.exec(log)) !== null) {
+                        let item = match[0].split('=');
+                        matches[item[0]] = item.slice(1, item.length).join('=');
+                    }
+                    let match_;
+                    const matches_ = [];
+                    while ((match_ = regex_.exec(log)) !== null) {
+                        matches_.push(match_[0]);
+                    }
+                    console.log(matches);
+                    console.log(matches_);
+                    let logArray = log.split(' ').filter((item) => item !== ''); //Remove extra whitespace from the string
+                    console.log(logArray);
+                    console.log('===', logArray[8]);
+                    if (logArray[8].includes(':')) {
+                        const regex =
+                            /(\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(\w+)\s+(\S+)\s+(\S+)\s+(\S+:\d+)\s+-\s+\[([^\]]+)\]\s+"(GET|POST)\s+(.+?)\s+HTTP\/1\.1"\s+(\d{3})\s+(\d+)\s+"([^"]*)"\s+"([^"]+)"/;
+
+                        const match = log.match(regex);
+                        if (match) {
+                            acc.push({
+                                timestamp: match[1], // 日志时间
+                                hostname: match[2], // 主机名
+                                logType: match[3], // 日志类型（如 vami-access）
+                                sourceIp: match[4], // 来源 IP
+                                targetIpPort: match[5], // 目标 IP 和端口
+                                requestTime: match[6], // 请求时间戳
+                                method: match[7], // 请求方法
+                                url: match[8], // 请求 URL
+                                statusCode: match[9], // 状态码
+                                bytes: match[10], // 响应字节数
+                                referrer: match[11], // 引用来源
+                                userAgent: match[12] // 用户代理
+                            });
+                        }
+                    } else {
+                        acc.push({
+                            'Event time': logArray.slice(3, 5).join(' '),
+                            'Source_IP': logArray[0] ? logArray[0] : undefined,
+                            'URL': matches_[0] ? matches_[0] : undefined,
+                            'User-Agent': matches_[2] ? matches_[2] : undefined,
+                            'upstream_status': logArray[8] ? logArray[8] : undefined,
+                            'upstream_addr': matches.upstream_addr ? matches.upstream_addr : undefined,
+                            'sn': matches.sn ? matches.sn : undefined,
+                            'http_referrer': matches.http_referrer ? matches.http_referrer : undefined,
+                            'http_cookie': matches.http_cookie ? matches.http_cookie : undefined,
+                            'location': matches.location ? matches.location : undefined
+                        });
+                    }
+                } else {
+                    console.log('===', log);
+                    const regex1 =
+                        /(\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(\w+)\s+pod-console\s+(.+?)\s+HTTP\/1\.1"\s+(\d{3})\s+(\d+)\s+"([^"]*)"\s+"([^"]+)"/;
+                    const regex2 =
+                        /(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\+\d{4})\s+\[([^\]]+)\]\s+"([^"]+)"\s+-\s+-\s+\[([^\]]+)\]\s+"(GET|POST)\s+(.+?)\s+HTTP\/1\.1"\s+(\d{3})\s+(\d+)\s+"([^"]*)"\s+"([^"]+)"/g;
+
+                    // 处理第一种格式
+                    const match1 = log.match(regex1);
+                    if (match1) {
+                        acc.push({
+                            timestamp: match1[1],
+                            host: match1[2],
+                            url: match1[3],
+                            statusCode: match1[4],
+                            bytes: match1[5],
+                            referrer: match1[6],
+                            userAgent: match1[7]
+                        });
+                    }
+                    // 处理第二种格式（可能有多个匹配）
+                    let match2;
+                    while ((match2 = regex2.exec(log)) !== null) {
+                        acc.push({
+                            timestamp: match2[1],
+                            identifier: match2[2],
+                            ip: match2[3],
+                            logTime: match2[4],
+                            method: match2[5],
+                            url: match2[6],
+                            statusCode: match2[7],
+                            bytes: match2[8],
+                            referrer: match2[9],
+                            userAgent: match2[10]
+                        });
+                    }
                 }
-                let match_;
-                const matches_ = [];
-                while ((match_ = regex_.exec(log)) !== null) {
-                    matches_.push(match_[0]);
-                }
-                console.log(matches);
-                console.log(matches_);
-                let logArray = log.split(' ').filter((item) => item !== ''); //Remove extra whitespace from the string
-                console.log(logArray);
-                acc.push({
-                    'Event time': logArray.slice(3, 5).join(' '),
-                    'Source_IP': logArray[0] ? logArray[0] : undefined,
-                    // 'request_uri': matches.request_uri ? matches.request_uri : undefined,
-                    'URL': matches_[0] ? matches_[0] : undefined,
-                    'User-Agent': matches_[2] ? matches_[2] : undefined,
-                    'upstream_status': logArray[8] ? logArray[8] : undefined,
-                    'upstream_addr': matches.upstream_addr ? matches.upstream_addr : undefined,
-                    'sn': matches.sn ? matches.sn : undefined,
-                    'http_referrer': matches.http_referrer ? matches.http_referrer : undefined,
-                    'http_cookie': matches.http_cookie ? matches.http_cookie : undefined,
-                    'location': matches.location ? matches.location : undefined
-                });
             } catch (error) {
                 console.log(`Error: ${error.message}`);
             }
