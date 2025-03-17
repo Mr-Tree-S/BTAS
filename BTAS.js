@@ -334,7 +334,7 @@ function registerSearchMenu() {
         { name: 'AbuseIPDB', url: 'https://www.abuseipdb.com/check/%s' },
         {
             name: 'Base64 Decode',
-            url: `https://icyberchef.com/#recipe=From_Base64('A-Za-z0-9%2B/%3D',true,false)&input=%b`
+            url: `https://cyberchef.org/#recipe=From_Base64('A-Za-z0-9%2B/%3D',true,false)&input=%b`
         }
     ];
     searchEngines.forEach((engine) => {
