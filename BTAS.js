@@ -843,9 +843,12 @@ function ticketNotify(pageData) {
                 console.error('未找到指定的元素');
                 return;
             }
-
-            // 获取元素文本内容
-            let text = element.text().trim();
+            let text;
+            if (selector == '#description-val') {
+                text = element.html();
+            } else {
+                text = element.text().trim();
+            }
 
             // 对每个字符串进行高亮处理
             searchStrings.forEach((searchString) => {
@@ -876,7 +879,7 @@ function ticketNotify(pageData) {
                                 isTrue = !isTrue;
                             }
                             if (isTrue) {
-                                if (property.propertiesKey == 'RawLog') {
+                                if (property.propertiesKey == 'RawLog' || property.propertiesKey == 'Description') {
                                     searchStrings.push(val.trim());
                                 }
                                 isAllConditionsMet = true; // 如果任何一个属性满足条件，返回 true
@@ -886,6 +889,9 @@ function ticketNotify(pageData) {
                             case 'contain':
                                 if (pageData[property.propertiesKey].toLowerCase().includes(val.trim().toLowerCase())) {
                                     isAllConditionsMet = true;
+                                    if (property.propertiesKey == 'RawLog' || property.propertiesKey == 'Description') {
+                                        searchStrings.push(val.trim());
+                                    }
                                 }
                                 break;
                             case 'not contain':
@@ -952,7 +958,11 @@ function ticketNotify(pageData) {
                 if (project == 'HK') {
                     selector = '#field-customfield_10219 > div:first-child > div:nth-child(2)';
                 } else if (project == 'MO') {
-                    selector = '#field-customfield_10904 > div.twixi-wrap.verbose > div';
+                    if (properties.includes('Description')) {
+                        selector = '#description-val';
+                    } else {
+                        selector = '#field-customfield_10904 > div.twixi-wrap.verbose > div';
+                    }
                 }
                 highlightTextInElement(selector, searchStrings);
             }
@@ -5111,7 +5121,8 @@ function RealTimeMonitoring() {
             Status,
             RawLog,
             Summary,
-            AgentName;
+            AgentName,
+            Description;
         let cachedEntry = GM_getValue('cachedEntry', null);
         if (window.location.host === cachedEntry['hk'].split('//')[1]) {
             // for HK
@@ -5140,6 +5151,7 @@ function RealTimeMonitoring() {
             RawLog = $('#field-customfield_10904 > div.twixi-wrap.verbose > div').text().trim();
             Summary = $('#summary-val').text().trim();
             AgentName = $('#customfield_10802-val').text().trim();
+            Description = $('#description-val').text().trim();
         }
 
         const pageData = {
@@ -5152,7 +5164,8 @@ function RealTimeMonitoring() {
             Status,
             RawLog,
             Summary,
-            AgentName
+            AgentName,
+            Description
         };
 
         // If it pops up once, it will not be reminded again
@@ -5164,7 +5177,7 @@ function RealTimeMonitoring() {
         ) {
             ticketNotify(pageData);
         }
-    }, 1000);
+    }, 2000);
 
     // Issue page: Norm Alert
     setTimeout(() => {
