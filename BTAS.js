@@ -4477,7 +4477,11 @@ function WebAccesslogAlertHandler(...kwargs) {
                 if (log.length == 0) {
                     return acc;
                 }
-                if (!summary.toLowerCase().includes('higher than allowed on most browsers. possible attack.')) {
+                console.log('===', log);
+                if (
+                    !summary.toLowerCase().includes('higher than allowed on most browsers. possible attack.') &&
+                    !log.includes('DEBUG:')
+                ) {
                     const regex = /(\b\w+=)"([^"]*?)"/g;
                     const regex_ = /"(.*?)"/g;
                     let match;
@@ -4531,14 +4535,34 @@ function WebAccesslogAlertHandler(...kwargs) {
                             'location': matches.location ? matches.location : undefined
                         });
                     }
+                } else if (log.includes('DEBUG:')) {
+                    const logRegex = /(\S+)\s+(\S+)\s+-\s+-\s+\[(.*?)\]\s+"(.*?)"\s+(\d+)\s+(\d+)\s+"(.*?)"\s+"(.*?)"/;
+                    const match = log.match(logRegex);
+
+                    if (!match) {
+                        console.error('日志格式不匹配');
+                        return null;
+                    }
+
+                    console.log('===', match);
+
+                    const [method, path, protocol] = match[4].split(' ');
+                    acc.push({
+                        timestamp: match[3],
+                        clientIp: match[1],
+                        method: method,
+                        path: path,
+                        responseSize: parseInt(match[6], 10),
+                        serverIp: match[2],
+                        statusCode: parseInt(match[5], 10),
+                        serverIp: match[2]
+                    });
                 } else {
-                    console.log('===', log);
                     const regex1 =
                         /(\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2})\s+(\w+)\s+pod-console\s+(.+?)\s+HTTP\/1\.1"\s+(\d{3})\s+(\d+)\s+"([^"]*)"\s+"([^"]+)"/;
                     const regex2 =
                         /(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\+\d{4})\s+\[([^\]]+)\]\s+"([^"]+)"\s+-\s+-\s+\[([^\]]+)\]\s+"(GET|POST)\s+(.+?)\s+HTTP\/1\.1"\s+(\d{3})\s+(\d+)\s+"([^"]*)"\s+"([^"]+)"/g;
 
-                    // 处理第一种格式
                     const match1 = log.match(regex1);
                     if (match1) {
                         acc.push({
@@ -4551,7 +4575,6 @@ function WebAccesslogAlertHandler(...kwargs) {
                             userAgent: match1[7]
                         });
                     }
-                    // 处理第二种格式（可能有多个匹配）
                     let match2;
                     while ((match2 = regex2.exec(log)) !== null) {
                         acc.push({
