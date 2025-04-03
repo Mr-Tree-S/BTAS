@@ -4903,6 +4903,25 @@ function LLA_CS_AlertHandler(DecoderName) {
     }
 }
 
+function GGA_AlertHandler() {
+    const cachedMappingContent = GM_getValue('cachedMappingContent', null);
+
+    function generateDescription() {
+        var description = $('#description-val').text().trim();
+
+        if (!description.includes('details')) {
+            let kibana = $('#field-customfield_10308').text().trim().split(' ')[36];
+            let newUrl = kibana.replace(
+                /https:\/\/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/,
+                'https://' + cachedMappingContent['gga_url']
+            );
+            description = '<b>Log Details:\n</b>' + description + '\n' + '<b>Kibana:</b>' + newUrl;
+            showDialog(description);
+        }
+    }
+    addButton('GGA', 'GGA', generateDescription);
+}
+
 function RealMonitorMe() {
     let ORG = $('#customfield_10002-val').text().trim();
     let status = $('#opsbar-transitions_more').text().trim();
@@ -5281,6 +5300,9 @@ function RealTimeMonitoring() {
         const cachedMappingContent = GM_getValue('cachedMappingContent', null);
         if (LogSourceDomain.includes(cachedMappingContent['lla'])) {
             LLA_CS_AlertHandler(DecoderName);
+        }
+        if (LogSourceDomain.includes(cachedMappingContent['gga'])) {
+            GGA_AlertHandler();
         }
     }, 3500);
 
