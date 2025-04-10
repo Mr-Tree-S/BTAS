@@ -5233,8 +5233,12 @@ function RealTimeMonitoring() {
             RawLog,
             Summary,
             AgentName,
-            Description;
+            Description,
+            SourceIP;
+
         let cachedEntry = GM_getValue('cachedEntry', null);
+        Description = $('#description-val').text().trim();
+        Summary = $('#summary-val').text().trim();
         if (window.location.host === cachedEntry['hk'].split('//')[1]) {
             // for HK
             LogSourceDomain = $('#customfield_10223-val').text().trim();
@@ -5248,7 +5252,6 @@ function RealTimeMonitoring() {
                 $('#field-customfield_10219 > div:first-child > div:nth-child(2)').text().trim() ||
                 $('#customfield_10219-val').text().trim() ||
                 $('#field-customfield_10232 > div.twixi-wrap.verbose > div > div > div > pre').text();
-            Summary = $('#summary-val').text().trim();
             AgentName = $('#customfield_10805-val').text().trim();
         } else if (window.location.host === cachedEntry['macao'].split('//')[1]) {
             // for MO
@@ -5260,9 +5263,8 @@ function RealTimeMonitoring() {
             TicketAutoEscalate = $('#customfield_10893-val').text().trim();
             Status = $('#status-value > span').text().trim();
             RawLog = $('#field-customfield_10904 > div.twixi-wrap.verbose > div').text().trim();
-            Summary = $('#summary-val').text().trim();
             AgentName = $('#customfield_10802-val').text().trim();
-            Description = $('#description-val').text().trim();
+            SourceIP = $('#customfield_10859-val').text().trim();
         }
 
         const pageData = {
@@ -5276,7 +5278,8 @@ function RealTimeMonitoring() {
             RawLog,
             Summary,
             AgentName,
-            Description
+            Description,
+            SourceIP
         };
 
         // If it pops up once, it will not be reminded again
