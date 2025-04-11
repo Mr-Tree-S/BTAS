@@ -4753,10 +4753,16 @@ function JsonAlertHandler(...kwargs) {
                 }
                 const json_alert = JSON.parse(log)['proofpoint'];
                 let Mail_file = [];
+                let urls = [];
                 json_alert.msgParts.forEach((item, index) => {
+                    if (item.detectedName.includes('html')) {
+                        urls.push(item.urls.map((i) => i.url)[0]);
+                    }
                     Mail_file.push(item.detectedName);
                 });
+
                 Mail_file = JSON.stringify(Mail_file);
+                urls = JSON.stringify(urls);
                 acc.push({
                     createtime: json_alert.ts.split('.')[0],
                     protocol: json_alert.connection.protocol,
@@ -4766,7 +4772,9 @@ function JsonAlertHandler(...kwargs) {
                     Mail_Subject: json_alert.msg.header.subject,
                     country: json_alert.connection.country,
                     host_ip: json_alert.connection.ip,
-                    Mail_file: Mail_file
+                    final_action: json_alert.final_action,
+                    Mail_file: Mail_file,
+                    urls: urls
                 });
                 raw_alert += 1;
             } catch (error) {
@@ -5185,7 +5193,8 @@ function RealTimeMonitoring() {
                 'suspicious geolocation ip login success': PulseAlertHandler,
                 'login success from malware ip(s)': ThreatMatrixAlertHandler,
                 'multiple account being disabled or deleted in short period of time': MultipleAccountAlertHandler,
-                'multiple sms request for same source ip': AwsAlertHandler
+                'multiple sms request for same source ip': AwsAlertHandler,
+                'malicious email campaign detected (>20)': JsonAlertHandler
             };
             const Summary = $('#summary-val').text().trim();
             let No_Decoder_handler = null;
