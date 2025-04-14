@@ -3951,83 +3951,100 @@ function MDE365AlertHandler(...kwargs) {
                         const alerts = logObj['incidents']['alerts'][0];
                         console.log(alerts);
                         let entities = {};
-                        if (alerts !== undefined) {
-                            alerts['entities'].forEach(function (entity) {
-                                if (entity.processCommandLine !== undefined) {
-                                    processCommandLine = entity.processCommandLine.replace(/\r\n\r\n+/g, '\n');
-                                    console.log(processCommandLine);
-                                }
-                                if (entity['entityType'] == 'User' || entity['entityType'] == 'Mailbox') {
-                                    entities['user'] = `${entity['domainName']}\\\\${entity['accountName']}`;
-                                    entities['userPrincipalName'] = entity['userPrincipalName'];
-                                }
-                                if (entity['entityType'] == 'CloudApplication') {
-                                    entities['applicationId'] = entity['applicationId'];
-                                    entities['applicationName'] = entity['applicationName'];
-                                }
-                                if (entity['entityType'] == 'Process') {
-                                    if (!entities['process']) {
-                                        entities['process'] = [];
+                        logObj['incidents']['alerts'].forEach(function (alert, index) {
+                            if (alert !== undefined) {
+                                alert['entities'].forEach(function (entity) {
+                                    if (entity.processCommandLine !== undefined) {
+                                        processCommandLine = entity.processCommandLine.replace(/\r\n\r\n+/g, '\n');
+                                        console.log(processCommandLine);
                                     }
-                                    const fileEntry = {
-                                        filename: entity['fileName'],
-                                        filePath: entity['filePath'],
-                                        cmd: processCommandLine
-                                    };
-                                    if (processCommandLine.includes('EncodedCommand')) {
-                                        let cmd_length = processCommandLine.split(' ').length;
-                                        fileEntry['Decode_Cmd'] = atob(
-                                            processCommandLine.split(' ')[cmd_length - 1].replace(/['"]/g, '')
-                                        );
+                                    if (entity['entityType'] == 'User' || entity['entityType'] == 'Mailbox') {
+                                        entities['user'] = `${entity['domainName']}\\\\${entity['accountName']}`;
+                                        entities['userPrincipalName'] = entity['userPrincipalName'];
                                     }
-                                    if (
-                                        Object.keys(entity).includes('sha256') &&
-                                        (WhiteFilehash(entity['sha256']) || WhiteFilehash(entity['sha1']))
-                                    ) {
-                                        entities['process'].push(fileEntry);
-                                    } else {
-                                        fileEntry['sha256'] = entity['sha256'];
-                                        entities['process'].push(fileEntry);
+                                    if (entity['entityType'] == 'CloudApplication') {
+                                        entities['applicationId'] = entity['applicationId'];
+                                        entities['applicationName'] = entity['applicationName'];
                                     }
-                                }
+                                    if (entity['entityType'] == 'Process') {
+                                        if (!entities['process']) {
+                                            entities['process'] = [];
+                                        }
+                                        const fileEntry = {
+                                            filename: entity['fileName'],
+                                            filePath: entity['filePath'],
+                                            cmd: processCommandLine
+                                        };
+                                        if (processCommandLine.includes('EncodedCommand')) {
+                                            let cmd_length = processCommandLine.split(' ').length;
+                                            fileEntry['Decode_Cmd'] = atob(
+                                                processCommandLine.split(' ')[cmd_length - 1].replace(/['"]/g, '')
+                                            );
+                                        }
+                                        if (
+                                            Object.keys(entity).includes('sha256') &&
+                                            (WhiteFilehash(entity['sha256']) || WhiteFilehash(entity['sha1']))
+                                        ) {
+                                            entities['process'].push(fileEntry);
+                                        } else {
+                                            fileEntry['sha256'] = entity['sha256'];
+                                            entities['process'].push(fileEntry);
+                                        }
+                                    }
 
-                                if (entity['entityType'] == 'File') {
-                                    if (!entities['file']) {
-                                        entities['file'] = [];
+                                    if (entity['entityType'] == 'File') {
+                                        if (!entities['file']) {
+                                            entities['file'] = [];
+                                        }
+                                        const fileEntry = {
+                                            filename: entity['fileName'],
+                                            filePath: entity['filePath']
+                                        };
+                                        if (
+                                            Object.keys(entity).includes('sha256') &&
+                                            (WhiteFilehash(entity['sha256']) || WhiteFilehash(entity['sha1']))
+                                        ) {
+                                            entities['file'].push(fileEntry);
+                                        } else {
+                                            fileEntry['sha256'] = entity['sha256'];
+                                            entities['file'].push(fileEntry);
+                                        }
                                     }
-                                    const fileEntry = {
-                                        filename: entity['fileName'],
-                                        filePath: entity['filePath']
-                                    };
-                                    if (
-                                        Object.keys(entity).includes('sha256') &&
-                                        (WhiteFilehash(entity['sha256']) || WhiteFilehash(entity['sha1']))
-                                    ) {
-                                        entities['file'].push(fileEntry);
-                                    } else {
-                                        fileEntry['sha256'] = entity['sha256'];
-                                        entities['file'].push(fileEntry);
-                                    }
-                                }
 
-                                if (entity['entityType'] == 'Ip') {
-                                    if (!entities['ip']) {
-                                        entities['ip'] = [];
+                                    if (entity['entityType'] == 'Ip') {
+                                        if (!entities['ip']) {
+                                            entities['ip'] = [];
+                                        }
+                                        entities['ip'].push({
+                                            ip: entity['ipAddress']
+                                        });
                                     }
-                                    entities['ip'].push({
-                                        ip: entity['ipAddress']
-                                    });
-                                }
-                                if (entity['entityType'] == 'Url') {
-                                    if (!entities['url']) {
-                                        entities['url'] = [];
+                                    if (entity['entityType'] == 'Url') {
+                                        if (!entities['url']) {
+                                            entities['url'] = [];
+                                        }
+                                        entities['url'].push({
+                                            url: entity['url']
+                                        });
                                     }
-                                    entities['url'].push({
-                                        url: entity['url']
-                                    });
-                                }
-                            });
-                        }
+                                    if (entity['entityType'] == 'MailMessage') {
+                                        if (!entities['MailMessage']) {
+                                            entities['MailMessage'] = [];
+                                        }
+                                        entities['MailMessage'].push({
+                                            subject: entity['subject'],
+                                            evidenceCreationTime: entity['evidenceCreationTime'],
+                                            recipient: entity['recipient'],
+                                            userPrincipalName: entity['userPrincipalName'],
+                                            remediationStatus: entity['remediationStatus']
+                                            // recipient: entity['recipient']
+                                        });
+                                    }
+                                    console.log('===', entities['MailMessage']);
+                                });
+                            }
+                        });
+
                         let creationTime = GMT8(alerts.creationTime.split('.')[0]);
                         let title = alerts?.title;
                         if (summary.toLowerCase().includes(title.toLowerCase())) {
@@ -4044,10 +4061,12 @@ function MDE365AlertHandler(...kwargs) {
                             file: entities.file,
                             ip: entities.ip,
                             url: entities.url,
+
+                            MailMessage: entities.MailMessage,
                             alertid: alerts?.alertId,
                             incidenturi: logObj['incidents'].incidentUri,
                             severity: logObj['incidents'].severity,
-                            description: alerts['description'],
+                            description: alerts['description'] || undefined,
                             applicationId: entities.applicationId,
                             applicationName: entities.applicationName
                         });
@@ -4124,6 +4143,7 @@ function MDE365AlertHandler(...kwargs) {
                         if (info.hasOwnProperty(key)) {
                             if (Array.isArray(info[key])) {
                                 info[key].forEach((item) => {
+                                    desc += '\n';
                                     for (let subKey in item) {
                                         if (item.hasOwnProperty(subKey) && item[subKey] !== '') {
                                             desc += `${subKey}: ${item[subKey]}\n`;
