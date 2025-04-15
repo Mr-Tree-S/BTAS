@@ -22,4 +22,4 @@ Barry, Jack, Xingyu, Mike
 
 ## License
 
-License: Apache License 2.0
+License: MIT
