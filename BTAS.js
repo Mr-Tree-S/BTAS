@@ -3410,7 +3410,7 @@ function DarktraceAlertHandler(...kwargs) {
 }
 
 function SangforAlertHandler(...kwargs) {
-    var { summary, rawLog, LogSourceDomain } = kwargs[0];
+    var { summary, rawLog, LogSourceDomain, DecoderName } = kwargs[0];
     function parseLog(rawLog) {
         const alertInfo = rawLog.reduce((acc, log) => {
             try {
@@ -3428,7 +3428,6 @@ function SangforAlertHandler(...kwargs) {
                 var pattern = /event_evidence.*?(?=suffer_classify1_id_name)/g;
                 console.log(log.match(pattern));
                 let logArray = log.split(' ').filter((item) => item !== ''); //Remove extra whitespace from the string
-                const DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
                 if (DecoderName == 'cyberark_cef') {
                     let data_json = {
                         'Event time': logArray.slice(0, 3).join(' '),
@@ -3490,6 +3489,17 @@ function SangforAlertHandler(...kwargs) {
                     data_json[matches.cs8Label] = matches.cs8 ? matches.cs8 : undefined;
                     data_json[matches.cs9Label] = matches.cs9 ? matches.cs9 : undefined;
 
+                    acc.push(data_json);
+                } else if (DecoderName == 'sangfor') {
+                    let data_json = {
+                        'Event time': logArray.slice(0, 3).join(' '),
+                        'act': matches.act ? matches.act : undefined,
+                        'dst': matches.dst ? matches.dst : undefined,
+                        'src': matches.src ? matches.src : undefined,
+                        'Request': matches.Request ? matches.Request.replace(/\[\.\]/g, '.') : undefined
+                    };
+                    let vt_domain = 'https://www.virustotal.com/gui/domain/' + matches.Request.replace(/\[\.\]/g, '.');
+                    data_json['vt'] = `<a href="${vt_domain}">${vt_domain}</a>`;
                     acc.push(data_json);
                 } else if (DecoderName == 'checkpoint_cef') {
                     let data_json = {
@@ -5184,7 +5194,8 @@ function RealTimeMonitoring() {
                 'sonicwall': FortigateAlertHandler,
                 'trellix_cef': SangforAlertHandler,
                 'json': JsonAlertHandler,
-                'f5-asm': F5AsmAlertHandler
+                'f5-asm': F5AsmAlertHandler,
+                'sangfor': SangforAlertHandler
             };
             let DecoderName = $('#customfield_10807-val').text().trim().toLowerCase();
             if (DecoderName == '') {
@@ -5203,7 +5214,12 @@ function RealTimeMonitoring() {
             }
             const handler = handlers[DecoderName];
             if (handler) {
-                handler({ LogSourceDomain: LogSourceDomain, rawLog: rawLog, summary: summary });
+                handler({
+                    LogSourceDomain: LogSourceDomain,
+                    rawLog: rawLog,
+                    summary: summary,
+                    DecoderName: DecoderName
+                });
             }
             const No_Decoder_handlers = {
                 'detect aad, o365 sign-in from risky countries': Risky_Countries_AlertHandler,
