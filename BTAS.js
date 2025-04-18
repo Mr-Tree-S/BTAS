@@ -2012,7 +2012,7 @@ function AwsAlertHandler(...kwargs) {
                 if (DecoderName == 'aws-guardduty') {
                     let EventTime = aws.service.eventFirstSeen.split('.')[0] + 'Z';
                     const action = aws.service.action;
-                    if (action.actionType == 'AWS_API_CALL') {
+                    if (action && action.actionType == 'AWS_API_CALL') {
                         acc.push({
                             EventTime: EventTime,
                             actionType: action.actionType,
@@ -2021,7 +2021,7 @@ function AwsAlertHandler(...kwargs) {
                             RemoteIP: action?.awsApiCallAction?.remoteIpDetails?.ipAddressV4,
                             RemoteIP_country: action?.awsApiCallAction?.remoteIpDetails?.country.countryName
                         });
-                    } else if (action.actionType == 'KUBERNETES_API_CALL') {
+                    } else if (action && action.actionType == 'KUBERNETES_API_CALL') {
                         acc.push({
                             EventTime: EventTime,
                             actionType: action.actionType,
@@ -2029,7 +2029,7 @@ function AwsAlertHandler(...kwargs) {
                             sourceIPs: action?.kubernetesApiCallAction?.sourceIPs,
                             requestUri: action?.kubernetesApiCallAction?.requestUri
                         });
-                    } else if (action.actionType == 'PORT_PROBE') {
+                    } else if (action && action.actionType == 'PORT_PROBE') {
                         acc.push({
                             EventTime: EventTime,
                             actionType: action.actionType,
@@ -2038,8 +2038,7 @@ function AwsAlertHandler(...kwargs) {
                             RemoteIP_country:
                                 action?.portProbeAction?.portProbeDetails.remoteIpDetails.country.countryName
                         });
-                    } else if (action.actionType == 'NETWORK_CONNECTION') {
-                        console.log('===', action);
+                    } else if (action && action.actionType == 'NETWORK_CONNECTION') {
                         acc.push({
                             EventTime: EventTime,
                             actionType: action.actionType,
@@ -2050,6 +2049,45 @@ function AwsAlertHandler(...kwargs) {
                             instanceId: aws?.resource?.instanceDetails?.instanceId,
                             platform: aws?.resource?.instanceDetails?.platform,
                             remoteIpcountryName: action?.networkConnectionAction?.remoteIpDetails?.country?.countryName
+                        });
+                    } else if (aws.service.featureName == 'RuntimeMonitoring') {
+                        console.log('===', aws.service);
+                        let process = aws.service.runtimeDetails.process;
+                        let data = {};
+                        const uniqueSet = new Set();
+                        if (Array.isArray(process.lineage)) {
+                            process.lineage.forEach((item) => {
+                                console.log('===', item);
+                                if (!data['lineage']) {
+                                    data['lineage'] = [];
+                                }
+                                const key = `${item.executablePath}-${item.userid}`;
+                                if (uniqueSet.has(key)) return false;
+                                uniqueSet.add(key);
+                                data['lineage'].push({
+                                    executablePath: item['executablePath'],
+                                    name: item['name'],
+                                    userid: item['userId']
+                                });
+                            });
+                        } else {
+                            data['lineage'] = [];
+                            let lineage = process.lineage;
+                            data['lineage'].push({
+                                executablePath: lineage['executablePath'],
+                                name: lineage['name'],
+                                userid: lineage['userId']
+                            });
+                        }
+                        acc.push({
+                            EventTime: EventTime,
+                            accountId: aws?.accountId,
+                            resourceType: aws?.resource?.resourceType,
+                            instanceId: aws?.resource?.instanceDetails?.instanceId,
+                            instanceType: aws?.resource?.instanceDetails?.instanceType,
+                            user: process.user,
+                            pwd: process.pwd,
+                            lineage: data['lineage']
                         });
                     }
                 } else if (summary.toLowerCase().includes('multiple sms request for same source ip')) {
@@ -2109,7 +2147,16 @@ function AwsAlertHandler(...kwargs) {
         for (const info of alertInfo) {
             let desc = `Observed ${summary.split(']')[1]}\n`;
             Object.entries(info).forEach(([index, value]) => {
-                if (value !== undefined && value !== ' ' && index != 'Summary') {
+                if (Array.isArray(info[index])) {
+                    info[index].forEach((item) => {
+                        desc += '\n';
+                        for (let subKey in item) {
+                            if (item.hasOwnProperty(subKey) && item[subKey] !== '') {
+                                desc += `${subKey}: ${item[subKey]}\n`;
+                            }
+                        }
+                    });
+                } else if (value !== undefined && value !== ' ' && index != 'Summary') {
                     if (index == 'EventTime') {
                         desc += `EventTime(<span class="red_highlight">GMT</span>): ${value}\n`;
                     } else {
