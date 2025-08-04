@@ -18,7 +18,7 @@ BTAS is a browser auxiliary script developed for Security Operations Center (SOC
 
 ## Contributions
 
-Barry, Jack, Xingyu, Mike
+Jack, Xingyu, Mike
 
 ## License
 
